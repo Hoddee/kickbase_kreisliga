@@ -3,7 +3,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Saira:wdth,wght@125,600;125,700;125,800&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 /* Layout: Hauptseite wie die Kickbase-Spielerkarte (Punktemuster, Foto, große Punktzahl, Wappen, Liste je Aktion) mit einem Button unten.
    Zweite Ansicht ist die Punktevergabe mit Reitern unten. Die Stufenfarbe der Gesamtpunkte färbt nur den LIVE-Text, den Button und kleine Marker. */
@@ -15,24 +15,25 @@
   --line: #2C2F33;
   --ink: #F4F5F6;
   --muted: #8E9399;
-  --lime: #A8E05F;
+  --lime: #9CE04A;
   --hi: #2FD673;
   --neg: #FF5A2A;
-  --lime-bg: rgba(168, 224, 95, .14);
+  --lime-bg: rgba(156, 224, 74, .14);
   --hi-bg: rgba(47, 214, 115, .15);
   --neg-bg: rgba(255, 90, 42, .15);
   --tier: #F28C1B;
   --tier-rgb: 242, 140, 27;
   --on-tier: #1A1000;
-  --font-display: 'Orbitron', 'Arial Black', system-ui, sans-serif;
+  --tier-text: #F28C1B;
+  --font-display: 'Saira', 'Arial', system-ui, sans-serif;
   --font-body: 'Sora', system-ui, -apple-system, 'Segoe UI', sans-serif;
 }
 /* Stufen: Minus dunkelrot, 0-99 orange, 100-199 hellgrün, 200-399 dunkelgrün, ab 400 gold */
-body[data-tier="red"]     { --tier: #B3202A; --tier-rgb: 179, 32, 42;  --on-tier: #FFFFFF; }
-body[data-tier="orange"]  { --tier: #F28C1B; --tier-rgb: 242, 140, 27; --on-tier: #1A1000; }
-body[data-tier="lime"]    { --tier: #A8E05F; --tier-rgb: 168, 224, 95; --on-tier: #0F1C06; }
-body[data-tier="emerald"] { --tier: #1FC46A; --tier-rgb: 31, 196, 106; --on-tier: #03170C; }
-body[data-tier="gold"]    { --tier: #E8B825; --tier-rgb: 232, 184, 37; --on-tier: #1F1600; }
+body[data-tier="red"]     { --tier: #B3202A; --tier-rgb: 179, 32, 42;  --on-tier: #FFFFFF; --tier-text: #E0343F; }
+body[data-tier="orange"]  { --tier: #ED8928; --tier-rgb: 237, 137, 40; --on-tier: #1A1000; --tier-text: #ED8928; }
+body[data-tier="lime"]    { --tier: #9CE04A; --tier-rgb: 156, 224, 74; --on-tier: #0F1C06; --tier-text: #9CE04A; }
+body[data-tier="emerald"] { --tier: #28DE86; --tier-rgb: 40, 222, 134; --on-tier: #03170C; --tier-text: #28DE86; }
+body[data-tier="gold"]    { --tier: #E1BE38; --tier-rgb: 225, 190, 56; --on-tier: #1F1600; --tier-text: #E1BE38; }
 
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
@@ -87,11 +88,11 @@ button { cursor: pointer; touch-action: manipulation; }
 }
 .pname { font-weight: 500; font-size: 18px; letter-spacing: .02em; color: rgba(255, 255, 255, .72); min-height: 26px; }
 .num {
-  font: 800 clamp(70px, 23vw, 100px)/1.05 var(--font-display); letter-spacing: -.01em;
+  font: 800 clamp(76px, 25vw, 108px)/1.05 var(--font-display); letter-spacing: -.01em;
   font-variant-numeric: tabular-nums; margin: 4px 0 10px; color: rgba(255, 255, 255, .94);
 }
-.num[data-len="4"] { font-size: clamp(56px, 17vw, 80px); }
-.num[data-len="5"] { font-size: clamp(46px, 13.5vw, 66px); }
+.num[data-len="4"] { font-size: clamp(60px, 19vw, 86px); }
+.num[data-len="5"] { font-size: clamp(50px, 15vw, 70px); }
 .match { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; gap: 6px; max-width: 320px; margin: 0 auto; }
 .badge {
   justify-self: center;
@@ -103,7 +104,7 @@ button { cursor: pointer; touch-action: manipulation; }
 .state { margin-top: 3px; font-weight: 600; font-size: 15px; letter-spacing: .03em; text-transform: uppercase; color: var(--muted); }
 .state.live { color: var(--tier); }
 
-.rows-wrap { padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px)); }
+.rows-wrap { padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px)); }
 .rows { list-style: none; margin: 0; padding: 6px 0 0; }
 .row {
   display: grid; grid-template-columns: 84px minmax(0, 1fr) auto; align-items: center; gap: 8px;
@@ -118,16 +119,58 @@ button { cursor: pointer; touch-action: manipulation; }
 
 .cta {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 20; pointer-events: none;
-  padding-top: 34px; padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
-  background: linear-gradient(to bottom, rgba(17, 17, 18, 0), var(--bg) 46%);
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
 }
+.cta .wrap { display: flex; justify-content: flex-end; }
 .cta button {
-  pointer-events: auto; width: 100%; height: 58px; border: 0; border-radius: 29px;
-  display: flex; align-items: center; justify-content: center; gap: 10px;
-  background: var(--tier); color: var(--on-tier); font-weight: 700; font-size: 16.5px;
+  pointer-events: auto; height: 46px; padding: 0 18px 0 14px; border: 0; border-radius: 23px;
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--tier); color: var(--on-tier); font-weight: 700; font-size: 14px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .5);
 }
+.cta .ic { font-size: 20px; line-height: 1; font-weight: 600; }
 body[data-tier="gold"] .cta button { background: linear-gradient(135deg, #F7D96B, #D9A21B); }
 .cta button:active { transform: scale(.98); }
+
+/* ---------- Endübersicht ---------- */
+.ended .num { color: var(--tier-text); }
+body[data-tier="gold"].ended .num {
+  background: linear-gradient(135deg, #F7D96B, #D9A21B); -webkit-background-clip: text; background-clip: text;
+  color: transparent; -webkit-text-fill-color: transparent;
+}
+.sec {
+  display: flex; align-items: center; gap: 10px; margin: 22px 0 10px;
+  font: 600 11.5px/1 var(--font-body); letter-spacing: .16em; text-transform: uppercase; color: var(--muted);
+}
+.sec::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.lh { display: flex; justify-content: space-between; align-items: baseline; margin: 24px 0 18px; }
+.lh b { font: 700 24px/1 var(--font-display); letter-spacing: .02em; text-transform: uppercase; }
+.lh span { font-size: 13px; color: var(--muted); letter-spacing: .08em; }
+.chart { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none; }
+.chart::-webkit-scrollbar { display: none; }
+.col { flex: 0 0 64px; display: flex; flex-direction: column; align-items: center; min-width: 0; }
+.col[data-tier="red"]     { --c: #B3202A; --ct: #E0343F; }
+.col[data-tier="orange"]  { --c: #ED8928; --ct: #ED8928; }
+.col[data-tier="lime"]    { --c: #9CE04A; --ct: #9CE04A; }
+.col[data-tier="emerald"] { --c: #28DE86; --ct: #28DE86; }
+.col[data-tier="gold"]    { --c: #E1BE38; --ct: #E1BE38; }
+.ci { height: 18px; font: 500 15px/1 var(--font-body); color: var(--muted); }
+.col.cur .ci { color: var(--ink); }
+.cc { display: flex; align-items: center; gap: 4px; height: 22px; margin: 12px 0 8px; }
+.cc img { width: 22px; height: 22px; object-fit: contain; display: block; }
+.cs { margin-bottom: 14px; font: 500 14px/1 var(--font-body); letter-spacing: .1em; color: rgba(255, 255, 255, .85); font-variant-numeric: tabular-nums; }
+.trk2 { position: relative; display: flex; align-items: flex-end; width: 30px; height: 250px; border-radius: 6px; background: rgba(255, 255, 255, .05); overflow: hidden; }
+.fill { position: relative; width: 100%; min-height: 6px; border-radius: 6px; background: var(--c); }
+.ico { position: absolute; left: 0; right: 0; bottom: 8px; display: flex; flex-direction: column-reverse; align-items: center; gap: 6px; color: rgba(255, 255, 255, .92); }
+.ico svg { display: block; width: 20px; height: 20px; }
+.cv { margin-top: 14px; font: 700 23px/1 var(--font-display); color: var(--ct); font-variant-numeric: tabular-nums; }
+.cm { margin-top: 6px; font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.bars { list-style: none; margin: 0; padding: 0; display: grid; gap: 16px; }
+.bt { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 13.5px; }
+.bt span { min-width: 0; color: var(--ink); }
+.bt b { font: 700 15px/1.2 var(--font-display); font-variant-numeric: tabular-nums; }
+.trk { height: 8px; margin-top: 8px; border-radius: 4px; background: rgba(255, 255, 255, .07); overflow: hidden; }
+.trk i { display: block; height: 100%; border-radius: 4px; background: currentColor; }
 
 /* ---------- Punktevergabe ---------- */
 .ehead {
@@ -221,6 +264,7 @@ textarea#sum {
   font-weight: 600; font-size: 12.5px; color: var(--muted);
 }
 .tabs button[aria-selected="true"] { color: var(--ink); border-top-color: var(--tier); }
+.num, .rp, .pt, .chip, .big-clk, .scoreline, .auto .v, .log .p, .undo .tx b, .cv, .bt b { font-stretch: 125%; }
 @media (prefers-reduced-motion: reduce) { .act.hit { animation: none; } }
 </style>
 
@@ -240,10 +284,10 @@ textarea#sum {
       </div>
     </div>
   </section>
-  <main class="wrap"><div class="rows-wrap"><ul class="rows" id="rows"></ul></div></main>
+  <main class="wrap"><div id="summary"></div><div class="rows-wrap"><h2 class="sec" id="listH" hidden>Alle Punkte</h2><ul class="rows" id="rows"></ul></div></main>
 </div>
 
-<div class="cta" id="cta"><div class="wrap"><button type="button" data-nav="edit">Punkte vergeben <span aria-hidden="true">›</span></button></div></div>
+<div class="cta" id="cta"><div class="wrap"><button type="button" data-nav="edit"><span class="ic" id="ctaI" aria-hidden="true">+</span><span id="ctaL">Punkte vergeben</span></button></div></div>
 
 <section id="edit" hidden>
   <header class="ehead">
@@ -368,8 +412,9 @@ textarea#sum {
     tg: { l: 'Tor ' + TEAM, s: 'Team-Tor', side: 'us', v: function () { return onField() ? 5 : 0; } },
     cg: { l: 'Tor ' + OPP, s: 'Gegentor', side: 'them', v: function () { return onField() ? -5 : 0; } }
   };
+  var CAT = { tg: 'Einsatz & Team', cg: 'Einsatz & Team' };
   ['att', 'def', 'err'].forEach(function (k) {
-    G[k].forEach(function (g) { g.a.forEach(function (x) { ACT[x[0]] = { l: x[1], v: x[2] }; }); });
+    G[k].forEach(function (g) { g.a.forEach(function (x) { ACT[x[0]] = { l: x[1], v: x[2] }; CAT[x[0]] = k === 'err' ? 'Fehler & Strafen' : g.t; }); });
   });
 
   /* ---------- Zustand ---------- */
@@ -391,7 +436,7 @@ textarea#sum {
   }
   function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
   var S = load() || fresh();
-  var view = 'home', tab = 'spiel', confirmReset = false, homeSig = '';
+  var view = 'home', tab = 'spiel', confirmReset = false, confirmEnd = false, confirmHist = false, homeSig = '';
 
   /* ---------- Rechnen ---------- */
   function elapsed() { return S.clock.offset + (S.clock.startedAt ? (Date.now() - S.clock.startedAt) / 1000 : 0); }
@@ -484,11 +529,72 @@ textarea#sum {
     el.textContent = stateText();
     el.className = 'state' + (!S.ended && S.clock.startedAt ? ' live' : '');
   }
+  /* Endübersicht: Balken je Spiel wie im Kickbase-Spielerprofil, darunter die Punkte nach Bereich */
+  var SEASON = '2026/2027', HKEY = 'matchday-history-v1';
+  var GOAL = { goal: 1, pen: 1 }, ASSIST = { ast: 1, defl: 1, reb: 1, wood: 1 };
+  var ICON_BALL = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7.2l3.9 2.8-1.5 4.6H9.6L8.1 10z" fill="currentColor"/><path d="M12 7.2V3M15.9 10l4-1.4M14.4 14.6l2.4 3.4M9.6 14.6L7.2 18M8.1 10L4.1 8.6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
+  var ICON_BOOT = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M2.5 15.2c0-1.1.7-2 1.8-2.3l5.1-1.3 1.4-4 2.4 1-.9 2.3 6 2.7c1.1.5 1.7 1.3 1.7 2.4v.8c0 .6-.5 1.1-1.1 1.1H3.6c-.6 0-1.1-.5-1.1-1.1z"/><path fill="currentColor" d="M5 19h2.2v2H5zM9.6 19h2.2v2H9.6zM14.2 19h2.2v2h-2.2z"/></svg>';
+  function loadHist() { try { var r = JSON.parse(localStorage.getItem(HKEY) || '[]'); return Array.isArray(r) ? r : []; } catch (e) { return []; } }
+  function saveHist(h) { try { localStorage.setItem(HKEY, JSON.stringify(h)); } catch (e) {} }
+  function matchEntry() {
+    var g = 0, a = 0, sc = score();
+    S.events.forEach(function (e) { if (GOAL[e.key]) g++; if (ASSIST[e.key]) a++; });
+    return { t: total(), m: Math.ceil(playedSec() / 60), us: sc.us, them: sc.them, g: g, a: a };
+  }
+  /* Balkenhöhe in Prozent: nicht linear, damit auch niedrige Werte sichtbar bleiben */
+  function barH(t) {
+    var A = [[-100, 4], [0, 8], [100, 50], [200, 78], [400, 94], [500, 100]], i, f;
+    if (t <= A[0][0]) return A[0][1];
+    for (i = 1; i < A.length; i++) {
+      if (t <= A[i][0]) { f = (t - A[i - 1][0]) / (A[i][0] - A[i - 1][0]); return A[i - 1][1] + f * (A[i][1] - A[i - 1][1]); }
+    }
+    return 100;
+  }
+  function chartHtml() {
+    var list = loadHist().concat([matchEntry()]);
+    var imgs = document.querySelectorAll('.badge img');
+    var ca = imgs[0] ? imgs[0].src : '', cb = imgs[1] ? imgs[1].src : '';
+    return '<div class="lh"><b>Leistung</b><span>' + SEASON + '</span></div><div class="chart">' + list.map(function (x, i) {
+      var ic = '', k;
+      for (k = 0; k < x.g; k++) ic += ICON_BALL;
+      for (k = 0; k < x.a; k++) ic += ICON_BOOT;
+      return '<div class="col' + (i === list.length - 1 ? ' cur' : '') + '" data-tier="' + tierOf(x.t) + '">' +
+        '<div class="ci">' + (i === 0 ? '#' : '') + (i + 1) + '</div>' +
+        '<div class="cc"><img src="' + esc(ca) + '" alt=""><img src="' + esc(cb) + '" alt=""></div>' +
+        '<div class="cs">' + x.them + ' : ' + x.us + '</div>' +
+        '<div class="trk2"><div class="fill" style="height:' + barH(x.t).toFixed(1) + '%"><div class="ico">' + ic + '</div></div></div>' +
+        '<div class="cv">' + x.t + '</div><div class="cm">' + x.m + '’</div></div>';
+    }).join('') + '</div>';
+  }
+  function breakdown() {
+    var map = {}, order = [];
+    function add(n, p) { if (!(n in map)) { map[n] = 0; order.push(n); } map[n] += p; }
+    S.events.forEach(function (e) { add(CAT[e.key] || 'Sonstiges', e.pts); });
+    var s = startLine(); if (s) add('Einsatz & Team', s.p);
+    endLines().forEach(function (l) { add('Einsatz & Team', l.p); });
+    return order.map(function (n) { return { n: n, p: map[n] }; })
+      .filter(function (x) { return x.p !== 0; })
+      .sort(function (a, b) { return b.p - a.p; });
+  }
+  function summaryHtml() {
+    var bd = breakdown(), max = 1;
+    bd.forEach(function (b) { max = Math.max(max, Math.abs(b.p)); });
+    return chartHtml() + '<h2 class="sec">Punkte nach Bereich</h2>' +
+      '<div class="card"><ul class="bars">' + bd.map(function (b) {
+        return '<li class="' + cls(b.p) + '"><div class="bt"><span>' + esc(b.n) + '</span><b>' + fmt(b.p) + '</b></div>' +
+          '<div class="trk"><i style="width:' + Math.max(4, Math.round(Math.abs(b.p) / max * 100)) + '%"></i></div></li>';
+      }).join('') + '</ul></div>';
+  }
   function renderHome() {
     var t = total(), sc = score(), rows = rowsData();
     applyTier(t);
+    document.body.classList.toggle('ended', !!S.ended);
     setNum($('hNum'), t);
     $('hScore').textContent = sc.them + ' : ' + sc.us;
+    $('ctaL').textContent = S.ended ? 'Bearbeiten' : 'Punkte vergeben';
+    $('ctaI').textContent = S.ended ? '✎' : '+';
+    $('summary').innerHTML = S.ended ? summaryHtml() : '';
+    $('listH').hidden = !S.ended;
     $('rows').innerHTML = rows.length ? rows.map(function (r) {
       return '<li class="row"><span class="rp ' + cls(r.p) + '">' + fmt(r.p) + '</span><span class="rl">' + esc(r.label) +
         '</span><span class="rt">' + esc(r.r) + '</span></li>';
@@ -547,12 +653,17 @@ textarea#sum {
       '<div class="row2" style="margin-top:0">' +
         (S.ended
           ? '<button type="button" class="btn" data-do="reopen">Spiel wieder öffnen</button>'
-          : '<button type="button" class="btn primary" data-do="end">Spiel beenden</button>') +
+          : confirmEnd
+            ? '<button type="button" class="btn primary" data-do="end-yes">Ja, Spiel beenden</button><button type="button" class="btn" data-do="end-no">Abbrechen</button>'
+            : '<button type="button" class="btn primary" data-do="end">Spiel beenden</button>') +
         (confirmReset
           ? '<button type="button" class="btn danger" data-do="reset-yes">Ja, alles löschen</button><button type="button" class="btn" data-do="reset-no">Abbrechen</button>'
           : '<button type="button" class="btn danger" data-do="reset">Neues Spiel</button>') +
       '</div>' +
-      '<p class="hint">Alles bleibt auf diesem Gerät gespeichert, auch wenn die Seite neu lädt.</p>';
+      '<div class="row2">' + (confirmHist
+        ? '<button type="button" class="btn danger" data-do="hist-yes">Ja, Saisonverlauf löschen</button><button type="button" class="btn" data-do="hist-no">Abbrechen</button>'
+        : '<button type="button" class="btn" data-do="hist">Saisonverlauf löschen (' + loadHist().length + ')</button>') + '</div>' +
+      '<p class="hint">„Neues Spiel“ legt ein beendetes Spiel als weiteren Balken im Saisonverlauf ab. Alles bleibt auf diesem Gerät gespeichert.</p>';
   }
   function summary() {
     var sc = score(), order = [], agg = {};
@@ -615,7 +726,7 @@ textarea#sum {
   function show(v) {
     view = v;
     $('home').hidden = v !== 'home'; $('cta').hidden = v !== 'home'; $('edit').hidden = v !== 'edit';
-    confirmReset = false;
+    confirmReset = false; confirmEnd = false; confirmHist = false;
     if (v === 'home') renderHome(); else renderEdit();
     window.scrollTo(0, 0);
   }
@@ -647,11 +758,18 @@ textarea#sum {
       case 'start1': S.startelf = true; if (!started()) S.stints = [{ from: 0, to: null }]; break;
       case 'start0': S.startelf = false; if (!started()) S.stints = []; break;
       case 'field': setField(!onField()); break;
-      case 'end': setClock(el, false); setField(false); S.ended = true; break;
+      case 'end': confirmEnd = true; renderEdit(); return;
+      case 'end-no': confirmEnd = false; renderEdit(); return;
+      case 'end-yes': setClock(el, false); setField(false); S.ended = true; confirmEnd = false; save(); show('home'); return;
       case 'reopen': S.ended = false; break;
       case 'reset': confirmReset = true; renderEdit(); return;
       case 'reset-no': confirmReset = false; renderEdit(); return;
-      case 'reset-yes': S = fresh({ pos: S.pos }); confirmReset = false; break;
+      case 'reset-yes':
+        if (S.ended) { var h = loadHist(); h.push(matchEntry()); saveHist(h); }
+        S = fresh({ pos: S.pos }); confirmReset = false; break;
+      case 'hist': confirmHist = true; renderEdit(); return;
+      case 'hist-no': confirmHist = false; renderEdit(); return;
+      case 'hist-yes': saveHist([]); confirmHist = false; break;
       case 'pABW': S.pos = 'ABW'; break;
       case 'pMIT': S.pos = 'MIT'; break;
       case 'undo': S.events.pop(); break;
@@ -680,7 +798,7 @@ textarea#sum {
   $('undo').addEventListener('click', function (e) { if (e.target.closest('[data-do="undo"]')) doAct('undo'); });
   document.querySelector('.tabs').addEventListener('click', function (e) {
     var b = e.target.closest('[data-tab]'); if (!b) return;
-    tab = b.getAttribute('data-tab'); confirmReset = false; renderEdit(); window.scrollTo(0, 0);
+    tab = b.getAttribute('data-tab'); confirmReset = false; confirmEnd = false; confirmHist = false; renderEdit(); window.scrollTo(0, 0);
   });
 
   show('home');
