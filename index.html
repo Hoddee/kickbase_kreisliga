@@ -195,7 +195,6 @@ body[data-tier="gold"].ended .num {
   text-wrap: balance;
 }
 .eb h2::after { content: ""; flex: 1; height: 1px; background: var(--line); }
-.note { margin: -4px 0 10px; font-size: 12.5px; color: var(--muted); max-width: 60ch; }
 .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 @media (max-width: 339px) { .grid { grid-template-columns: minmax(0, 1fr); } }
 @media (min-width: 640px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
@@ -205,6 +204,13 @@ body[data-tier="gold"].ended .num {
   background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
   font-weight: 400; font-size: 13.5px; line-height: 1.25; user-select: none; -webkit-user-select: none;
 }
+.grid.big .act { min-height: 84px; padding: 12px 10px 12px 12px; gap: 6px; font-size: 13px; font-weight: 600; }
+.grid.big .lb, .grid .lb { overflow-wrap: break-word; hyphens: auto; }
+.grid.big .pt { font-size: 15px; padding: 7px 7px; }
+.grid.chips { gap: 6px; }
+.chips .act { min-height: 44px; padding: 6px 8px 6px 11px; gap: 6px; font-size: 12.5px; line-height: 1.2; border-radius: 10px; }
+.chips .pt { font-size: 12.5px; padding: 5px 7px; }
+.chips .cnt { top: -9px; left: auto; right: -5px; min-width: 20px; height: 20px; font-size: 11.5px; }
 .act:active { transform: scale(.97); background: var(--raised); }
 .act.on { border-color: rgba(var(--tier-rgb), .85); }
 .act.hit { animation: hit .55s ease-out; }
@@ -233,13 +239,11 @@ body[data-tier="gold"].ended .num {
 .seg button { border: 0; background: var(--raised); padding: 10px 20px; min-height: 48px; font-weight: 600; }
 .seg button[aria-pressed="true"] { background: var(--tier); color: var(--on-tier); }
 .scoreline { font: 700 38px/1 var(--font-display); font-variant-numeric: tabular-nums; margin-bottom: 4px; }
-.scorecap { font-size: 12.5px; color: var(--muted); margin-bottom: 12px; }
 .auto { margin: 0; padding: 0; list-style: none; }
 .auto li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--line); }
 .auto li:last-child { border-bottom: 0; }
 .auto small { display: block; color: var(--muted); font-size: 12px; }
 .auto .v { font: 700 15px/1.4 var(--font-display); font-variant-numeric: tabular-nums; }
-.hint { font-size: 12.5px; color: var(--muted); margin: 10px 0 0; max-width: 60ch; }
 .log { list-style: none; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
 .log li { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto 44px; align-items: center; gap: 8px; padding: 4px 4px 4px 14px; border-bottom: 1px solid var(--line); }
 .log li:last-child { border-bottom: 0; }
@@ -327,7 +331,7 @@ textarea#sum {
      Wert: Zahl oder {ABW, MIT, SUB}. SUB gilt, wenn der Spieler eingewechselt wurde. */
   var G = {
     att: [
-      { t: 'Tore & Vorlagen', n: 'Elfmetertor bitte nur als „Elfmeter verwandelt“ buchen. Bonus-Zeilen kommen zusätzlich zum Tor bzw. zur Vorlage.', a: [
+      { t: 'Tore & Vorlagen', a: [
         ['goal', 'Tor', { ABW: 100, MIT: 90, SUB: 80 }],
         ['pen', 'Elfmeter verwandelt', 80],
         ['long', 'Tor von außerhalb des 16ers (Bonus)', 10],
@@ -598,7 +602,7 @@ textarea#sum {
     $('rows').innerHTML = rows.length ? rows.map(function (r) {
       return '<li class="row"><span class="rp ' + cls(r.p) + '">' + fmt(r.p) + '</span><span class="rl">' + esc(r.label) +
         '</span><span class="rt">' + esc(r.r) + '</span></li>';
-    }).join('') : '<li class="empty">Noch keine Punkte. Tippe unten auf „Punkte vergeben“, sobald das Spiel läuft.</li>';
+    }).join('') : '';
     homeSig = t + '|' + S.events.length + '|' + S.ended;
     updateLive();
   }
@@ -610,10 +614,17 @@ textarea#sum {
       '</span><span class="pt ' + cls(p) + '">' + fmt(p) + '</span>' + (c ? '<span class="cnt">' + c + '</span>' : '') + '</button>';
   }
   function groupsHtml(k) {
-    return G[k].map(function (g) {
-      return '<h2>' + esc(g.t) + '</h2>' + (g.n ? '<p class="note">' + esc(g.n) + '</p>' : '') +
-        '<div class="grid">' + g.a.map(function (x) { return actBtn(x[0]); }).join('') + '</div>';
-    }).join('');
+    var all = [];
+    G[k].forEach(function (g) { g.a.forEach(function (x) { all.push(x[0]); }); });
+    var big = [], mid = [], sm = [];
+    all.forEach(function (key) {
+      var p = Math.abs(val(ACT[key]));
+      (p >= 25 ? big : p >= 10 ? mid : sm).push(key);
+    });
+    function sec(t, keys, cl) {
+      return keys.length ? '<h2>' + t + '</h2><div class="' + cl + '">' + keys.map(actBtn).join('') + '</div>' : '';
+    }
+    return sec('Klein', sm, 'grid chips') + sec('Mittel', mid, 'grid') + sec('Hoch', big, 'grid big');
   }
   function autoHtml() {
     var ls = [], s = startLine();
@@ -621,8 +632,7 @@ textarea#sum {
     ls = ls.concat(endLines());
     var html = ls.length ? '<ul class="auto">' + ls.map(function (l) {
       return '<li><span>' + esc(l.l) + (l.h ? '<small>' + esc(l.h) + '</small>' : '') + '</span><span class="v ' + cls(l.p) + '">' + fmt(l.p) + '</span></li>';
-    }).join('') + '</ul>' : '<p class="hint" style="margin:0">Noch keine Einsatzzeit. Sobald die Spieluhr läuft, zählt die Startelf.</p>';
-    if (!S.ended) html += '<p class="hint">Minutenbonus, „Zu null“ und Sieg/Niederlage kommen erst nach „Spiel beenden“ dazu.</p>';
+    }).join('') + '</ul>' : '';
     return html;
   }
   function spielHtml() {
@@ -638,14 +648,12 @@ textarea#sum {
       '</div></div>' +
       '<h2>Spielstand</h2>' +
       '<div class="scoreline">' + sc.them + ' : ' + sc.us + '</div>' +
-      '<div class="scorecap">' + esc(OPP) + ' : ' + esc(TEAM) + '</div>' +
       '<div class="grid">' + actBtn('tg') + actBtn('cg') + '</div>' +
-      '<p class="hint">Team-Tor (+5) und Gegentor (-5) zählen nur, solange ' + esc(PLAYER) + ' auf dem Platz steht. Draußen zählt nur der Spielstand.</p>' +
       '<h2>Einsatz</h2>' +
       '<div class="card"><div class="row2" style="margin-top:0;align-items:center">' +
         '<div class="seg" role="group" aria-label="Start"><button type="button" data-do="start1" aria-pressed="' + S.startelf + '">Startelf</button><button type="button" data-do="start0" aria-pressed="' + !S.startelf + '">Bank</button></div>' +
         '<button type="button" class="btn" data-do="field"' + d + '>' + (on ? 'Auswechseln' : 'Einwechseln') + '</button>' +
-      '</div><p class="hint">Startelf oder Bank vor dem Anpfiff wählen. Die Spielzeit läuft nur, solange er auf dem Platz steht.</p>' +
+      '</div>' +
       '<div style="margin-top:14px"><div class="seg" role="group" aria-label="Position"><button type="button" data-do="pABW" aria-pressed="' + (S.pos === 'ABW') + '">Abwehr</button><button type="button" data-do="pMIT" aria-pressed="' + (S.pos === 'MIT') + '">Mittelfeld</button></div></div></div>' +
       '<h2>Automatische Punkte</h2>' +
       '<div class="card" id="autoBox">' + autoHtml() + '</div>' +
@@ -662,8 +670,7 @@ textarea#sum {
       '</div>' +
       '<div class="row2">' + (confirmHist
         ? '<button type="button" class="btn danger" data-do="hist-yes">Ja, Saisonverlauf löschen</button><button type="button" class="btn" data-do="hist-no">Abbrechen</button>'
-        : '<button type="button" class="btn" data-do="hist">Saisonverlauf löschen (' + loadHist().length + ')</button>') + '</div>' +
-      '<p class="hint">„Neues Spiel“ legt ein beendetes Spiel als weiteren Balken im Saisonverlauf ab. Alles bleibt auf diesem Gerät gespeichert.</p>';
+        : '<button type="button" class="btn" data-do="hist">Saisonverlauf löschen (' + loadHist().length + ')</button>') + '</div>';
   }
   function summary() {
     var sc = score(), order = [], agg = {};
