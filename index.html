@@ -1,6 +1,10 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>Matchday Punkte</title>
 <meta name="claude:viewport-fit-sides" content="cover">
+<meta name="theme-color" content="#111112">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Saira:wdth,wght@125,600;125,700;125,800&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -36,7 +40,7 @@ body[data-tier="emerald"] { --tier: #28DE86; --tier-rgb: 40, 222, 134; --on-tier
 body[data-tier="gold"]    { --tier: #E1BE38; --tier-rgb: 225, 190, 56; --on-tier: #1F1600; --tier-text: #E1BE38; }
 
 * { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; }
+html { overscroll-behavior-y: none; -webkit-text-size-adjust: 100%; }
 body {
   background: var(--bg);
   color: var(--ink);
@@ -60,7 +64,7 @@ button { cursor: pointer; touch-action: manipulation; }
 
 /* ---------- Hauptseite ---------- */
 .hero {
-  --pw: clamp(230px, 74vw, 310px);
+  --pw: clamp(240px, min(88vw, 41svh), 400px);
   position: relative; isolation: isolate; overflow: hidden;
 }
 .hero::before {
@@ -74,8 +78,7 @@ button { cursor: pointer; touch-action: manipulation; }
   content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 60%; z-index: 1; pointer-events: none;
   background: linear-gradient(to bottom, rgba(17, 17, 18, 0), rgba(17, 17, 18, .8) 60%, var(--bg) 100%);
 }
-.hero-in { position: relative; display: flex; flex-direction: column; align-items: center; padding-top: 12px; }
-.grab { position: relative; z-index: 3; width: 56px; height: 5px; border-radius: 3px; background: rgba(255, 255, 255, .28); margin-bottom: 14px; }
+.hero-in { position: relative; display: flex; flex-direction: column; align-items: center; padding-top: calc(10px + env(safe-area-inset-top, 0px)); }
 .photo {
   position: relative; z-index: 1; width: var(--pw); aspect-ratio: 522 / 810;
   -webkit-mask-image: linear-gradient(#000 72%, transparent 100%);
@@ -86,9 +89,10 @@ button { cursor: pointer; touch-action: manipulation; }
   position: relative; z-index: 2; width: 100%; text-align: center;
   margin-top: calc(var(--pw) * -.52); padding-bottom: 22px;
 }
-.pname { font-weight: 500; font-size: 18px; letter-spacing: .02em; color: rgba(255, 255, 255, .72); min-height: 26px; }
+.pname { font-weight: 600; font-size: 17px; letter-spacing: .06em; text-transform: uppercase; color: rgba(255, 255, 255, .85); min-height: 26px; text-shadow: 0 2px 10px rgba(0, 0, 0, .75); }
 .num {
-  font: 800 clamp(76px, 25vw, 108px)/1.05 var(--font-display); letter-spacing: -.01em;
+  text-shadow: 0 4px 24px rgba(0, 0, 0, .45);
+  font: 800 clamp(84px, 28vw, 124px)/1.05 var(--font-display); letter-spacing: -.01em;
   font-variant-numeric: tabular-nums; margin: 4px 0 10px; color: rgba(255, 255, 255, .94);
 }
 .num[data-len="4"] { font-size: clamp(60px, 19vw, 86px); }
@@ -107,13 +111,13 @@ button { cursor: pointer; touch-action: manipulation; }
 .rows-wrap { padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px)); }
 .rows { list-style: none; margin: 0; padding: 6px 0 0; }
 .row {
-  display: grid; grid-template-columns: 84px minmax(0, 1fr) auto; align-items: center; gap: 8px;
-  padding: 18px 16px; margin-bottom: 10px;
-  border: 1px solid var(--line); border-radius: 12px; background: rgba(255, 255, 255, .015);
+  display: grid; grid-template-columns: 62px minmax(0, 1fr) auto; align-items: center; gap: 6px;
+  padding: 14px 16px 14px 14px; margin-bottom: 8px;
+  border: 1px solid var(--line); border-radius: 14px; background: rgba(255, 255, 255, .02);
 }
-.rp { font: 700 19px/1 var(--font-display); font-variant-numeric: tabular-nums; }
-.rl { min-width: 0; font-size: 16.5px; font-weight: 400; overflow-wrap: anywhere; }
-.rt { color: var(--muted); font-size: 14.5px; font-variant-numeric: tabular-nums; }
+.rp { font: 700 18px/1 var(--font-display); font-variant-numeric: tabular-nums; }
+.rl { min-width: 0; font-size: 15.5px; font-weight: 400; overflow-wrap: anywhere; }
+.rt { color: var(--muted); font-size: 13.5px; font-variant-numeric: tabular-nums; }
 .pos { color: var(--lime); } .hi { color: var(--hi); } .neg { color: var(--neg); } .zero { color: var(--muted); }
 .empty { padding: 22px 16px; border: 1px dashed var(--line); border-radius: 12px; color: var(--muted); text-align: center; }
 
@@ -275,7 +279,6 @@ textarea#sum {
 <div id="home">
   <section class="hero">
     <div class="wrap hero-in">
-      <div class="grab" aria-hidden="true"></div>
       <div class="photo"><img src="https://eewvsquscmflxdhkgvna.supabase.co/storage/v1/object/public/kickbase/Barbano.png" alt="Barbano" width="522" height="810"></div>
       <div class="hero-text">
         <div class="pname">Barbano</div>
@@ -601,7 +604,7 @@ textarea#sum {
     $('listH').hidden = !S.ended;
     $('rows').innerHTML = rows.length ? rows.map(function (r) {
       return '<li class="row"><span class="rp ' + cls(r.p) + '">' + fmt(r.p) + '</span><span class="rl">' + esc(r.label) +
-        '</span><span class="rt">' + esc(r.r) + '</span></li>';
+        '</span><span class="rt">' + esc(r.r === '–' ? '' : r.r) + '</span></li>';
     }).join('') : '';
     homeSig = t + '|' + S.events.length + '|' + S.ended;
     updateLive();
@@ -806,6 +809,21 @@ textarea#sum {
   document.querySelector('.tabs').addEventListener('click', function (e) {
     var b = e.target.closest('[data-tab]'); if (!b) return;
     tab = b.getAttribute('data-tab'); confirmReset = false; confirmEnd = false; confirmHist = false; renderEdit(); window.scrollTo(0, 0);
+  });
+
+  /* Bildschirm bleibt an, kurzes Vibrieren bei jedem Tipp auf eine Aktion */
+  var wl = null;
+  function keepAwake() {
+    try {
+      if (navigator.wakeLock && document.visibilityState === 'visible' && !wl) {
+        navigator.wakeLock.request('screen').then(function (l) { wl = l; l.addEventListener('release', function () { wl = null; }); }).catch(function () {});
+      }
+    } catch (e) {}
+  }
+  document.addEventListener('visibilitychange', keepAwake);
+  document.addEventListener('click', function (e) {
+    keepAwake();
+    try { if (navigator.vibrate && e.target.closest && e.target.closest('.act')) navigator.vibrate(12); } catch (x) {}
   });
 
   show('home');
