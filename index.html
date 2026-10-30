@@ -350,6 +350,23 @@ button.gr:active { background: var(--raised); }
 .svc .ok { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; border-radius: 14px; background: var(--hi-bg); color: var(--hi); font-weight: 600; }
 .svc p { margin: 0 0 10px; text-align: center; font-weight: 600; }
 .svc .err { color: var(--neg); font-size: 13px; text-align: center; margin: 10px 0 0; font-weight: 500; }
+.ht { list-style: none; display: flex; align-items: center; justify-content: center; gap: 8px; margin: 6px 0 14px; color: var(--muted); font-size: 12.5px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; }
+.ht svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+.log li.ht { display: flex; border-bottom: 0; padding: 12px 0; }
+.gr { position: relative; }
+.gr > .ov { position: absolute; inset: 0; width: 100%; border: 0; background: transparent; border-radius: 14px; padding: 0; }
+.gr > .ov:active { background: rgba(255, 255, 255, .05); }
+.gr > :not(.ov):not(.hb2) { pointer-events: none; }
+.hb2 { position: relative; z-index: 1; padding: 0; border: 0; display: block; background: transparent; }
+.col[data-hof] { cursor: pointer; }
+.gh { text-align: center; padding: 6px 0 18px; }
+.gh .hb2 { margin: 0 auto; }
+.gh .hav { width: 104px; height: 104px; margin: 0 auto; }
+.gh .gname { margin-top: 12px; font: 700 20px var(--font-display); font-stretch: 125%; text-transform: uppercase; letter-spacing: .04em; }
+.gh .gbig { margin: 6px 0 4px; font: 800 84px/1.05 var(--font-display); font-stretch: 125%; color: var(--ct); font-variant-numeric: tabular-nums; }
+.gh .gm { display: flex; justify-content: center; align-items: center; gap: 14px; margin-top: 6px; font: 500 28px/1 var(--font-body); letter-spacing: .08em; font-variant-numeric: tabular-nums; }
+.gh .gm img { width: 54px; height: 54px; object-fit: contain; }
+.gh .gsub { margin-top: 10px; color: var(--muted); font-size: 13px; }
 </style>
 
 <div id="home">
@@ -696,10 +713,25 @@ button.gr:active { background: var(--raised); }
     var m = Math.floor(elapsed() / 60) + 1;
     return (S.clock.startedAt ? 'Live ' : 'Pause ') + m + '’';
   }
+  var ICON_HT = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M7.5 12h9"/></svg>';
+  function htLi() { return '<li class="ht">' + ICON_HT + 'Halbzeit</li>'; }
+  /* Ereignisse (neueste zuerst) mit Halbzeit-Marke dazwischen */
+  function mergeHt(list) {
+    if (!S.h2 || S.h2Id == null) return list.map(function (e) { return { e: e }; });
+    var out = [], done = false;
+    list.forEach(function (e) { if (!done && e.id < S.h2Id) { out.push({ ht: 1 }); done = true; } out.push({ e: e }); });
+    if (!done) out.push({ ht: 1 });
+    return out;
+  }
+  function rowLi(r) {
+    if (r.ht) return htLi();
+    return '<li class="row"><span class="rp ' + cls(r.p) + '">' + fmt(r.p) + '</span><span class="rl">' + esc(r.label) +
+      '</span><span class="rt">' + esc(r.r === '–' ? '' : r.r) + '</span></li>';
+  }
   function rowsData() {
     var out = [];
     endLines().forEach(function (l) { out.push({ p: l.p, label: l.l, r: l.r }); });
-    S.events.slice().reverse().forEach(function (e) { out.push({ p: e.pts, label: e.label, r: minStamp(e.t) }); });
+    mergeHt(S.events.slice().reverse()).forEach(function (it) { out.push(it.ht ? { ht: 1 } : { p: it.e.pts, label: it.e.label, r: minStamp(it.e.t) }); });
     var s = startLine(); if (s) out.push({ p: s.p, label: s.l, r: s.r });
     return out;
   }
@@ -730,18 +762,18 @@ button.gr:active { background: var(--raised); }
     }
     return 100;
   }
-  function toEntry(g) { return { t: g.points, m: g.minutes, us: g.us, them: g.them, g: g.goals, a: g.assists, p: g.player, o: g.opp, h: g.home ? 1 : 0 }; }
+  function toEntry(g) { return { u: g.uid, t: g.points, m: g.minutes, us: g.us, them: g.them, g: g.goals, a: g.assists, p: g.player, o: g.opp, h: g.home ? 1 : 0 }; }
   function gamesOf(p) {
     return (games || []).filter(function (g) { return g.player === p; })
       .sort(function (a, b) { return a.created_at < b.created_at ? -1 : 1; }).map(toEntry);
   }
-  function chartFrom(list, title) {
+  function chartFrom(list, title, click) {
     return '<div class="lh"><b>' + esc(title) + '</b><span>' + SEASON + '</span></div><div class="chart">' + list.map(function (x, i) {
       var ic = '', k;
       for (k = 0; k < x.g; k++) ic += ICON_BALL;
       for (k = 0; k < x.a; k++) ic += ICON_BOOT;
       var mine = PL[x.p].c, opp = x.o;
-      return '<div class="col' + (i === list.length - 1 ? ' cur' : '') + '" data-tier="' + tierOf(x.t) + '">' +
+      return '<div class="col' + (i === list.length - 1 ? ' cur' : '') + '" data-tier="' + tierOf(x.t) + '"' + (click && x.u ? ' data-hof="g:' + esc(x.u) + '" role="button"' : '') + '>' +
         '<div class="ci">' + (i === 0 ? '#' : '') + (i + 1) + '</div>' +
         '<div class="cc"><img src="' + esc(crestUrl(x.h ? mine : opp)) + '" alt=""><img src="' + esc(crestUrl(x.h ? opp : mine)) + '" alt=""></div>' +
         '<div class="cs">' + scoreText(x, x.h) + '</div>' +
@@ -765,14 +797,16 @@ button.gr:active { background: var(--raised); }
       .filter(function (x) { return x.p !== 0; })
       .sort(function (a, b) { return b.p - a.p; });
   }
-  function summaryHtml() {
-    var bd = breakdown(), max = 1;
+  function barsHtml(bd) {
+    var max = 1;
     bd.forEach(function (b) { max = Math.max(max, Math.abs(b.p)); });
-    return chartHtml() + saveHtml() + '<h2 class="sec">Punkte nach Bereich</h2>' +
-      '<div class="card"><ul class="bars">' + bd.map(function (b) {
-        return '<li class="' + cls(b.p) + '"><div class="bt"><span>' + esc(b.n) + '</span><b>' + fmt(b.p) + '</b></div>' +
-          '<div class="trk"><i style="width:' + Math.max(4, Math.round(Math.abs(b.p) / max * 100)) + '%"></i></div></li>';
-      }).join('') + '</ul></div>';
+    return '<div class="card"><ul class="bars">' + bd.map(function (b) {
+      return '<li class="' + cls(b.p) + '"><div class="bt"><span>' + esc(b.n) + '</span><b>' + fmt(b.p) + '</b></div>' +
+        '<div class="trk"><i style="width:' + Math.max(4, Math.round(Math.abs(b.p) / max * 100)) + '%"></i></div></li>';
+    }).join('') + '</ul></div>';
+  }
+  function summaryHtml() {
+    return chartHtml() + saveHtml() + '<h2 class="sec">Punkte nach Bereich</h2>' + barsHtml(breakdown());
   }
   function renderHome() {
     var t = total(), sc = score(), rows = rowsData();
@@ -791,10 +825,7 @@ button.gr:active { background: var(--raised); }
       if (!games && !gamesBusy) loadGames().then(function () { if (view === 'home' && S.ended) { $('summary').innerHTML = summaryHtml(); scrollCharts(); } });
     }
     $('listH').hidden = !S.ended;
-    $('rows').innerHTML = rows.length ? rows.map(function (r) {
-      return '<li class="row"><span class="rp ' + cls(r.p) + '">' + fmt(r.p) + '</span><span class="rl">' + esc(r.label) +
-        '</span><span class="rt">' + esc(r.r === '–' ? '' : r.r) + '</span></li>';
-    }).join('') : '';
+    $('rows').innerHTML = rows.map(rowLi).join('');
     homeSig = t + '|' + S.events.length + '|' + S.ended;
     updateLive();
   }
@@ -882,7 +913,9 @@ button.gr:active { background: var(--raised); }
     return out.join('\n');
   }
   function logHtml() {
-    var items = S.events.slice().reverse().map(function (e) {
+    var items = mergeHt(S.events.slice().reverse()).map(function (it) {
+      if (it.ht) return htLi();
+      var e = it.e;
       return '<li><span class="mn">' + minStamp(e.t) + '</span><span>' + esc(e.label) + '</span><span class="p ' + cls(e.pts) + '">' + fmt(e.pts) + '</span>' +
         '<button type="button" class="x" data-del="' + e.id + '" aria-label="' + esc(e.label) + ' löschen">×</button></li>';
     }).join('');
@@ -924,7 +957,7 @@ button.gr:active { background: var(--raised); }
   }
   /* ---------- Cloud: Spiele speichern und Hall of Fame ---------- */
   var games = null, gamesBusy = false, gamesErr = false, saveBusy = false, saveErr = '', confirmSave = false;
-  var hofTab = 'best', hofLg = 'ALL', hofP = null, hofFrom = 'setup';
+  var hofTab = 'best', hofLg = 'ALL', hofP = null, hofG = null, hofFrom = 'setup';
   function sb(path, opt) {
     var ctl = new AbortController(), t = setTimeout(function () { ctl.abort(); }, 12000);
     opt = opt || {}; opt.headers = Object.assign({ apikey: SBKEY }, opt.headers || {}); opt.signal = ctl.signal;
@@ -956,12 +989,18 @@ button.gr:active { background: var(--raised); }
     if (!S.ended || S.saved || saveBusy) return;
     if (!S.uid) { S.uid = rnd(); save(); }
     var e = matchEntry(), autos = [];
-    var st = startLine(); if (st) autos.push({ k: 'auto', l: st.l, p: st.p, t: -1 });
-    endLines().forEach(function (l) { autos.push({ k: 'auto', l: l.l, p: l.p, t: -1 }); });
+    var st = startLine(); if (st) autos.push({ k: 'auto', a: 's', l: st.l, p: st.p, t: -1 });
+    endLines().forEach(function (l) { autos.push({ k: 'auto', a: 'e', l: l.l, p: l.p, t: -1 }); });
+    var evs = [], htDone = !(S.h2 && S.h2Id != null);
+    S.events.slice().sort(function (a, b) { return a.id - b.id; }).forEach(function (x) {
+      if (!htDone && x.id >= S.h2Id) { evs.push({ k: 'ht' }); htDone = true; }
+      evs.push({ k: x.key, l: x.label, p: x.pts, t: x.t });
+    });
+    if (!htDone) evs.push({ k: 'ht' });
     var row = {
       uid: S.uid, season: SEASON, player: S.match.p, opp: S.match.o, home: !!S.match.home, pos: S.pos,
       us: e.us, them: e.them, minutes: e.m, points: e.t, goals: e.g, assists: e.a,
-      events: S.events.map(function (x) { return { k: x.key, l: x.label, p: x.pts, t: x.t }; }).concat(autos)
+      events: evs.concat(autos)
     };
     saveBusy = true; saveErr = ''; confirmSave = false; renderHome();
     sb('spiele', { method: 'POST', headers: { 'Content-Type': 'application/json', Prefer: 'return=minimal' }, body: JSON.stringify(row) })
@@ -987,12 +1026,46 @@ button.gr:active { background: var(--raised); }
   function lgOf(p) { return CL[PL[p].c].lg; }
   function inLg(g) { return hofLg === 'ALL' || lgOf(g.player) === hofLg; }
   function avatar(p) { return '<span class="hav"><img src="' + esc(photoUrl(p)) + '" alt="" loading="lazy"></span>'; }
-  function gameRow(g, rank) {
+  function gameRow(g, rank, inProfile) {
     var mine = PL[g.player].c, l = g.home ? mine : g.opp, r = g.home ? g.opp : mine;
-    return '<li class="gr tc' + (rank ? '' : ' nr') + '" data-tier="' + tierOf(g.points) + '">' +
-      (rank ? '<span class="rk' + (rank < 4 ? ' r' + rank : '') + '">' + rank + '</span>' : '') + avatar(g.player) +
+    return '<li class="gr tc' + (rank ? '' : ' nr') + '" data-tier="' + tierOf(g.points) + '"><button type="button" class="ov" data-hof="g:' + esc(g.uid) + '" aria-label="Spiel ansehen"></button>' +
+      (rank ? '<span class="rk' + (rank < 4 ? ' r' + rank : '') + '">' + rank + '</span>' : '') +
+      (inProfile ? avatar(g.player) : '<button type="button" class="hav hb2" data-hof="p:' + g.player + '" aria-label="Profil von ' + esc(PL[g.player].n) + '"><img src="' + esc(photoUrl(g.player)) + '" alt="" loading="lazy"></button>') +
       '<div class="gi"><b>' + esc(PL[g.player].n) + '</b><span class="gs"><img src="' + esc(crestUrl(l)) + '" alt="">' + scoreText(g, g.home) + '<img src="' + esc(crestUrl(r)) + '" alt=""></span></div>' +
       '<div class="gp"><span class="gv">' + g.points + '</span><span class="gd">' + dstr(g.created_at) + ' · ' + POSN[g.pos] + '</span></div></li>';
+  }
+  var evCache = {}, evErr = false;
+  function loadEvents(uid) {
+    if (evCache[uid]) return Promise.resolve();
+    evErr = false;
+    return sb('spiele?select=events&uid=eq.' + encodeURIComponent(uid)).then(function (r) { return r.json(); })
+      .then(function (d) { evCache[uid] = (d[0] && Array.isArray(d[0].events)) ? d[0].events : []; })
+      .catch(function () { evErr = true; });
+  }
+  function gameDetailHtml() {
+    var g = null; (games || []).forEach(function (x) { if (x.uid === hofG) g = x; });
+    var back = '<button type="button" class="back" style="margin-left:-8px" data-hof="gback"><b aria-hidden="true">‹</b>Übersicht</button>';
+    if (!g) return back + '<p class="hmsg">Spiel nicht gefunden.</p>';
+    var pl = PL[g.player], mine = pl.c, l = g.home ? mine : g.opp, r = g.home ? g.opp : mine, ev = evCache[g.uid];
+    var h = back + '<div class="gh tc" data-tier="' + tierOf(g.points) + '"><button type="button" class="hb2" data-hof="p:' + g.player + '" aria-label="Profil"><span class="hav"><img src="' + esc(photoUrl(g.player)) + '" alt=""></span></button>' +
+      '<div class="gname">' + esc(pl.n) + '</div><div class="gbig">' + g.points + '</div>' +
+      '<div class="gm"><img src="' + esc(crestUrl(l)) + '" alt="">' + scoreText(g, g.home) + '<img src="' + esc(crestUrl(r)) + '" alt=""></div>' +
+      '<div class="gsub">' + dstr(g.created_at) + ' · ' + POSN[g.pos] + ' · ' + g.minutes + ' Min.</div></div>';
+    if (!ev) return h + (evErr ? '<p class="hmsg">Keine Verbindung.</p><button type="button" class="btn full" data-hof="g:' + esc(g.uid) + '">Nochmal versuchen</button>' : '<p class="hmsg">Lädt …</p>');
+    var map = {}, order = [], ends = [], mids = [], start = null;
+    ev.forEach(function (x) {
+      if (x.k === 'ht') { mids.push(x); return; }
+      var c = x.k === 'auto' ? 'Einsatz & Team' : (CAT[x.k] || 'Sonstiges');
+      if (!(c in map)) { map[c] = 0; order.push(c); }
+      map[c] += x.p;
+      if (x.k === 'auto') { if (x.a === 's') start = x; else ends.push(x); } else mids.push(x);
+    });
+    var bd = order.map(function (n) { return { n: n, p: map[n] }; }).filter(function (b) { return b.p !== 0; }).sort(function (a, b) { return b.p - a.p; });
+    var rows = [];
+    ends.forEach(function (x) { rows.push({ p: x.p, label: x.l, r: '' }); });
+    mids.slice().reverse().forEach(function (x) { rows.push(x.k === 'ht' ? { ht: 1 } : { p: x.p, label: x.l, r: minStamp(x.t) }); });
+    if (start) rows.push({ p: start.p, label: start.l, r: '' });
+    return h + '<h2>Punkte nach Bereich</h2>' + barsHtml(bd) + '<h2>Alle Punkte</h2><ul class="rows">' + rows.map(rowLi).join('') + '</ul>';
   }
   function aggPlayers() {
     var m = {};
@@ -1005,6 +1078,7 @@ button.gr:active { background: var(--raised); }
   }
   function hofHtml() {
     var h = '';
+    if (hofG) return gameDetailHtml();
     if (hofP) {
       var pl = PL[hofP], mine = games.filter(function (g) { return g.player === hofP; }), sum = 0, best = -9999;
       mine.forEach(function (g) { sum += g.points; best = Math.max(best, g.points); });
@@ -1013,7 +1087,7 @@ button.gr:active { background: var(--raised); }
         '<div class="pf">' + avatar(hofP) + '<div><h3>' + esc(pl.n) + '</h3><p><img src="' + esc(crestUrl(c.id)) + '" alt="">' + esc(c.n) + ' · ' + c.lg + '</p></div></div>';
       if (!mine.length) return h + '<p class="hmsg">Noch kein Spiel gespeichert.</p>';
       h += '<div class="stats4"><div><b>' + mine.length + '</b><span>Spiele</span></div><div><b>' + sum + '</b><span>Gesamt</span></div><div><b>' + Math.round(sum / mine.length) + '</b><span>Schnitt</span></div><div><b>' + best + '</b><span>Bestes</span></div></div>' +
-        chartFrom(gamesOf(hofP), 'Verlauf') + '<h2>Alle Spiele</h2><ul class="glist">' + mine.map(function (g) { return gameRow(g, 0); }).join('') + '</ul>';
+        chartFrom(gamesOf(hofP), 'Verlauf', true) + '<h2>Alle Spiele</h2><ul class="glist">' + mine.map(function (g) { return gameRow(g, 0, true); }).join('') + '</ul>';
       return h;
     }
     h += '<div class="seg full htabs">' + [['best', 'Beste Spiele'], ['players', 'Spieler'], ['new', 'Neueste']].map(function (t) {
@@ -1038,15 +1112,20 @@ button.gr:active { background: var(--raised); }
     return h;
   }
   function renderHof() { $('hofBody').innerHTML = hofHtml(); scrollCharts(); applyTier(0); }
-  function hofReload() { renderHof(); loadGames(true).then(function () { if (view === 'hof') renderHof(); }); renderHof(); }
+  function hofReload() { evCache = {}; renderHof(); loadGames(true).then(function () { if (view === 'hof') renderHof(); }); renderHof(); }
   $('hof').addEventListener('click', function (e) {
     var b = e.target.closest('[data-hof]'); if (!b) return;
     var k = b.getAttribute('data-hof'), v = k.slice(2);
     if (k === 'reload') { hofReload(); return; }
-    if (k === 'plist') hofP = null;
+    if (k === 'plist') { hofP = null; hofG = null; }
+    else if (k === 'gback') hofG = null;
     else if (k.indexOf('t:') === 0) hofTab = v;
     else if (k.indexOf('l:') === 0) hofLg = v;
-    else if (k.indexOf('p:') === 0) { hofP = v; window.scrollTo(0, 0); }
+    else if (k.indexOf('p:') === 0) { hofP = v; hofG = null; window.scrollTo(0, 0); }
+    else if (k.indexOf('g:') === 0) {
+      hofG = v; window.scrollTo(0, 0);
+      loadEvents(v).then(function () { if (view === 'hof' && hofG === v) renderHof(); });
+    }
     renderHof();
   });
 
@@ -1135,7 +1214,7 @@ button.gr:active { background: var(--raised); }
   function startHalf2() {
     var el = elapsed(), l = S.stints[S.stints.length - 1];
     if (el > 2700 && l && l.to === null) { l.to = el; S.stints.push({ from: 2700, to: null }); }
-    S.h2 = true;
+    if (!S.h2) { S.h2 = true; S.h2Id = S.nextId; }
     setClock(2700, true);
   }
   function doAct(what) {
@@ -1180,7 +1259,7 @@ button.gr:active { background: var(--raised); }
     var n = e.target.closest('[data-nav]');
     if (!n) return;
     var nv = n.getAttribute('data-nav');
-    if (nv === 'hof') { if (view !== 'hof') hofFrom = view; hofP = null; }
+    if (nv === 'hof') { if (view !== 'hof') hofFrom = view; hofP = null; hofG = null; }
     if (nv === 'back') nv = hofFrom || 'setup';
     show(nv);
   });
