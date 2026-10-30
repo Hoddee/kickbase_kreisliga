@@ -747,10 +747,10 @@ textarea#sum {
       '<h2>Spieluhr</h2>' +
       '<div class="card"><div class="big-clk"><span id="clk">' + clock(elapsed()) + '</span><small>Min.</small></div>' +
       '<div class="row2">' +
-        '<button type="button" class="btn primary" data-do="clock"' + d + '>' + (running ? 'Pause' : 'Start') + '</button>' +
+        '<button type="button" class="btn primary" data-do="clock"' + d + '>' + (running ? 'Pause' : (!S.h2 && elapsed() > 2700 ? '2. Halbzeit starten' : 'Start')) + '</button>' +
         '<button type="button" class="btn" data-do="m-1"' + d + '>-1 Min</button>' +
         '<button type="button" class="btn" data-do="m+1"' + d + '>+1 Min</button>' +
-        '<button type="button" class="btn" data-do="half2"' + d + '>2. Halbzeit ab 45:00</button>' +
+        '<button type="button" class="btn" data-do="half2"' + d + '>2. Halbzeit ab 45:00 starten</button>' +
       '</div></div>' +
       '<h2>Spielstand</h2>' +
       '<div class="scoreline">' + scoreText(sc, isHome()) + '</div>' +
@@ -919,13 +919,20 @@ textarea#sum {
     else if (l && l.to === null) l.to = el;
   }
   function setClock(sec, run) { S.clock.offset = Math.max(0, sec); S.clock.startedAt = run ? Date.now() : null; }
+  /* 2. Halbzeit: Uhr springt auf 45:00 zurück und läuft sofort; die Nachspielzeit der 1. Halbzeit bleibt als Spielzeit erhalten. */
+  function startHalf2() {
+    var el = elapsed(), l = S.stints[S.stints.length - 1];
+    if (el > 2700 && l && l.to === null) { l.to = el; S.stints.push({ from: 2700, to: null }); }
+    S.h2 = true;
+    setClock(2700, true);
+  }
   function doAct(what) {
     var el = elapsed(), running = !!S.clock.startedAt;
     switch (what) {
-      case 'clock': if (S.ended) return; setClock(el, !running); break;
+      case 'clock': if (S.ended) return; if (!running && !S.h2 && el > 2700) startHalf2(); else setClock(el, !running); break;
       case 'm-1': setClock(el - 60, running); break;
       case 'm+1': setClock(el + 60, running); break;
-      case 'half2': setClock(Math.max(el, 45 * 60), false); break;
+      case 'half2': if (S.ended) return; startHalf2(); break;
       case 'start1': S.startelf = true; if (!started()) S.stints = [{ from: 0, to: null }]; break;
       case 'start0': S.startelf = false; if (!started()) S.stints = []; break;
       case 'field': setField(!onField()); break;
