@@ -291,6 +291,65 @@ textarea#sum {
 .tabs button[aria-selected="true"] { color: var(--ink); border-top-color: var(--tier); }
 .num, .rp, .pt, .chip, .big-clk, .scoreline, .auto .v, .log .p, .undo .tx b, .cv, .bt b { font-stretch: 125%; }
 @media (prefers-reduced-motion: reduce) { .act.hit { animation: none; } }
+.eb h2 { margin: 30px 0 12px; }
+.act { min-height: 62px; }
+.chips .act { min-height: 50px; }
+.fl { margin: 16px 0 8px; font-size: 12px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.fl:first-child { margin-top: 0; }
+.btn.big { width: 100%; min-height: 58px; margin-top: 16px; font-size: 17px; border-radius: 14px; }
+.btn.full { width: 100%; }
+.trio { display: grid; grid-template-columns: 1fr 1fr 1.5fr; gap: 8px; margin-top: 10px; }
+.trio .btn { padding: 8px 6px; min-height: 50px; font-size: 13.5px; }
+.duo { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+.big-clk { text-align: center; font-size: 60px; padding: 4px 0 2px; }
+.scorebox { text-align: center; font: 700 52px/1 var(--font-display); font-stretch: 125%; font-variant-numeric: tabular-nums; margin: 4px 0 16px; letter-spacing: .04em; }
+.tabs button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; height: 66px; font-size: 12px; }
+.tabs svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.undo { bottom: calc(66px + env(safe-area-inset-bottom, 0px)); }
+.shead { justify-self: start; font: 700 19px var(--font-display); font-stretch: 125%; letter-spacing: .02em; }
+.hofbtn { justify-self: end; grid-column: 3; min-height: 42px; padding: 0 14px; border-radius: 21px; border: 1px solid var(--line); background: var(--surface); display: inline-flex; align-items: center; gap: 8px; font-weight: 600; font-size: 13.5px; }
+.hofbtn svg { width: 18px; height: 18px; fill: none; stroke: var(--tier); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.rf { justify-self: end; width: 44px; height: 44px; border: 0; background: transparent; color: var(--muted); font-size: 22px; }
+.hb { padding-block: 16px 70px; }
+.htabs { margin-bottom: 14px; }
+.lgs { display: flex; gap: 8px; margin-bottom: 18px; }
+.lgs button { min-height: 40px; padding: 0 18px; border-radius: 20px; border: 1px solid var(--line); background: var(--surface); font-weight: 600; font-size: 13px; color: var(--muted); }
+.lgs button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.tc[data-tier="red"]     { --c: #B3202A; --ct: #E0343F; }
+.tc[data-tier="orange"]  { --c: #ED8928; --ct: #ED8928; }
+.tc[data-tier="lime"]    { --c: #9CE04A; --ct: #9CE04A; }
+.tc[data-tier="emerald"] { --c: #28DE86; --ct: #28DE86; }
+.tc[data-tier="gold"]    { --c: #E1BE38; --ct: #E1BE38; }
+.glist { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.gr { display: grid; grid-template-columns: 28px 48px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 10px 14px 10px 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; width: 100%; text-align: left; }
+.gr.nr { grid-template-columns: 48px minmax(0, 1fr) auto; }
+button.gr:active { background: var(--raised); }
+.rk { text-align: center; font: 700 18px var(--font-display); font-stretch: 125%; color: var(--muted); }
+.rk.r1 { color: #E1BE38; } .rk.r2 { color: #C9D1D9; } .rk.r3 { color: #CD8B50; }
+.hav { width: 48px; height: 48px; border-radius: 50%; overflow: hidden; background: var(--raised); display: block; }
+.hav img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 8%; display: block; }
+.gi { min-width: 0; }
+.gi b { display: block; font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gs { display: flex; align-items: center; gap: 6px; margin-top: 4px; font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; }
+.gs img { width: 18px; height: 18px; object-fit: contain; flex: none; }
+.gp { text-align: right; }
+.gv { display: block; font: 700 23px/1 var(--font-display); font-stretch: 125%; color: var(--ct); font-variant-numeric: tabular-nums; }
+.gd { display: block; margin-top: 5px; font-size: 11.5px; color: var(--muted); }
+.hmsg { color: var(--muted); text-align: center; padding: 44px 10px; }
+.pf { display: flex; align-items: center; gap: 16px; margin: 4px 0 14px; }
+.pf .hav { width: 88px; height: 88px; }
+.pf h3 { margin: 0; font: 700 26px/1.1 var(--font-display); font-stretch: 125%; text-transform: uppercase; }
+.pf p { margin: 6px 0 0; color: var(--muted); font-size: 13px; display: flex; align-items: center; gap: 6px; }
+.pf p img { width: 18px; height: 18px; object-fit: contain; }
+.stats4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-bottom: 6px; }
+.stats4 div { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 4px; text-align: center; }
+.stats4 b { display: block; font: 700 19px var(--font-display); font-stretch: 125%; font-variant-numeric: tabular-nums; }
+.stats4 span { display: block; margin-top: 4px; font-size: 11px; color: var(--muted); }
+.svc { margin: 22px 0 0; }
+.svc .btn { width: 100%; min-height: 56px; font-size: 16px; border-radius: 14px; }
+.svc .ok { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; border-radius: 14px; background: var(--hi-bg); color: var(--hi); font-weight: 600; }
+.svc p { margin: 0 0 10px; text-align: center; font-weight: 600; }
+.svc .err { color: var(--neg); font-size: 13px; text-align: center; margin: 10px 0 0; font-weight: 500; }
 </style>
 
 <div id="home">
@@ -313,7 +372,18 @@ textarea#sum {
 
 <div class="cta" id="cta"><div class="wrap"><button type="button" data-nav="edit"><span class="ic" id="ctaI" aria-hidden="true">+</span><span id="ctaL">Punkte vergeben</span></button></div></div>
 
-<section id="setup" hidden><main class="wrap eb sb" id="setupBody"></main><div class="go" id="go"><div class="wrap"><button type="button" id="goBtn" data-pick="go" disabled>Spiel starten</button></div></div></section>
+<section id="setup" hidden><header class="ehead"><div class="wrap"><div class="shead">Matchday</div><span></span><button type="button" class="hofbtn" data-nav="hof"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H4v1a4 4 0 0 0 4 4M16 6h4v1a4 4 0 0 1-4 4M12 13v4M8 20h8M10 17h4"/></svg>Hall of Fame</button></div></header><main class="wrap eb sb" id="setupBody"></main><div class="go" id="go"><div class="wrap"><button type="button" id="goBtn" data-pick="go" disabled>Spiel starten</button></div></div></section>
+
+<section id="hof" hidden>
+  <header class="ehead">
+    <div class="wrap">
+      <button type="button" class="back" data-nav="back" aria-label="Zurück"><b aria-hidden="true">‹</b>Zurück</button>
+      <div class="etitle">Hall of Fame</div>
+      <button type="button" class="rf" data-hof="reload" aria-label="Aktualisieren">↻</button>
+    </div>
+  </header>
+  <main class="wrap eb hb" id="hofBody"></main>
+</section>
 
 <section id="edit" hidden>
   <header class="ehead">
@@ -332,11 +402,11 @@ textarea#sum {
   </div>
   <nav class="tabs" aria-label="Bereiche">
     <div class="wrap" role="tablist">
-      <button type="button" role="tab" data-tab="spiel" aria-selected="true">Spiel</button>
-      <button type="button" role="tab" data-tab="att" aria-selected="false">Angriff</button>
-      <button type="button" role="tab" data-tab="def" aria-selected="false">Abwehr</button>
-      <button type="button" role="tab" data-tab="err" aria-selected="false">Fehler</button>
-      <button type="button" role="tab" data-tab="log" aria-selected="false">Verlauf</button>
+      <button type="button" role="tab" data-tab="spiel" aria-selected="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span class="tl">Spiel</span></button>
+      <button type="button" role="tab" data-tab="att" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 3L5 14h6l-1 7 8-11h-6z"/></svg><span class="tl">Angriff</span></button>
+      <button type="button" role="tab" data-tab="def" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/></svg><span class="tl">Abwehr</span></button>
+      <button type="button" role="tab" data-tab="err" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17v.5"/></svg><span class="tl">Fehler</span></button>
+      <button type="button" role="tab" data-tab="log" aria-selected="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"/></svg><span class="tl">Verlauf</span></button>
     </div>
   </nav>
 </section>
@@ -392,6 +462,7 @@ textarea#sum {
   var POSN = { TW: 'Torwart', ABW: 'Abwehr', MIT: 'Mittelfeld', ANG: 'Angriff' }, POSORDER = ['TW', 'ABW', 'MIT', 'ANG'];
   function photoUrl(id) { return url('spieler/' + id + '.png'); }
   function crestUrl(id) { return url(CL[id].f); }
+  var SBURL = 'https://eewvsquscmflxdhkgvna.supabase.co', SBKEY = 'sb_publishable_tWF4nhJLNDqHsuGSK07zmw_54ZiRmPU';
   var PLAYER = '', TEAM = '', OPP = '';
   function applyMatch(m) {
     if (!m || !PL[m.p] || !CL[m.o]) return;
@@ -659,20 +730,31 @@ textarea#sum {
     }
     return 100;
   }
-  function chartHtml() {
-    var list = histOf(S.match.p).concat([matchEntry()]);
-    return '<div class="lh"><b>' + esc(PLAYER) + '</b><span>' + SEASON + '</span></div><div class="chart">' + list.map(function (x, i) {
+  function toEntry(g) { return { t: g.points, m: g.minutes, us: g.us, them: g.them, g: g.goals, a: g.assists, p: g.player, o: g.opp, h: g.home ? 1 : 0 }; }
+  function gamesOf(p) {
+    return (games || []).filter(function (g) { return g.player === p; })
+      .sort(function (a, b) { return a.created_at < b.created_at ? -1 : 1; }).map(toEntry);
+  }
+  function chartFrom(list, title) {
+    return '<div class="lh"><b>' + esc(title) + '</b><span>' + SEASON + '</span></div><div class="chart">' + list.map(function (x, i) {
       var ic = '', k;
       for (k = 0; k < x.g; k++) ic += ICON_BALL;
       for (k = 0; k < x.a; k++) ic += ICON_BOOT;
+      var mine = PL[x.p].c, opp = x.o;
       return '<div class="col' + (i === list.length - 1 ? ' cur' : '') + '" data-tier="' + tierOf(x.t) + '">' +
         '<div class="ci">' + (i === 0 ? '#' : '') + (i + 1) + '</div>' +
-        '<div class="cc"><img src="' + esc(crestUrl(x.h ? PL[x.p || 'Barbano'].c : (x.o || 'sk_fichtenberg'))) + '" alt=""><img src="' + esc(crestUrl(x.h ? (x.o || 'sk_fichtenberg') : PL[x.p || 'Barbano'].c)) + '" alt=""></div>' +
+        '<div class="cc"><img src="' + esc(crestUrl(x.h ? mine : opp)) + '" alt=""><img src="' + esc(crestUrl(x.h ? opp : mine)) + '" alt=""></div>' +
         '<div class="cs">' + scoreText(x, x.h) + '</div>' +
         '<div class="trk2"><div class="fill" style="height:' + barH(x.t).toFixed(1) + '%"><div class="ico">' + ic + '</div></div></div>' +
         '<div class="cv">' + x.t + '</div><div class="cm">' + x.m + '’</div></div>';
     }).join('') + '</div>';
   }
+  function chartHtml() {
+    var list = gamesOf(S.match.p);
+    if (!S.saved) list.push(matchEntry());
+    return chartFrom(list, PLAYER);
+  }
+  function scrollCharts() { document.querySelectorAll('.chart').forEach(function (c) { c.scrollLeft = c.scrollWidth; }); }
   function breakdown() {
     var map = {}, order = [];
     function add(n, p) { if (!(n in map)) { map[n] = 0; order.push(n); } map[n] += p; }
@@ -686,7 +768,7 @@ textarea#sum {
   function summaryHtml() {
     var bd = breakdown(), max = 1;
     bd.forEach(function (b) { max = Math.max(max, Math.abs(b.p)); });
-    return chartHtml() + '<h2 class="sec">Punkte nach Bereich</h2>' +
+    return chartHtml() + saveHtml() + '<h2 class="sec">Punkte nach Bereich</h2>' +
       '<div class="card"><ul class="bars">' + bd.map(function (b) {
         return '<li class="' + cls(b.p) + '"><div class="bt"><span>' + esc(b.n) + '</span><b>' + fmt(b.p) + '</b></div>' +
           '<div class="trk"><i style="width:' + Math.max(4, Math.round(Math.abs(b.p) / max * 100)) + '%"></i></div></li>';
@@ -704,6 +786,10 @@ textarea#sum {
     $('ctaL').textContent = S.ended ? 'Bearbeiten' : 'Punkte vergeben';
     $('ctaI').textContent = S.ended ? '✎' : '+';
     $('summary').innerHTML = S.ended ? summaryHtml() : '';
+    if (S.ended) {
+      scrollCharts();
+      if (!games && !gamesBusy) loadGames().then(function () { if (view === 'home' && S.ended) { $('summary').innerHTML = summaryHtml(); scrollCharts(); } });
+    }
     $('listH').hidden = !S.ended;
     $('rows').innerHTML = rows.length ? rows.map(function (r) {
       return '<li class="row"><span class="rp ' + cls(r.p) + '">' + fmt(r.p) + '</span><span class="rl">' + esc(r.label) +
@@ -743,42 +829,39 @@ textarea#sum {
   }
   function spielHtml() {
     var running = !!S.clock.startedAt, sc = score(), on = onField(), d = S.ended ? ' disabled' : '';
+    function seg(label, arr, cur, attrs) {
+      return '<div class="fl">' + label + '</div><div class="seg full" role="group" aria-label="' + label + '">' + arr.map(function (x) {
+        return '<button type="button" data-do="' + x[0] + '" aria-pressed="' + (cur === x[0]) + '">' + x[1] + '</button>'; }).join('') + '</div>';
+    }
     return '' +
       '<h2>Spieluhr</h2>' +
-      '<div class="card"><div class="big-clk"><span id="clk">' + clock(elapsed()) + '</span><small>Min.</small></div>' +
-      '<div class="row2">' +
-        '<button type="button" class="btn primary" data-do="clock"' + d + '>' + (running ? 'Pause' : (!S.h2 && elapsed() > 2700 ? '2. Halbzeit starten' : 'Start')) + '</button>' +
-        '<button type="button" class="btn" data-do="m-1"' + d + '>-1 Min</button>' +
-        '<button type="button" class="btn" data-do="m+1"' + d + '>+1 Min</button>' +
-        '<button type="button" class="btn" data-do="half2"' + d + '>2. Halbzeit ab 45:00 starten</button>' +
-      '</div></div>' +
+      '<div class="card"><div class="big-clk"><span id="clk">' + clock(elapsed()) + '</span></div>' +
+        '<button type="button" class="btn primary big" data-do="clock"' + d + '>' + (running ? 'Pause' : (!S.h2 && elapsed() > 2700 ? '2. Halbzeit starten' : 'Start')) + '</button>' +
+        '<div class="trio"><button type="button" class="btn" data-do="m-1"' + d + '>-1 Min</button><button type="button" class="btn" data-do="m+1"' + d + '>+1 Min</button>' +
+        '<button type="button" class="btn" data-do="half2"' + d + '>2. HZ ab 45:00</button></div></div>' +
       '<h2>Spielstand</h2>' +
-      '<div class="scoreline">' + scoreText(sc, isHome()) + '</div>' +
+      '<div class="scorebox">' + scoreText(sc, isHome()) + '</div>' +
       '<div class="grid">' + (isHome() ? actBtn('tg') + actBtn('cg') : actBtn('cg') + actBtn('tg')) + '</div>' +
       '<h2>Einsatz</h2>' +
-      '<div class="card"><div class="row2" style="margin-top:0;align-items:center">' +
-        '<div class="seg" role="group" aria-label="Start"><button type="button" data-do="start1" aria-pressed="' + S.startelf + '">Startelf</button><button type="button" data-do="start0" aria-pressed="' + !S.startelf + '">Bank</button></div>' +
-        '<button type="button" class="btn" data-do="field"' + d + '>' + (on ? 'Auswechseln' : 'Einwechseln') + '</button>' +
+      '<div class="card">' +
+        seg('Start', [['start1', 'Startelf'], ['start0', 'Bank']], S.startelf ? 'start1' : 'start0') +
+        '<button type="button" class="btn full" style="margin-top:10px" data-do="field"' + d + '>' + (on ? 'Auswechseln' : 'Einwechseln') + '</button>' +
+        seg('Position', POSORDER.map(function (k) { return ['p' + k, POSN[k]]; }), 'p' + S.pos) +
+        seg('Spielort', [['homeY', 'Heim'], ['homeN', 'Auswärts']], isHome() ? 'homeY' : 'homeN') +
       '</div>' +
-      '<div style="margin-top:14px"><div class="seg full" role="group" aria-label="Position">' + POSORDER.map(function (k) { return '<button type="button" data-do="p' + k + '" aria-pressed="' + (S.pos === k) + '">' + POSN[k] + '</button>'; }).join('') + '</div></div>' +
-      '<div style="margin-top:10px"><div class="seg full" role="group" aria-label="Spielort"><button type="button" data-do="homeY" aria-pressed="' + isHome() + '">Heim</button><button type="button" data-do="homeN" aria-pressed="' + !isHome() + '">Auswärts</button></div></div></div>' +
       '<h2>Automatische Punkte</h2>' +
       '<div class="card" id="autoBox">' + autoHtml() + '</div>' +
       '<h2>Spielende</h2>' +
-      '<div class="row2" style="margin-top:0">' +
-        (S.ended
-          ? '<button type="button" class="btn" data-do="reopen">Spiel wieder öffnen</button>'
-          : confirmEnd
-            ? '<button type="button" class="btn primary" data-do="end-yes">Ja, Spiel beenden</button><button type="button" class="btn" data-do="end-no">Abbrechen</button>'
-            : '<button type="button" class="btn primary" data-do="end">Spiel beenden</button>') +
+      (S.ended
+        ? (S.saved ? '' : '<button type="button" class="btn full" style="min-height:54px" data-do="reopen">Spiel wieder öffnen</button>')
+        : confirmEnd
+          ? '<div class="duo" style="margin-top:0"><button type="button" class="btn primary" data-do="end-yes" style="min-height:54px">Ja, beenden</button><button type="button" class="btn" data-do="end-no" style="min-height:54px">Abbrechen</button></div>'
+          : '<button type="button" class="btn primary full" style="min-height:56px;font-size:16px" data-do="end">Spiel beenden</button>') +
+      '<div class="duo">' +
         (confirmReset
-          ? '<button type="button" class="btn danger" data-do="reset-yes">Ja, alles löschen</button><button type="button" class="btn" data-do="reset-no">Abbrechen</button>'
-          : '<button type="button" class="btn danger" data-do="reset">Neues Spiel</button>') +
-        (!started() ? '<button type="button" class="btn" data-do="change">Spieler/Gegner ändern</button>' : '') +
-      '</div>' +
-      '<div class="row2">' + (confirmHist
-        ? '<button type="button" class="btn danger" data-do="hist-yes">Ja, Saisonverlauf löschen</button><button type="button" class="btn" data-do="hist-no">Abbrechen</button>'
-        : '<button type="button" class="btn" data-do="hist">Saisonverlauf löschen (' + histOf(S.match.p).length + ')</button>') + '</div>';
+          ? '<button type="button" class="btn danger" data-do="reset-yes">' + (S.ended && !S.saved ? 'Ohne Speichern weg' : 'Ja, neues Spiel') + '</button><button type="button" class="btn" data-do="reset-no">Abbrechen</button>'
+          : '<button type="button" class="btn danger"' + (started() ? ' style="grid-column:1/-1"' : '') + ' data-do="reset">Neues Spiel</button>' + (!started() ? '<button type="button" class="btn" data-do="change">Spieler ändern</button>' : '')) +
+      '</div>';
   }
   function summary() {
     var sc = score(), order = [], agg = {};
@@ -811,7 +894,7 @@ textarea#sum {
   }
   var main = $('editBody');
   function renderEdit() {
-    document.querySelector('[data-tab="def"]').textContent = S.pos === 'TW' ? 'Torwart' : 'Abwehr';
+    document.querySelector('[data-tab="def"] .tl').textContent = S.pos === 'TW' ? 'Torwart' : 'Abwehr';
     if (tab === 'spiel') main.innerHTML = spielHtml();
     else if (tab === 'log') main.innerHTML = logHtml();
     else main.innerHTML = groupsHtml(tab);
@@ -839,6 +922,134 @@ textarea#sum {
       setNum($('eTot'), total());
     }
   }
+  /* ---------- Cloud: Spiele speichern und Hall of Fame ---------- */
+  var games = null, gamesBusy = false, gamesErr = false, saveBusy = false, saveErr = '', confirmSave = false;
+  var hofTab = 'best', hofLg = 'ALL', hofP = null, hofFrom = 'setup';
+  function sb(path, opt) {
+    var ctl = new AbortController(), t = setTimeout(function () { ctl.abort(); }, 12000);
+    opt = opt || {}; opt.headers = Object.assign({ apikey: SBKEY }, opt.headers || {}); opt.signal = ctl.signal;
+    return fetch(SBURL + '/rest/v1/' + path, opt).then(function (r) {
+      clearTimeout(t);
+      if (!r.ok) { var e = new Error('HTTP ' + r.status); e.status = r.status; throw e; }
+      return r;
+    }, function (e) { clearTimeout(t); throw e; });
+  }
+  function loadGames(force) {
+    if (gamesBusy || (games && !force)) return Promise.resolve();
+    gamesBusy = true; gamesErr = false;
+    return sb('spiele?select=uid,created_at,season,player,opp,home,pos,us,them,minutes,points,goals,assists&order=created_at.desc&limit=1000')
+      .then(function (r) { return r.json(); })
+      .then(function (d) { games = (Array.isArray(d) ? d : []).filter(function (g) { return PL[g.player] && CL[g.opp]; }); })
+      .catch(function () { gamesErr = true; })
+      .then(function () { gamesBusy = false; });
+  }
+  function rnd() { var a = 'abcdefghijklmnopqrstuvwxyz0123456789', o = '', i; for (i = 0; i < 20; i++) o += a.charAt(Math.floor(Math.random() * a.length)); return o; }
+  function saveHtml() {
+    var b;
+    if (S.saved) b = '<div class="ok">✓ In der Hall of Fame gespeichert</div><button type="button" class="btn full" style="margin-top:10px" data-nav="hof">Hall of Fame ansehen</button>';
+    else if (saveBusy) b = '<button type="button" class="btn primary" disabled>Speichere …</button>';
+    else if (confirmSave) b = '<p>Für alle sichtbar speichern?</p><div class="duo" style="margin-top:0"><button type="button" class="btn primary" data-sv="yes">Ja, speichern</button><button type="button" class="btn" data-sv="no">Abbrechen</button></div>';
+    else b = '<button type="button" class="btn primary" data-sv="ask">In Hall of Fame speichern</button>';
+    return '<div class="svc">' + b + (saveErr ? '<div class="err">' + esc(saveErr) + '</div>' : '') + '</div>';
+  }
+  function saveGame() {
+    if (!S.ended || S.saved || saveBusy) return;
+    if (!S.uid) { S.uid = rnd(); save(); }
+    var e = matchEntry(), autos = [];
+    var st = startLine(); if (st) autos.push({ k: 'auto', l: st.l, p: st.p, t: -1 });
+    endLines().forEach(function (l) { autos.push({ k: 'auto', l: l.l, p: l.p, t: -1 }); });
+    var row = {
+      uid: S.uid, season: SEASON, player: S.match.p, opp: S.match.o, home: !!S.match.home, pos: S.pos,
+      us: e.us, them: e.them, minutes: e.m, points: e.t, goals: e.g, assists: e.a,
+      events: S.events.map(function (x) { return { k: x.key, l: x.label, p: x.pts, t: x.t }; }).concat(autos)
+    };
+    saveBusy = true; saveErr = ''; confirmSave = false; renderHome();
+    sb('spiele', { method: 'POST', headers: { 'Content-Type': 'application/json', Prefer: 'return=minimal' }, body: JSON.stringify(row) })
+      .then(function () { return true; }, function (er) { return er && er.status === 409; })
+      .then(function (ok) {
+        saveBusy = false;
+        if (ok) { S.saved = true; save(); games = null; loadGames(true).then(function () { if (view === 'home') renderHome(); }); }
+        else saveErr = 'Speichern hat nicht geklappt. Netz prüfen und nochmal tippen.';
+        if (view === 'home') renderHome();
+      });
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-sv]'); if (!b) return;
+    var v = b.getAttribute('data-sv');
+    if (v === 'ask') { confirmSave = true; saveErr = ''; renderHome(); }
+    else if (v === 'no') { confirmSave = false; renderHome(); }
+    else if (v === 'yes') saveGame();
+  });
+
+  /* Hall of Fame */
+  function pad2(n) { return (n < 10 ? '0' : '') + n; }
+  function dstr(iso) { var d = new Date(iso); return isNaN(d) ? '' : pad2(d.getDate()) + '.' + pad2(d.getMonth() + 1) + '.'; }
+  function lgOf(p) { return CL[PL[p].c].lg; }
+  function inLg(g) { return hofLg === 'ALL' || lgOf(g.player) === hofLg; }
+  function avatar(p) { return '<span class="hav"><img src="' + esc(photoUrl(p)) + '" alt="" loading="lazy"></span>'; }
+  function gameRow(g, rank) {
+    var mine = PL[g.player].c, l = g.home ? mine : g.opp, r = g.home ? g.opp : mine;
+    return '<li class="gr tc' + (rank ? '' : ' nr') + '" data-tier="' + tierOf(g.points) + '">' +
+      (rank ? '<span class="rk' + (rank < 4 ? ' r' + rank : '') + '">' + rank + '</span>' : '') + avatar(g.player) +
+      '<div class="gi"><b>' + esc(PL[g.player].n) + '</b><span class="gs"><img src="' + esc(crestUrl(l)) + '" alt="">' + scoreText(g, g.home) + '<img src="' + esc(crestUrl(r)) + '" alt=""></span></div>' +
+      '<div class="gp"><span class="gv">' + g.points + '</span><span class="gd">' + dstr(g.created_at) + ' · ' + POSN[g.pos] + '</span></div></li>';
+  }
+  function aggPlayers() {
+    var m = {};
+    games.filter(inLg).forEach(function (g) {
+      var a = m[g.player] || (m[g.player] = { p: g.player, n: 0, sum: 0, best: -9999 });
+      a.n++; a.sum += g.points; a.best = Math.max(a.best, g.points);
+    });
+    return Object.keys(m).map(function (k) { var a = m[k]; a.avg = Math.round(a.sum / a.n); return a; })
+      .sort(function (x, y) { return y.sum - x.sum; });
+  }
+  function hofHtml() {
+    var h = '';
+    if (hofP) {
+      var pl = PL[hofP], mine = games.filter(function (g) { return g.player === hofP; }), sum = 0, best = -9999;
+      mine.forEach(function (g) { sum += g.points; best = Math.max(best, g.points); });
+      var c = CL[pl.c];
+      h += '<button type="button" class="back" style="margin-left:-8px" data-hof="plist"><b aria-hidden="true">‹</b>Spieler</button>' +
+        '<div class="pf">' + avatar(hofP) + '<div><h3>' + esc(pl.n) + '</h3><p><img src="' + esc(crestUrl(c.id)) + '" alt="">' + esc(c.n) + ' · ' + c.lg + '</p></div></div>';
+      if (!mine.length) return h + '<p class="hmsg">Noch kein Spiel gespeichert.</p>';
+      h += '<div class="stats4"><div><b>' + mine.length + '</b><span>Spiele</span></div><div><b>' + sum + '</b><span>Gesamt</span></div><div><b>' + Math.round(sum / mine.length) + '</b><span>Schnitt</span></div><div><b>' + best + '</b><span>Bestes</span></div></div>' +
+        chartFrom(gamesOf(hofP), 'Verlauf') + '<h2>Alle Spiele</h2><ul class="glist">' + mine.map(function (g) { return gameRow(g, 0); }).join('') + '</ul>';
+      return h;
+    }
+    h += '<div class="seg full htabs">' + [['best', 'Beste Spiele'], ['players', 'Spieler'], ['new', 'Neueste']].map(function (t) {
+      return '<button type="button" data-hof="t:' + t[0] + '" aria-pressed="' + (hofTab === t[0]) + '">' + t[1] + '</button>'; }).join('') + '</div>' +
+      '<div class="lgs">' + [['ALL', 'Alle'], ['A2', 'Kreisliga A2'], ['B2', 'Kreisliga B2']].map(function (t) {
+        return '<button type="button" data-hof="l:' + t[0] + '" aria-pressed="' + (hofLg === t[0]) + '">' + t[1] + '</button>'; }).join('') + '</div>';
+    if (gamesBusy && !games) return h + '<p class="hmsg">Lädt …</p>';
+    if (!games) return h + '<p class="hmsg">Keine Verbindung.</p><button type="button" class="btn full" data-hof="reload">Nochmal versuchen</button>';
+    var list = games.filter(inLg);
+    if (!list.length) return h + '<p class="hmsg">Noch keine Spiele gespeichert.</p>';
+    if (hofTab === 'best') {
+      h += '<ul class="glist">' + list.slice().sort(function (a, b) { return b.points - a.points; }).slice(0, 30).map(function (g, i) { return gameRow(g, i + 1); }).join('') + '</ul>';
+    } else if (hofTab === 'new') {
+      h += '<ul class="glist">' + list.slice(0, 40).map(function (g) { return gameRow(g, 0); }).join('') + '</ul>';
+    } else {
+      h += '<ul class="glist">' + aggPlayers().map(function (a, i) {
+        return '<li><button type="button" class="gr tc" style="grid-template-columns:28px 48px minmax(0,1fr) auto" data-tier="' + tierOf(a.avg) + '" data-hof="p:' + a.p + '"><span class="rk' + (i < 3 ? ' r' + (i + 1) : '') + '">' + (i + 1) + '</span>' + avatar(a.p) +
+          '<div class="gi"><b>' + esc(PL[a.p].n) + '</b><span class="gs">' + a.n + (a.n === 1 ? ' Spiel' : ' Spiele') + ' · Schnitt ' + a.avg + '</span></div>' +
+          '<div class="gp"><span class="gv">' + a.sum + '</span><span class="gd">Gesamt</span></div></button></li>';
+      }).join('') + '</ul>';
+    }
+    return h;
+  }
+  function renderHof() { $('hofBody').innerHTML = hofHtml(); scrollCharts(); applyTier(0); }
+  function hofReload() { renderHof(); loadGames(true).then(function () { if (view === 'hof') renderHof(); }); renderHof(); }
+  $('hof').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-hof]'); if (!b) return;
+    var k = b.getAttribute('data-hof'), v = k.slice(2);
+    if (k === 'reload') { hofReload(); return; }
+    if (k === 'plist') hofP = null;
+    else if (k.indexOf('t:') === 0) hofTab = v;
+    else if (k.indexOf('l:') === 0) hofLg = v;
+    else if (k.indexOf('p:') === 0) { hofP = v; window.scrollTo(0, 0); }
+    renderHof();
+  });
+
   /* ---------- Spiel einrichten: Spieler, Gegner, Heim/Auswärts, Position ---------- */
   var POSKEY = 'matchday-pos-v1', sel = { p: null, o: null, home: true, pos: 'ABW' };
   function posMem() { try { return JSON.parse(localStorage.getItem(POSKEY) || '{}') || {}; } catch (e) { return {}; } }
@@ -878,7 +1089,7 @@ textarea#sum {
     if (k === 'back') { show('home'); return; }
     if (k === 'go') {
       if (!(sel.p && sel.o)) return;
-      S = fresh({ pos: sel.pos }); S.match = { p: sel.p, o: sel.o, home: sel.home };
+      S = fresh({ pos: sel.pos }); S.match = { p: sel.p, o: sel.o, home: sel.home }; S.uid = rnd();
       rememberPos(sel.p, sel.pos); applyMatch(S.match); save(); show('home'); return;
     }
     if (k.indexOf('p:') === 0) {
@@ -894,11 +1105,12 @@ textarea#sum {
     renderSetup();
   });
   function show(v) {
-    if (v !== 'setup' && !S.match) { openSetup(null); return; }
+    if (v !== 'setup' && v !== 'hof' && !S.match) { openSetup(null); return; }
     view = v;
-    $('home').hidden = v !== 'home'; $('cta').hidden = v !== 'home'; $('edit').hidden = v !== 'edit'; $('setup').hidden = v !== 'setup';
+    $('home').hidden = v !== 'home'; $('cta').hidden = v !== 'home'; $('edit').hidden = v !== 'edit'; $('setup').hidden = v !== 'setup'; $('hof').hidden = v !== 'hof';
     confirmReset = false; confirmEnd = false; confirmHist = false;
-    if (v === 'home') renderHome(); else if (v === 'edit') renderEdit(); else renderSetup();
+    confirmSave = false;
+    if (v === 'home') renderHome(); else if (v === 'edit') renderEdit(); else if (v === 'hof') hofReload(); else renderSetup();
     window.scrollTo(0, 0);
   }
 
@@ -939,11 +1151,10 @@ textarea#sum {
       case 'end': confirmEnd = true; renderEdit(); return;
       case 'end-no': confirmEnd = false; renderEdit(); return;
       case 'end-yes': setClock(el, false); setField(false); S.ended = true; confirmEnd = false; save(); show('home'); return;
-      case 'reopen': S.ended = false; break;
+      case 'reopen': if (S.saved) return; S.ended = false; break;
       case 'reset': confirmReset = true; renderEdit(); return;
       case 'reset-no': confirmReset = false; renderEdit(); return;
       case 'reset-yes':
-        if (S.ended) { var h = loadHist(); h.push(matchEntry()); saveHist(h); }
         S = fresh({ pos: S.pos }); confirmReset = false; save(); openSetup(null); return;
       case 'hist': confirmHist = true; renderEdit(); return;
       case 'hist-no': confirmHist = false; renderEdit(); return;
@@ -967,7 +1178,11 @@ textarea#sum {
   /* ---------- Eingaben ---------- */
   document.addEventListener('click', function (e) {
     var n = e.target.closest('[data-nav]');
-    if (n) show(n.getAttribute('data-nav'));
+    if (!n) return;
+    var nv = n.getAttribute('data-nav');
+    if (nv === 'hof') { if (view !== 'hof') hofFrom = view; hofP = null; }
+    if (nv === 'back') nv = hofFrom || 'setup';
+    show(nv);
   });
   main.addEventListener('click', function (e) {
     var b = e.target.closest('[data-k],[data-do],[data-del]'); if (!b) return;
