@@ -104,3 +104,36 @@ input[type="date"].fi { color-scheme: dark; }
 .inline-form .fl { margin: 0; }
 .fi.file { padding: 12px 14px; font-size: 14px; }
 .fi.file::file-selector-button { margin-right: 12px; padding: 8px 12px; border-radius: 8px; border: 0; background: var(--raised); color: var(--ink); font: 600 13px var(--font-body); }
+
+/* Mannschaft wählen („Spielt für“) */
+.tchips { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.tchip { display: grid; grid-template-columns: 34px minmax(0, 1fr); align-items: center; gap: 10px; padding: 10px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); text-align: left; color: var(--ink); min-width: 0; }
+.tchip img { width: 34px; height: 34px; object-fit: contain; }
+.tchip b { display: block; font: 600 13px/1.25 var(--font-body); overflow-wrap: anywhere; }
+.tchip small { display: block; margin-top: 2px; color: var(--muted); font-size: 11.5px; }
+.tchip[aria-pressed="true"] { border-color: var(--tier); box-shadow: 0 0 0 1px var(--tier) inset; }
+
+/* Nächstes Spiel laut Spielplan */
+.fx { border-radius: 16px; border: 1px solid var(--tier); background: linear-gradient(180deg, rgba(var(--kb-red-rgb), .10), var(--surface) 70%); padding: 14px 14px 12px; }
+.fx-h { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.fx-h span { font: 600 11px var(--font-body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.fx-h b { font: 700 14px var(--font-body); }
+.fx-m { display: grid; grid-template-columns: 1fr auto 1fr; align-items: start; gap: 8px; margin: 14px 0 10px; text-align: center; }
+.fx-m > div { display: grid; justify-items: center; gap: 8px; min-width: 0; }
+.fx-m img { width: 64px; height: 64px; object-fit: contain; }
+.fx-m span { font: 600 13px/1.25 var(--font-body); overflow-wrap: anywhere; }
+.fx-m i { font: 800 18px var(--font-display); font-style: normal; color: var(--muted); margin-top: 22px; }
+.fx-f { text-align: center; color: var(--muted); font-size: 12.5px; }
+.lgseg { margin-bottom: 10px; }
+
+/* Bild hochladen mit Vorschau */
+.imgfield { display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 12px; align-items: center; }
+.imgprev { width: 84px; height: 116px; border-radius: 12px; border: 1px dashed rgba(222, 228, 236, .22); display: grid; place-items: center; overflow: hidden;
+  background: repeating-conic-gradient(#2a2f37 0 25%, #20242b 0 50%) 0 0 / 14px 14px; }
+.imgprev.crest { height: 84px; }
+.imgprev img { width: 100%; height: 100%; object-fit: contain; }
+.imgprev span { color: var(--muted); font-size: 12px; background: var(--surface); padding: 3px 6px; border-radius: 6px; }
+.imgctl { display: grid; gap: 6px; justify-items: start; }
+.imgctl p { margin: 0; line-height: 1.35; }
+.small-btn { min-height: 40px; padding: 0 14px; font-size: 14px; display: inline-flex; align-items: center; cursor: pointer; }
+.lnk.inline { display: inline; margin: 0; padding: 0; font-size: 13px; }

@@ -19,6 +19,7 @@ function loadGame() {
     if (s && s.events && s.clock && s.stints) {
       if (!POS_NAME[s.pos]) s.pos = 'ABW';
       if (!s.match || !PL[s.match.p] || !CL[s.match.o]) s.match = null;
+      else applyMedia(s.match.p, s.match.o, s.match.pf, s.match.of);
       s.subs = s.subs || [];
       return s;
     }
@@ -29,12 +30,21 @@ export const store = { S: loadGame() || freshGame() };
 export function saveGame() { try { localStorage.setItem(KEYS.game, JSON.stringify(store.S)); } catch (e) {} }
 export function replaceGame(next) { store.S = next; saveGame(); }
 
+/* Eigene Bilder von Gastspielern / eigenen Gegnern an die (temporären) Einträge hängen */
+export function applyMedia(p, o, pf, of) {
+  if (pf && PL[p] && PL[p].guest) PL[p].foto = pf;
+  if (of && CL[o] && CL[o].custom) CL[o].f = of;
+}
+/* Eigene Mannschaft: im Spiel gespeichert (z. B. B5-Einsatz), sonst der Verein des Spielers */
+export const teamOf = m => (m && m.team && CL[m.team] ? m.team : PL[m.p].c);
+export const recordTeam = g => (g.team && CL[g.team] ? g.team : PL[g.player].c);
+
 /* Anzeigenamen des laufenden Spiels */
 export const names = { player: '', team: '', opp: '' };
 export function applyMatchNames() {
   const m = store.S.match;
   if (!m || !PL[m.p] || !CL[m.o]) return;
-  names.player = PL[m.p].n; names.team = CL[PL[m.p].c].n; names.opp = CL[m.o].n;
+  names.player = PL[m.p].n; names.team = CL[teamOf(m)].n; names.opp = CL[m.o].n;
   document.title = names.player + ' – Kreisliga Edition';
 }
 export const isHome = () => !!(store.S.match && store.S.match.home);
@@ -138,7 +148,7 @@ export function matchEntry() {
   const S = store.S, sc = score();
   let g = 0, a = 0;
   for (const e of S.events) { if (GOAL_KEYS[e.key]) g++; if (ASSIST_KEYS[e.key]) a++; }
-  return { t: total(), m: Math.ceil(playedSec() / 60), us: sc.us, them: sc.them, g, a, p: S.match.p, o: S.match.o, h: isHome() ? 1 : 0 };
+  return { tm: teamOf(S.match), t: total(), m: Math.ceil(playedSec() / 60), us: sc.us, them: sc.them, g, a, p: S.match.p, o: S.match.o, h: isHome() ? 1 : 0 };
 }
 
 /* Datensatz für die Hall of Fame (chronologische Ereignisse inkl. Marken und Automatik-Zeilen) */
@@ -152,7 +162,8 @@ export function gameRecord(season) {
   const st = startLine(); if (st) evs.push({ k: 'auto', a: 's', l: st.l, p: st.p, t: -1 });
   for (const l of endLines()) evs.push({ k: 'auto', a: 'e', l: l.l, p: l.p, t: -1 });
   const row = {
-    uid: S.uid, season, player: S.match.p, opp: S.match.o, home: !!S.match.home, pos: S.pos,
+    uid: S.uid, season, player: S.match.p, opp: S.match.o, home: !!S.match.home, pos: S.pos, team: teamOf(S.match),
+    player_foto: S.match.pf || null, opp_foto: S.match.of || null,
     us: e.us, them: e.them, minutes: e.m, points: e.t, goals: e.g, assists: e.a, events: evs
   };
   if (S.manual) { row.manual = true; row.played_at = S.playedAt; }

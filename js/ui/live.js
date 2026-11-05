@@ -1,6 +1,6 @@
 /* Spielerkarte (Live-Ansicht) mit Punkteliste; nach Spielende zusätzlich die Endübersicht */
 import { $, esc, setNum, setSrc, applyTier, signedEur, eur, trendClass } from '../core/util.js';
-import { store, saveGame, names, isHome, scoreText, score, total, started, elapsed, startLine, endLines, withMarkers, breakdown, matchEntry, gameRecord } from '../core/game.js';
+import { store, saveGame, names, teamOf, isHome, scoreText, score, total, started, elapsed, startLine, endLines, withMarkers, breakdown, matchEntry, gameRecord } from '../core/game.js';
 import { PL, photoUrl } from '../data/players.js';
 import { CL, crestUrl } from '../data/clubs.js';
 import { statusIcon, ICON } from '../core/icons.js';
@@ -87,7 +87,7 @@ export function render() {
   applyTier(t);
   document.body.classList.toggle('ended', !!S.ended);
   setNum($('hNum'), t);
-  const mine = PL[S.match.p].c, left = isHome() ? mine : S.match.o, right = isHome() ? S.match.o : mine;
+  const mine = teamOf(S.match), left = isHome() ? mine : S.match.o, right = isHome() ? S.match.o : mine;
   setSrc($('hPhoto'), photoUrl(S.match.p), names.player);
   setSrc($('hBL'), crestUrl(left), CL[left].n);
   setSrc($('hBR'), crestUrl(right), CL[right].n);

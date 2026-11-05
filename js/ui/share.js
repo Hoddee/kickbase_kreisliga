@@ -1,5 +1,5 @@
 /* Ergebnis als Bild (1080x1350) im Look der Spielerkarte – teilen oder herunterladen */
-import { store, total, score, names } from '../core/game.js';
+import { store, total, score, names, teamOf } from '../core/game.js';
 import { PL, photoUrl } from '../data/players.js';
 import { CL, crestUrl } from '../data/clubs.js';
 import { tierOf, dateLong } from '../core/util.js';
@@ -23,7 +23,7 @@ function fontsReady() {
   catch (e) { return Promise.resolve(); }
 }
 function urls() {
-  const m = store.S.match, mine = PL[m.p].c;
+  const m = store.S.match, mine = teamOf(m);
   return [photoUrl(m.p), crestUrl(m.home ? mine : m.o), crestUrl(m.home ? m.o : mine)];
 }
 /* Bilder vorab laden, damit "Teilen" sofort reagiert (Teilen-Dialog braucht eine direkte Nutzeraktion) */
@@ -67,7 +67,7 @@ export async function shareCard() {
   spacing(x, '0px');
   x.font = '500 26px "Inter Tight", Arial, sans-serif'; x.fillStyle = '#7e8187';
   const d = S.manual && S.playedAt ? new Date(S.playedAt) : new Date();
-  x.fillText('Kreisliga Edition · Kreisliga ' + CL[PL[S.match.p].c].lg + ' · ' + dateLong(d), W / 2, 1316);
+  x.fillText('Kreisliga Edition · Kreisliga ' + (CL[teamOf(S.match)].lg || '') + ' · ' + dateLong(d), W / 2, 1316);
 
   cv.toBlob(blob => {
     if (!blob) return;

@@ -3,6 +3,7 @@ import { $, esc, eur, toast, applyTier } from '../core/util.js';
 import { PL, PLAYER_LIST, POS_NAME, POS_ORDER, STATUS_NAME, fullName } from '../data/players.js';
 import { CL, CLUB_LIST } from '../data/clubs.js';
 import { login, logout, currentUser, isLoggedIn, isAdmin, refreshAdminFlag, requestPasswordReset, updatePassword, onAuthChange } from '../services/auth.js';
+import { cutout } from '../core/cutout.js';
 import { loadRoster, updatePlayer, insertPlayer, uploadPhoto, games } from '../services/api.js';
 import { marketOf } from '../core/market.js';
 import { ICON, statusIcon } from '../core/icons.js';
@@ -60,8 +61,8 @@ function rosterRow(p) {
     '<i class="kr-e">' + ICON.edit + '</i></button></li>';
 }
 
-const photoField = label => '<label class="nf"><span>' + label + '</span><input class="fi file" type="file" name="photo" accept="image/png,image/jpeg,image/webp"></label>' +
-  '<p class="muted small" style="margin:-4px 0 0">Am besten ein freigestelltes Hochformat-Foto (PNG mit transparentem Hintergrund).</p>';
+const photoField = label => '<label class="nf"><span>' + label + '</span><input class="fi file" type="file" name="photo" accept="image/*"></label>' +
+  '<p class="muted small" style="margin:-4px 0 0" id="admPhotoStatus">' + (ui.busy ? 'Foto wird verarbeitet …' : 'Der Hintergrund wird automatisch entfernt. Am besten ein Hochformat-Foto mit Oberkörper.') + '</p>';
 
 /* Neuer Stammspieler */
 function newPlayerHtml() {
@@ -77,15 +78,12 @@ function newPlayerHtml() {
     (ui.msg ? '<div class="form-msg bad">' + esc(ui.msg) + '</div>' : '') +
     '<div class="duo"><button type="submit" class="btn primary"' + (ui.busy ? ' disabled' : '') + '>' + (ui.busy ? 'Speichere …' : 'Anlegen') + '</button><button type="button" class="btn" data-adm="add-cancel">Abbrechen</button></div></form>';
 }
-/* Foto verkleinern (max. 907 px breit wie die vorhandenen Fotos), Transparenz bleibt erhalten */
+/* Foto freistellen (Hintergrund entfernen) und ins Kickbase-Format bringen */
 async function preparePhoto(file) {
   if (!file || !file.size) return null;
-  if (file.size > 15e6) throw new Error('Foto ist zu groß (max. 15 MB).');
-  const bmp = await createImageBitmap(file);
-  const scale = Math.min(1, 907 / bmp.width), cv = document.createElement('canvas');
-  cv.width = Math.round(bmp.width * scale); cv.height = Math.round(bmp.height * scale);
-  cv.getContext('2d').drawImage(bmp, 0, 0, cv.width, cv.height);
-  return new Promise(res => cv.toBlob(b => res(b), 'image/png'));
+  const res = await cutout(file, 'player', t => { const el = document.getElementById('admPhotoStatus'); if (el) el.textContent = t; });
+  URL.revokeObjectURL(res.url);
+  return res.blob;
 }
 function makeId(vn, n) {
   const base = (n + (vn ? vn[0] : '')).replace(/ä/gi, 'ae').replace(/ö/gi, 'oe').replace(/ü/gi, 'ue').replace(/ß/g, 'ss')
