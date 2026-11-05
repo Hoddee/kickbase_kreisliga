@@ -1,0 +1,30 @@
+/* Design-Tokens: Kickbase-Farbpalette (#131417, #181c22, #dee4ec, Live-Rot #ff4600) und Stufenfarben der Punkte */
+:root {
+  color-scheme: dark;
+  --bg: #131417;
+  --surface: #181c22;
+  --raised: #22272e;
+  --line: rgba(222, 228, 236, .12);
+  --ink: #dee4ec;
+  --muted: #a8adb4;
+  --lime: #9CE04A;
+  --hi: #2FD673;
+  --neg: #FF5A2A;
+  --lime-bg: rgba(156, 224, 74, .14);
+  --hi-bg: rgba(47, 214, 115, .15);
+  --neg-bg: rgba(255, 90, 42, .15);
+  --tier: #F28C1B;
+  --tier-rgb: 242, 140, 27;
+  --on-tier: #1A1000;
+  --tier-text: #F28C1B;
+  --kb-red: #ff4600; --kb-red-rgb: 255, 70, 0; /* Kickbase "Live-Rot" */
+  --muted2: #7e8187;
+  --font-display: 'Oxanium', 'Arial Black', system-ui, sans-serif;
+  --font-body: 'Inter Tight', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+/* Stufen: Minus dunkelrot, 0-99 orange, 100-199 hellgrün, 200-399 dunkelgrün, ab 400 gold */
+body[data-tier="red"]     { --tier: #B3202A; --tier-rgb: 179, 32, 42;  --on-tier: #FFFFFF; --tier-text: #E0343F; }
+body[data-tier="orange"]  { --tier: #ED8928; --tier-rgb: 237, 137, 40; --on-tier: #1A1000; --tier-text: #ED8928; }
+body[data-tier="lime"]    { --tier: #9CE04A; --tier-rgb: 156, 224, 74; --on-tier: #0F1C06; --tier-text: #9CE04A; }
+body[data-tier="emerald"] { --tier: #28DE86; --tier-rgb: 40, 222, 134; --on-tier: #03170C; --tier-text: #28DE86; }
+body[data-tier="gold"]    { --tier: #E1BE38; --tier-rgb: 225, 190, 56; --on-tier: #1F1600; --tier-text: #E1BE38; }
