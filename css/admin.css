@@ -137,3 +137,26 @@ input[type="date"].fi { color-scheme: dark; }
 .imgctl p { margin: 0; line-height: 1.35; }
 .small-btn { min-height: 40px; padding: 0 14px; font-size: 14px; display: inline-flex; align-items: center; cursor: pointer; }
 .lnk.inline { display: inline; margin: 0; padding: 0; font-size: 13px; }
+
+/* Spielerkonten */
+.iconbtn { position: relative; }
+.nbadge { position: absolute; top: -3px; right: -3px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: var(--kb-red); color: #fff;
+  font: 700 11px/18px var(--font-body); font-style: normal; text-align: center; box-shadow: 0 0 0 2px var(--bg); }
+.nb { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 6px; margin-left: 6px; border-radius: 10px; background: var(--kb-red); color: #fff; font: 700 11px var(--font-body); font-style: normal; letter-spacing: 0; vertical-align: 1px; }
+.kreq { display: grid; grid-template-columns: 44px minmax(0, 1fr); align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+.kreq .hav { width: 44px; height: 44px; }
+.kreq b { display: block; font: 600 15px var(--font-body); }
+.kreq small { display: block; margin-top: 2px; color: var(--muted); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kreq-b { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.kreq-b .btn:only-child { grid-column: 1 / -1; }
+.btn.sm { min-height: 40px; padding: 0 12px; font-size: 14px; }
+.kact { margin-top: 10px; }
+.kact summary { cursor: pointer; padding: 10px 0; color: var(--muted); font-size: 14px; font-weight: 600; }
+.pcard { display: grid; grid-template-columns: 52px minmax(0, 1fr) 14px; align-items: center; gap: 12px; width: 100%; margin-top: 12px; padding: 12px; border-radius: 16px; border: 1px solid var(--kb-red);
+  background: linear-gradient(90deg, rgba(var(--kb-red-rgb), .12), var(--surface) 70%); text-align: left; color: var(--ink); }
+.pcard .hav { width: 52px; height: 52px; }
+.pcard small { display: block; font: 700 11px var(--font-body); letter-spacing: .08em; text-transform: uppercase; color: #ff8a5c; }
+.pcard b { display: block; margin-top: 3px; font: 600 17px var(--font-body); }
+.waitc { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 12px; margin-top: 12px; }
+.waiti { font-size: 26px; line-height: 1.2; }
+.waitc p { margin: 6px 0 8px; line-height: 1.45; }

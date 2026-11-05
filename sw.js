@@ -2,7 +2,7 @@
    App-Dateien: erst Netz, bei Ausfall aus dem Cache (so kommen Updates sofort an).
    Spielerfotos und Wappen: aus dem Cache, im Hintergrund aktualisiert.
    Datenbank-Anfragen (REST/Auth) werden nie zwischengespeichert. */
-const VERSION = 'kl-v3.0.0';
+const VERSION = 'kl-v3.1.0';
 const APP = 'app-' + VERSION;
 const IMG = 'img-v1';
 const SHELL = [

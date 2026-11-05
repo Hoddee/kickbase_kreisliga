@@ -8,7 +8,7 @@ import { store, replaceGame, freshGame, applyMatchNames, applyMedia } from '../c
 import { marketOf } from '../core/market.js';
 import { cutout } from '../core/cutout.js';
 import { games, loadGames, uploadGuestImage } from '../services/api.js';
-import { isAdmin } from '../services/auth.js';
+import { isAdmin, canManage } from '../services/auth.js';
 import { avatar, nameWithStatus, playerRow as baseRow } from './components.js';
 import { registerView, show, nav } from '../router.js';
 import { prepareManual, resetTab } from './booking.js';
@@ -56,6 +56,8 @@ export function openSetup(match = null, { manual = false, player = null } = {}) 
   } else sel = lastSelection();
   if (!match && player && PL[player]) { sel = blank(); sel.p = player; sel.pos = PL[player].pos || 'ABW'; sel.team = defaultTeam(player); }
   sel.manual = !!manual;
+  /* Spieler (kein Admin) tragen nur für sich selbst nach */
+  sel.lock = sel.manual && !isAdmin();
   if (sel.team) {
     const o = sel.o, home = sel.home;
     applyPlan();
@@ -125,6 +127,10 @@ function html() {
   if (sel.manual) h += '<div class="note-badge">Nachtrag: Spiel nachträglich eintragen</div>';
   else if (store.S.match) h += '<button type="button" class="back" data-pick="back"><b aria-hidden="true">‹</b>Zurück zum Spiel</button>';
   h += '<h2>Spieler</h2>';
+  if (sel.lock) {
+    h += '<div class="plist">' + (PL[sel.p] ? playerRow(PL[sel.p]) : '') + '</div>';
+    return h + matchHtml();
+  }
   /* Gruppen: erst die eigenen Vereine, dann Vereine weiterer Stammspieler */
   const active = PLAYER_LIST.filter(p => p.active !== false);
   const clubIds = [...new Set([...OWN_CLUBS, ...active.map(p => p.c)])].filter(id => CL[id]);
@@ -134,6 +140,10 @@ function html() {
     h += '<div class="grp"><img src="' + esc(crestUrl(c.id)) + '" alt=""><span>Kreisliga ' + c.lg + ' · ' + esc(c.n) + '</span></div><div class="plist">' + players.map(playerRow).join('') + '</div>';
   }
   h += guestHtml();
+  return h + matchHtml();
+}
+function matchHtml() {
+  let h = '';
   if (sel.p) {
     h += '<h2 id="oppH">Spielt für</h2>' + teamChips();
     h += '<h2>Gegner</h2>' + (sel.plan && sel.fx ? fixtureCard(sel.fx) : oppPicker());
@@ -171,7 +181,7 @@ export function render() {
 
 function start() {
   if (!(sel.p && sel.o) || forms.busy) return;
-  if (sel.manual && !isAdmin()) return;
+  if (sel.manual && !canManage(sel.p)) return;
   const g = freshGame({ pos: sel.pos });
   g.match = { p: sel.p, o: sel.o, home: sel.home, team: sel.team || defaultTeam(sel.p) };
   if (isGuest(sel.p) && sel.pf) g.match.pf = sel.pf;
