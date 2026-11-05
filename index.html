@@ -497,6 +497,9 @@ body { font-size: 15px; }
 .gh .gbig { font: 800 92px/1 var(--font-display); letter-spacing: -.035em; }
 .gh .gm { font: 500 28px var(--font-body); }
 .htabs button { font-size: 14px; }
+.ht.sub svg { fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.ht.sub.out svg { stroke: var(--neg); }
+.ht.sub.in svg { stroke: var(--hi); }
 </style>
 
 <div id="home">
@@ -795,7 +798,8 @@ body { font-size: 15px; }
   function endLines() {
     var out = [], m = minPlayed(), sc = score(), r = Math.ceil(playedSec() / 60) + '’';
     if (!S.ended || !S.stints.length) return out;
-    if (sc.them === 0 && m > 0) {
+    var concOn = S.events.filter(function (e) { return e.key === 'cg' && e.pts < 0; }).length;
+    if (concOn === 0 && m >= 45) {
       var v = { TW: 5, ABW: 3, MIT: 2, ANG: 1 }[S.pos] || 2;
       out.push({ l: 'Zu null', h: '+' + v + ' je 10 Minuten, +' + v + ' bei voller Spielzeit', p: Math.floor(m / 10) * v + (m >= 90 ? v : 0), r: r });
     }
@@ -847,11 +851,25 @@ body { font-size: 15px; }
   var ICON_HT = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M7.5 12h9"/></svg>';
   function htLi() { return '<li class="ht">' + ICON_HT + 'Halbzeit</li>'; }
   /* Ereignisse (neueste zuerst) mit Halbzeit-Marke dazwischen */
+  var ICON_SUB_OUT = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v14M6 12l6 6 6-6"/></svg>';
+  var ICON_SUB_IN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20V6M6 12l6-6 6 6"/></svg>';
+  function subLi(x) {
+    return '<li class="ht sub ' + (x.o === 'in' ? 'in' : 'out') + '">' + (x.o === 'in' ? ICON_SUB_IN : ICON_SUB_OUT) +
+      (x.o === 'in' ? 'Eingewechselt' : 'Ausgewechselt') + (x.t >= 0 ? ' ' + minStamp(x.t) : '') + '</li>';
+  }
+  /* Marken (Halbzeit, Ein-/Auswechslung) mit Schwelle "at" = nächste Ereignis-ID zum Zeitpunkt */
+  function markers() {
+    var m = [];
+    if (S.h2 && S.h2Id != null) m.push({ at: S.h2Id, t: 2700, ht: 1 });
+    (S.subs || []).forEach(function (x) { m.push({ at: x.at, t: x.t, sub: x }); });
+    return m.sort(function (a, b) { return b.at - a.at || b.t - a.t; });
+  }
+  /* Ereignisse (neueste zuerst) mit Marken dazwischen */
   function mergeHt(list) {
-    if (!S.h2 || S.h2Id == null) return list.map(function (e) { return { e: e }; });
-    var out = [], done = false;
-    list.forEach(function (e) { if (!done && e.id < S.h2Id) { out.push({ ht: 1 }); done = true; } out.push({ e: e }); });
-    if (!done) out.push({ ht: 1 });
+    var mk = markers(), i = 0, out = [];
+    function flush(id) { while (i < mk.length && mk[i].at > id) { out.push(mk[i].ht ? { ht: 1 } : { sub: mk[i].sub }); i++; } }
+    list.forEach(function (e) { flush(e.id); out.push({ e: e }); });
+    flush(-Infinity);
     return out;
   }
   var seenId = -1;
@@ -859,13 +877,14 @@ body { font-size: 15px; }
   function whistleLi() { return '<li class="whistle" aria-label="Anpfiff">' + ICON_WHISTLE + '</li>'; }
   function rowLi(r) {
     if (r.ht) return htLi();
+    if (r.sub) return subLi(r.sub);
     return '<li class="row' + (r.fresh ? ' fresh' : '') + '"><span class="rp ' + cls(r.p) + '">' + fmt(r.p) + '</span><span class="rl">' + esc(r.label) +
       '</span><span class="rt">' + esc(r.r === '–' ? '' : r.r) + '</span></li>';
   }
   function rowsData() {
     var out = [];
     endLines().forEach(function (l) { out.push({ p: l.p, label: l.l, r: l.r }); });
-    mergeHt(S.events.slice().reverse()).forEach(function (it) { out.push(it.ht ? { ht: 1 } : { p: it.e.pts, label: it.e.label, r: minStamp(it.e.t), fresh: seenId >= 0 && it.e.id > seenId }); });
+    mergeHt(S.events.slice().reverse()).forEach(function (it) { out.push(it.ht ? { ht: 1 } : it.sub ? { sub: it.sub } : { p: it.e.pts, label: it.e.label, r: minStamp(it.e.t), fresh: seenId >= 0 && it.e.id > seenId }); });
     var s = startLine(); if (s) out.push({ p: s.p, label: s.l, r: s.r });
     return out;
   }
@@ -1050,6 +1069,7 @@ body { font-size: 15px; }
   function logHtml() {
     var items = mergeHt(S.events.slice().reverse()).map(function (it) {
       if (it.ht) return htLi();
+      if (it.sub) return subLi(it.sub);
       var e = it.e;
       return '<li><span class="mn">' + minStamp(e.t) + '</span><span>' + esc(e.label) + '</span><span class="p ' + cls(e.pts) + '">' + fmt(e.pts) + '</span>' +
         '<button type="button" class="x" data-del="' + e.id + '" aria-label="' + esc(e.label) + ' löschen">×</button></li>';
@@ -1173,12 +1193,13 @@ body { font-size: 15px; }
     var e = matchEntry(), autos = [];
     var st = startLine(); if (st) autos.push({ k: 'auto', a: 's', l: st.l, p: st.p, t: -1 });
     endLines().forEach(function (l) { autos.push({ k: 'auto', a: 'e', l: l.l, p: l.p, t: -1 }); });
-    var evs = [], htDone = !(S.h2 && S.h2Id != null);
+    var evs = [], mk = markers().reverse(), mi = 0;
+    function mkPush(id) { while (mi < mk.length && mk[mi].at <= id) { var q = mk[mi++]; evs.push(q.ht ? { k: 'ht' } : { k: 'sub', o: q.sub.o, t: q.sub.t }); } }
     S.events.slice().sort(function (a, b) { return a.id - b.id; }).forEach(function (x) {
-      if (!htDone && x.id >= S.h2Id) { evs.push({ k: 'ht' }); htDone = true; }
+      mkPush(x.id);
       evs.push({ k: x.key, l: x.label, p: x.pts, t: x.t });
     });
-    if (!htDone) evs.push({ k: 'ht' });
+    mkPush(Infinity);
     var row = {
       uid: S.uid, season: SEASON, player: S.match.p, opp: S.match.o, home: !!S.match.home, pos: S.pos,
       us: e.us, them: e.them, minutes: e.m, points: e.t, goals: e.g, assists: e.a,
@@ -1269,14 +1290,26 @@ body { font-size: 15px; }
   }
 
   /* Marktwert wie bei Kickbase: Start 500.000 €, jedes gespeicherte Spiel verschiebt ihn um (Punkte - 100) x 4.000 € */
-  var MW0 = 500000, MWMIN = 100000, POSA = { TW: 'TW', ABW: 'ABW', MIT: 'MF', ANG: 'ANG' };
-  function mwDelta(pts) { return Math.round((pts - 100) * 4000 / 10000) * 10000; }
+  /* Marktwerte: Startwerte aus der Kader-Liste, leicht "krumm" gemacht (fest pro Spieler, für alle gleich).
+     Wie bei Kickbase bewegt sich der Wert prozentual: gute Spiele heben ihn, schwache drücken ihn.
+     Pro gespeichertem Spiel: (Punkte - 120) x 0,04 %, begrenzt auf -8 % bis +12 %, dazu ein kleines Markt-Rauschen. */
+  var MWBASE = { Pace: 12500000, Sipala: 6500000, Heckmann: 8000000, Krauss: 6000000, Collin: 4500000, Collin2: 8000000,
+    Doez: 8800000, Barbano: 11500000, Klenk: 6200000, Buehler: 800000, Kugler: 7500000, Reule: 7400000, Knoedler: 3200000,
+    Schoenenberg: 7000000, Fechter: 5800000, Filenberg: 950000, Schwer: 700000, Schauss: 6800000 };
+  var MWMIN = 250000, POSA = { TW: 'TW', ABW: 'ABW', MIT: 'MF', ANG: 'ANG' };
+  function hash01(str) { var h = 2166136261; for (var i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); } return ((h >>> 0) % 100000) / 100000; }
+  function mwStart(p) { var b = MWBASE[p] || 1000000; return Math.round(b * (0.975 + hash01('mw:' + p) * 0.06)); }
+  function mwPct(pts, seed) {
+    var pc = Math.max(-0.08, Math.min(0.12, (pts - 120) * 0.0004));
+    return pc + (hash01(seed) - 0.5) * 0.012;
+  }
+  function mwStep(v, pts, seed) { return Math.max(MWMIN, Math.round(v * (1 + mwPct(pts, seed)))); }
   function eur(n) { return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ' €'; }
   function sgn(n) { return (n > 0 ? '+' : n < 0 ? '−' : '±') + eur(Math.abs(n)); }
   function gamesAsc(p) { return (games || []).filter(function (g) { return g.player === p; }).sort(function (a, b) { return a.created_at < b.created_at ? -1 : 1; }); }
   function mwOf(p) {
-    var v = MW0, s = [{ v: v }], last = 0;
-    gamesAsc(p).forEach(function (g) { var nv = Math.max(MWMIN, v + mwDelta(g.points)); last = nv - v; v = nv; s.push({ v: v, g: g }); });
+    var v = mwStart(p), s = [{ v: v }], last = 0;
+    gamesAsc(p).forEach(function (g) { var nv = mwStep(v, g.points, g.uid); last = nv - v; v = nv; s.push({ v: v, g: g }); });
     return { v: v, last: last, s: s };
   }
   function statsOf(p) {
@@ -1300,7 +1333,7 @@ body { font-size: 15px; }
   function mwEndHtml() {
     if (!S.match) return '';
     var m = mwOf(S.match.p), d, v;
-    if (S.saved) { d = m.last; v = m.v; } else { d = mwDelta(total()); v = Math.max(MWMIN, m.v + d); d = v - m.v; }
+    if (S.saved) { d = m.last; v = m.v; } else { v = mwStep(m.v, total(), S.uid || 'x'); d = v - m.v; }
     return '<div class="mwc"><div class="mw-k">' + (S.saved ? 'Marktwert' : 'Marktwert nach diesem Spiel') + '</div><div class="mw-row"><span class="mw-v">' + eur(v) + '</span><span class="mw-d ' + dcls(d) + '">' + (d > 0 ? '▲ ' : d < 0 ? '▼ ' : '') + sgn(d) + '</span></div></div>';
   }
   function badgesHtml(l) {
@@ -1360,7 +1393,7 @@ body { font-size: 15px; }
     if (!ev) return h + (evErr ? '<p class="hmsg">Keine Verbindung.</p><button type="button" class="btn full" data-hof="g:' + esc(g.uid) + '">Nochmal versuchen</button>' : '<p class="hmsg">Lädt …</p>');
     var map = {}, order = [], ends = [], mids = [], start = null;
     ev.forEach(function (x) {
-      if (x.k === 'ht') { mids.push(x); return; }
+      if (x.k === 'ht' || x.k === 'sub') { mids.push(x); return; }
       var c = x.k === 'auto' ? 'Einsatz & Team' : (CAT[x.k] || 'Sonstiges');
       if (!(c in map)) { map[c] = 0; order.push(c); }
       map[c] += x.p;
@@ -1369,7 +1402,7 @@ body { font-size: 15px; }
     var bd = order.map(function (n) { return { n: n, p: map[n] }; }).filter(function (b) { return b.p !== 0; }).sort(function (a, b) { return b.p - a.p; });
     var rows = [];
     ends.forEach(function (x) { rows.push({ p: x.p, label: x.l, r: '' }); });
-    mids.slice().reverse().forEach(function (x) { rows.push(x.k === 'ht' ? { ht: 1 } : { p: x.p, label: x.l, r: minStamp(x.t) }); });
+    mids.slice().reverse().forEach(function (x) { rows.push(x.k === 'ht' ? { ht: 1 } : x.k === 'sub' ? { sub: x } : { p: x.p, label: x.l, r: minStamp(x.t) }); });
     if (start) rows.push({ p: start.p, label: start.l, r: '' });
     return h + '<h2>Punkte nach Bereich</h2>' + barsHtml(bd) + '<h2>Alle Punkte</h2><ul class="rows">' + rows.map(rowLi).join('') + whistleLi() + '</ul>' + admHtml();
   }
@@ -1555,7 +1588,13 @@ body { font-size: 15px; }
       case 'half2': if (S.ended) return; startHalf2(); break;
       case 'start1': S.startelf = true; if (!started()) S.stints = [{ from: 0, to: null }]; break;
       case 'start0': S.startelf = false; if (!started()) S.stints = []; break;
-      case 'field': setField(!onField()); break;
+      case 'field':
+        var goOn = !onField(); setField(goOn);
+        S.subs = S.subs || [];
+        var ls = S.subs[S.subs.length - 1];
+        if (ls && ls.at === S.nextId && ls.o !== (goOn ? 'in' : 'out')) S.subs.pop();
+        else S.subs.push({ o: goOn ? 'in' : 'out', at: S.nextId, t: Math.floor(el) });
+        break;
       case 'end': confirmEnd = true; renderEdit(); return;
       case 'end-no': confirmEnd = false; renderEdit(); return;
       case 'end-yes': setClock(el, false); setField(false); S.ended = true; confirmEnd = false; save(); show('home'); return;
