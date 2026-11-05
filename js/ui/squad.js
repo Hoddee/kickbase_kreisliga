@@ -9,7 +9,7 @@ export function squadBarHtml() {
   return squadInfo().map(x => {
     const p = PL[x.p];
     return '<button type="button" class="sqb tc" data-sq="' + x.i + '" data-tier="' + tierOf(x.t) + '" aria-pressed="' + (x.i === cur) + '" aria-label="' + esc(p.n) + ': ' + x.t + ' Punkte">' +
-      '<span class="sqa"><img src="' + esc(photoUrl(x.p)) + '" alt="">' + (x.started && !store.S.ended ? '<i class="sqd' + (x.on ? ' on' : '') + '" title="' + (x.on ? 'auf dem Platz' : 'nicht auf dem Platz') + '"></i>' : '') + '</span>' +
+      '<span class="sqa"><img src="' + esc(photoUrl(x.p, true)) + '" alt="">' + (x.started && !store.S.ended ? '<i class="sqd' + (x.on ? ' on' : '') + '" title="' + (x.on ? 'auf dem Platz' : 'nicht auf dem Platz') + '"></i>' : '') + '</span>' +
       '<span class="sqn">' + esc(p.n) + '</span><b class="sqv">' + x.t + '</b></button>';
   }).join('');
 }

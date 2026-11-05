@@ -28,7 +28,7 @@ js/
   ui/                   start (Übersicht), profile (Spielerprofil), setup (Neues Spiel), live (Spielerkarte),
                         booking (Punktevergabe), hof, admin, share, components
 supabase/migrations/    SQL für Tabellen und Rechte
-assets/                 Schriften und Icons
+assets/                 Schriften, Icons und Bilder (img/p = Spielerfotos 600 px, img/p/s = Vorschaubilder, img/c = Wappen; alles WebP)
 ```
 ## Datenbank (Supabase)
 

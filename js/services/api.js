@@ -26,19 +26,21 @@ const json = { 'Content-Type': 'application/json' };
 /* ---------- Spiele ---------- */
 const LIST_FIELDS = 'uid,created_at,played_at,season,player,opp,home,pos,us,them,minutes,points,goals,assists,manual,team,player_foto,opp_foto';
 
-export const games = { list: null, busy: false, error: false };
+export const games = { list: null, busy: false, error: false, failedAt: 0 };
 const gameListeners = new Set();
 export const onGamesChange = fn => gameListeners.add(fn);
 
 export async function loadGames(force = false) {
   if (games.busy || (games.list && !force)) return games.list;
+  /* Nach einem Fehler höchstens alle 20 Sekunden neu versuchen (verhindert Endlosschleifen beim Neuzeichnen) */
+  if (!force && games.error && Date.now() - games.failedAt < 20000) return games.list;
   games.busy = true; games.error = false;
   try {
     const r = await rest('spiele?select=' + LIST_FIELDS + '&order=played_at.desc&limit=2000');
     const d = await r.json();
     games.list = (Array.isArray(d) ? d : []).filter(g => PL[g.player] && CL[g.opp]);
     for (const g of games.list.slice().reverse()) applyMedia(g.player, g.opp, g.player_foto, g.opp_foto);
-  } catch (e) { games.error = true; }
+  } catch (e) { games.error = true; games.failedAt = Date.now(); }
   games.busy = false;
   gameListeners.forEach(fn => fn());
   return games.list;
@@ -108,8 +110,11 @@ export async function insertPlayer(row) {
   writeJson(KEYS.roster, readJson(KEYS.roster, []).concat(d));
   return d[0];
 }
+/* Dateiendung passend zum Bildformat (WebP, wo der Browser es erzeugen kann, sonst PNG) */
+const ext = blob => (blob.type === 'image/webp' ? '.webp' : '.png');
 async function upload(path, blob, upsert) {
-  const headers = { apikey: SUPABASE_KEY, 'Content-Type': 'image/png', 'x-upsert': upsert ? 'true' : 'false' };
+  /* Lange Cache-Dauer: jedes Bild wird pro Gerät nur einmal geladen */
+  const headers = { apikey: SUPABASE_KEY, 'Content-Type': blob.type || 'image/png', 'x-upsert': upsert ? 'true' : 'false', 'cache-control': 'max-age=31536000' };
   const token = await accessToken();
   if (token) headers.Authorization = 'Bearer ' + token;
   const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 30000);
@@ -124,12 +129,12 @@ async function upload(path, blob, upsert) {
 /* Spielerfoto in den Bucket laden (nur Admin); liefert den Pfad im Bucket */
 export async function uploadPhoto(id, blob) {
   if (!(await accessToken())) throw new Error('Nicht angemeldet.');
-  return upload('spieler/' + id + '.png', blob, true);
+  return upload('spieler/' + id + ext(blob), blob, true);
 }
 /* Bild für Gastspieler / eigenen Gegner (darf jeder hochladen, nur neue Dateien) */
 export function uploadGuestImage(blob) {
   const rnd = [...crypto.getRandomValues(new Uint8Array(12))].map(b => b.toString(16).padStart(2, '0')).join('');
-  return upload('gast/' + rnd + '.png', blob, false);
+  return upload('gast/' + rnd + ext(blob), blob, false);
 }
 
 export async function updatePlayer(id, patch) {
