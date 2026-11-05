@@ -605,12 +605,12 @@ body { font-size: 15px; }
   ];
   var CL = {}; CLIST.forEach(function (c) { CL[c.id] = c; });
   var PLIST = [
-    { id: 'Barbano', n: 'Barbano', c: 'vfr', pos: 'ABW' }, { id: 'Doez', n: 'Doez', c: 'vfr', pos: 'ABW' }, { id: 'Heckmann', n: 'Heckmann', c: 'vfr', pos: 'MIT' },
-    { id: 'Kugler', n: 'Kugler', c: 'vfr', pos: 'ABW' }, { id: 'Pace', n: 'Pace', c: 'vfr', pos: 'ANG' }, { id: 'Sipala', n: 'Sipala', c: 'vfr', pos: 'ANG' },
-    { id: 'Buehler', n: 'Bühler', c: 'vfrk', pos: 'ANG' }, { id: 'Fechter', n: 'Fechter', c: 'vfrk', pos: 'TW' }, { id: 'Filenberg', n: 'Filenberg', c: 'vfrk', pos: 'ABW' },
-    { id: 'Klenk', n: 'Klenk', c: 'vfrk', pos: 'MIT' }, { id: 'Knoedler', n: 'Knödler', c: 'vfrk', pos: 'ABW' }, { id: 'Krauss', n: 'Krauss', c: 'vfrk', pos: 'MIT' },
-    { id: 'Reule', n: 'Reule', c: 'vfrk', pos: 'ABW' }, { id: 'Schauss', n: 'Schauss', c: 'vfrk', pos: 'MIT' }, { id: 'Schoenenberg', n: 'Schönenberg', c: 'vfrk', pos: 'ABW' },
-    { id: 'Schwer', n: 'Schwer', c: 'vfrk', pos: 'ANG' }, { id: 'Collin', n: 'Collin', c: 'fornsbach', pos: 'MIT' }, { id: 'Collin2', n: 'Collin 2', c: 'fornsbach', pos: 'MIT' }
+    { id: 'Barbano', n: 'Barbano', fn: 'Mattia Barbano', c: 'vfr', pos: 'ABW' }, { id: 'Doez', n: 'Döz', fn: 'Benjamin Döz', c: 'vfr', pos: 'ABW' }, { id: 'Heckmann', n: 'Heckmann', fn: 'Philipp Heckmann', c: 'vfr', pos: 'MIT' },
+    { id: 'Kugler', n: 'Kugler', fn: 'Mattis Kugler', c: 'vfr', pos: 'ABW' }, { id: 'Pace', n: 'Pace', fn: 'Vincenzo Pace', c: 'vfr', pos: 'ANG' }, { id: 'Sipala', n: 'Sipala', fn: 'Angelo Sipala', c: 'vfr', pos: 'ANG' },
+    { id: 'Buehler', n: 'Bühler', fn: 'Marian Bühler', c: 'vfrk', pos: 'ANG' }, { id: 'Fechter', n: 'Fechter', fn: 'Mikk Fechter', c: 'vfrk', pos: 'TW' }, { id: 'Filenberg', n: 'Filenberg', fn: 'Daniel Filenberg', c: 'vfrk', pos: 'ABW' },
+    { id: 'Klenk', n: 'Klenk', fn: 'Silas Klenk', c: 'vfrk', pos: 'MIT' }, { id: 'Knoedler', n: 'Knödler', fn: 'Jakob Knödler', c: 'vfrk', pos: 'ABW' }, { id: 'Krauss', n: 'Krauss', fn: 'Levin Krauss', c: 'vfrk', pos: 'MIT' },
+    { id: 'Reule', n: 'Reule', fn: 'Noah Reule', c: 'vfrk', pos: 'ABW' }, { id: 'Schauss', n: 'Schauß', fn: 'Ben Schauß', c: 'vfrk', pos: 'MIT' }, { id: 'Schoenenberg', n: 'Schönenberg', fn: 'Benedikt Schönenberg', c: 'vfrk', pos: 'ABW' },
+    { id: 'Schwer', n: 'Schwer', fn: 'Benjamin Schwer', c: 'vfrk', pos: 'ANG' }, { id: 'Collin', n: 'Collin', fn: 'Alexander Collin', c: 'fornsbach', pos: 'MIT' }, { id: 'Collin2', n: 'Collin', fn: 'Niklas Collin', c: 'fornsbach', pos: 'MIT' }
   ];
   var PL = {}; PLIST.forEach(function (p) { PL[p.id] = p; });
   var POSN = { TW: 'Torwart', ABW: 'Abwehr', MIT: 'Mittelfeld', ANG: 'Angriff' }, POSORDER = ['TW', 'ABW', 'MIT', 'ANG'];
@@ -1305,12 +1305,13 @@ body { font-size: 15px; }
   /* Marktwerte: Startwerte aus der Kader-Liste, leicht "krumm" gemacht (fest pro Spieler, für alle gleich).
      Wie bei Kickbase bewegt sich der Wert prozentual: gute Spiele heben ihn, schwache drücken ihn.
      Pro gespeichertem Spiel: (Punkte - 120) x 0,04 %, begrenzt auf -8 % bis +12 %, dazu ein kleines Markt-Rauschen. */
-  var MWBASE = { Pace: 12500000, Sipala: 6500000, Heckmann: 8000000, Krauss: 6000000, Collin: 4500000, Collin2: 8000000,
+  var MWBASE = { Pace: 12500000, Sipala: 6500000, Heckmann: 8000000, Krauss: 6000000, Collin: 8000000, Collin2: 4500000,
     Doez: 8800000, Barbano: 11500000, Klenk: 6200000, Buehler: 800000, Kugler: 7500000, Reule: 7400000, Knoedler: 3200000,
-    Schoenenberg: 7000000, Fechter: 5800000, Filenberg: 950000, Schwer: 700000, Schauss: 6800000 };
+    Schoenenberg: 7000000, Fechter: 5800000, Filenberg: 9342812, Schwer: 700000, Schauss: 6800000 };
   var MWMIN = 250000, POSA = { TW: 'TW', ABW: 'ABW', MIT: 'MF', ANG: 'ANG' };
   function hash01(str) { var h = 2166136261; for (var i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); } return ((h >>> 0) % 100000) / 100000; }
-  function mwStart(p) { var b = MWBASE[p] || 1000000; return Math.round(b * (0.975 + hash01('mw:' + p) * 0.06)); }
+  var MWEXACT = { Filenberg: 1 };
+  function mwStart(p) { var b = MWBASE[p] || 1000000; if (MWEXACT[p]) return b; return Math.round(b * (0.975 + hash01('mw:' + p) * 0.06)); }
   function mwPct(pts, seed) {
     var pc = Math.max(-0.08, Math.min(0.12, (pts - 120) * 0.0004));
     return pc + (hash01(seed) - 0.5) * 0.012;
@@ -1515,7 +1516,7 @@ body { font-size: 15px; }
         PLIST.filter(function (p) { return p.c === c.id; }).map(function (p) {
           var st = statsOf(p.id), mw = mwOf(p.id), pos = p.pos || 'ABW';
           return '<button type="button" class="prow" data-pick="p:' + p.id + '" aria-pressed="' + (sel.p === p.id) + '"><span class="hav"><img src="' + esc(photoUrl(p.id)) + '" alt="" loading="lazy"></span>' +
-            '<span><b>' + esc(p.n) + stIcon(p.id) + '</b><span class="ps"><i class="pbadge">' + POSA[pos] + '</i>' + eur(mw.v) + (mw.last ? ' <span class="mw-d ' + dcls(mw.last) + '" style="font-size:12px">' + (mw.last > 0 ? '▲' : '▼') + '</span>' : '') + '</span></span>' +
+            '<span><b>' + esc(p.fn || p.n) + stIcon(p.id) + '</b><span class="ps"><i class="pbadge">' + POSA[pos] + '</i>' + eur(mw.v) + (mw.last ? ' <span class="mw-d ' + dcls(mw.last) + '" style="font-size:12px">' + (mw.last > 0 ? '▲' : '▼') + '</span>' : '') + '</span></span>' +
             '<span class="pv tc"' + (st.avg != null ? ' data-tier="' + tierOf(st.avg) + '"' : '') + '><b>' + (st.avg != null ? st.avg : '–') + '</b><small>Ø Punkte</small></span><span class="ck">✓</span></button>';
         }).join('') + '</div>';
     });
