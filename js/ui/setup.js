@@ -9,7 +9,7 @@ import { marketOf } from '../core/market.js';
 import { cutout } from '../core/cutout.js';
 import { games, loadGames, uploadGuestImage } from '../services/api.js';
 import { isAdmin } from '../services/auth.js';
-import { avatar, nameWithStatus } from './components.js';
+import { avatar, nameWithStatus, playerRow as baseRow } from './components.js';
 import { registerView, show, nav } from '../router.js';
 import { prepareManual, resetTab } from './booking.js';
 
@@ -48,12 +48,13 @@ function lastSelection() {
 }
 
 /* Öffnet die Auswahl; mit match = vorhandene Auswahl bearbeiten, manual = Nachtrag (nur Admin) */
-export function openSetup(match = null, { manual = false } = {}) {
+export function openSetup(match = null, { manual = false, player = null } = {}) {
   if (match) {
     sel = Object.assign(blank(), { p: match.p, o: match.o, home: !!match.home, pos: store.S.pos, team: match.team || defaultTeam(match.p), pf: match.pf || null, of: match.of || null });
     const fx = nextFixture(sel.team);
     sel.plan = !!(fx && fx.o === match.o);
   } else sel = lastSelection();
+  if (!match && player && PL[player]) { sel = blank(); sel.p = player; sel.pos = PL[player].pos || 'ABW'; sel.team = defaultTeam(player); }
   sel.manual = !!manual;
   if (sel.team) {
     const o = sel.o, home = sel.home;
@@ -64,19 +65,7 @@ export function openSetup(match = null, { manual = false } = {}) {
   show('setup');
 }
 
-function statsOf(id) {
-  const l = (games.list || []).filter(g => g.player === id);
-  const sum = l.reduce((s, g) => s + g.points, 0);
-  return { n: l.length, avg: l.length ? Math.round(sum / l.length) : null };
-}
-
-function playerRow(p) {
-  const st = statsOf(p.id), mw = marketOf(p.id, games.list || []);
-  const trend = mw.last ? ' <span class="mw-d ' + trendClass(mw.last) + '" style="font-size:12px">' + (mw.last > 0 ? '▲' : '▼') + '</span>' : '';
-  return '<button type="button" class="prow" data-pick="p:' + p.id + '" aria-pressed="' + (sel.p === p.id) + '">' + avatar(p.id) +
-    '<span><b>' + nameWithStatus(p.id, fullName(p)) + '</b><span class="ps"><i class="pbadge">' + POS_SHORT[p.pos || 'ABW'] + '</i>' + eur(mw.v) + trend + '</span></span>' +
-    '<span class="pv tc"' + (st.avg != null ? ' data-tier="' + tierOf(st.avg) + '"' : '') + '><b>' + (st.avg != null ? st.avg : '–') + '</b><small>Ø Punkte</small></span><span class="ck">✓</span></button>';
-}
+const playerRow = p => baseRow(p, 'data-pick="p:' + p.id + '" aria-pressed="' + (sel.p === p.id) + '"', '<span class="ck">✓</span>');
 
 /* Bild-Auswahl mit Vorschau (Hintergrund wird automatisch entfernt) */
 function imageField(which, img, label) {
@@ -177,7 +166,6 @@ export function render() {
   $('setupBody').innerHTML = html();
   $('goBtn').disabled = !(sel.p && sel.o) || forms.busy;
   $('goBtn').textContent = sel.manual ? 'Weiter zum Nachtrag' : 'Spiel starten';
-  $('adminBtn').classList.toggle('on', isAdmin());
   applyTier(0);
 }
 

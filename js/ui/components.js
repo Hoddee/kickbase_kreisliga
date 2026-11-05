@@ -1,9 +1,11 @@
 /* Wiederverwendbare Bausteine: Punktezeilen, Marken, Balkendiagramm, Bereichsbalken, Marktwert-Kurve */
-import { esc, fmt, cls, tierOf, minStamp } from '../core/util.js';
+import { esc, fmt, cls, tierOf, minStamp, eur, trendClass, dateShort, pad2 } from '../core/util.js';
 import { ICON, statusIcon } from '../core/icons.js';
-import { PL, photoUrl } from '../data/players.js';
+import { PL, photoUrl, fullName, POS_NAME, POS_SHORT } from '../data/players.js';
 import { CL, crestUrl } from '../data/clubs.js';
-import { scoreText } from '../core/game.js';
+import { scoreText, recordTeam } from '../core/game.js';
+import { marketOf } from '../core/market.js';
+import { games } from '../services/api.js';
 import { SEASON } from '../config.js';
 
 export const halftimeLi = () => '<li class="ht">' + ICON.halftime + 'Halbzeit</li>';
@@ -84,3 +86,60 @@ export function sparkline(series) {
 
 export const avatar = id => '<span class="hav"><img src="' + esc(photoUrl(id)) + '" alt="" loading="lazy"></span>';
 export const nameWithStatus = (id, label) => esc(label != null ? label : PL[id].n) + statusIcon(id) + (PL[id] && PL[id].guest ? ' <i class="tag">Gast</i>' : '');
+
+/* ---------- Spielerzeile (Übersicht und Auswahl) ---------- */
+export function playerStats(id) {
+  const l = (games.list || []).filter(g => g.player === id);
+  const sum = l.reduce((s, g) => s + g.points, 0);
+  return { n: l.length, sum, avg: l.length ? Math.round(sum / l.length) : null, min: l.length ? Math.round(l.reduce((s, g) => s + g.minutes, 0) / l.length) : null };
+}
+/* attrs: z. B. 'data-pick="p:ID" aria-pressed="true"'; tail: Haken oder Pfeil rechts */
+export function playerRow(p, attrs, tail) {
+  const st = playerStats(p.id), mw = marketOf(p.id, games.list || []);
+  const trend = mw.last ? ' <span class="mw-d ' + trendClass(mw.last) + '" style="font-size:12px">' + (mw.last > 0 ? '▲' : '▼') + '</span>' : '';
+  return '<button type="button" class="prow" ' + attrs + '>' + avatar(p.id) +
+    '<span><b>' + nameWithStatus(p.id, fullName(p)) + '</b><span class="ps"><i class="pbadge">' + POS_SHORT[p.pos || 'ABW'] + '</i>' + eur(mw.v) + trend + '</span></span>' +
+    '<span class="pv tc"' + (st.avg != null ? ' data-tier="' + tierOf(st.avg) + '"' : '') + '><b>' + (st.avg != null ? st.avg : '–') + '</b><small>Ø Punkte</small></span>' + tail + '</button>';
+}
+
+/* ---------- Spielzeile (Hall of Fame, Profil) ---------- */
+export function gameRow(g, rank, inProfile) {
+  const mine = recordTeam(g), l = g.home ? mine : g.opp, r = g.home ? g.opp : mine;
+  return '<li class="gr tc' + (rank ? '' : ' nr') + '" data-tier="' + tierOf(g.points) + '"><button type="button" class="ov" data-open="g:' + esc(g.uid) + '" aria-label="Spiel ansehen"></button>' +
+    (rank ? '<span class="rk' + (rank < 4 ? ' r' + rank : '') + '">' + rank + '</span>' : '') +
+    (inProfile ? avatar(g.player) : '<button type="button" class="hav hb2" data-open="p:' + esc(g.player) + '" aria-label="Profil von ' + esc(PL[g.player].n) + '"><img src="' + esc(photoUrl(g.player)) + '" alt="" loading="lazy"></button>') +
+    '<div class="gi"><b>' + nameWithStatus(g.player) + (g.manual ? ' <i class="tag">Nachtrag</i>' : '') + '</b><span class="gs"><img src="' + esc(crestUrl(l)) + '" alt="">' + scoreText(g, g.home) + '<img src="' + esc(crestUrl(r)) + '" alt=""></span></div>' +
+    '<div class="gp"><span class="gv">' + g.points + '</span><span class="gd">' + dateShort(g.played_at) + ' · ' + POS_NAME[g.pos] + '</span></div></li>';
+}
+
+/* ---------- Saisonverlauf wie im Kickbase-Profil: gespielte Spiele + kommende Spiele laut Spielplan ---------- */
+const MONTHS = ['JAN.', 'FEB.', 'MÄRZ', 'APR.', 'MAI', 'JUNI', 'JULI', 'AUG.', 'SEPT.', 'OKT.', 'NOV.', 'DEZ.'];
+const dayMonth = d => pad2(d.getDate()) + '. ' + MONTHS[d.getMonth()];
+/* played: gespeicherte Spiele (chronologisch), upcoming: [{at, team, o, home}] */
+export function profileChart(played, upcoming) {
+  const cols = played.map((g, i) => {
+    const mine = recordTeam(g), l = g.home ? mine : g.opp, r = g.home ? g.opp : mine;
+    const icons = ICON.ball.repeat(g.goals || 0) + ICON.boot.repeat(g.assists || 0);
+    return '<button type="button" class="col played" data-tier="' + tierOf(g.points) + '" data-open="g:' + esc(g.uid) + '" aria-label="Spiel ' + (i + 1) + ': ' + g.points + ' Punkte">' +
+      '<div class="ci">' + (i + 1) + '</div><div class="cc"><img src="' + esc(crestUrl(l)) + '" alt=""><img src="' + esc(crestUrl(r)) + '" alt=""></div>' +
+      '<div class="cd">' + dayMonth(new Date(g.played_at)) + '</div>' +
+      '<div class="trk2"><div class="fill" style="height:' + barHeight(g.points).toFixed(1) + '%"><div class="ico">' + icons + '</div></div></div>' +
+      '<div class="cv">' + g.points + '</div><div class="cm">' + g.minutes + '’</div></button>';
+  });
+  upcoming.forEach((f, j) => {
+    const l = f.home ? f.team : f.o, r = f.home ? f.o : f.team;
+    cols.push('<div class="col fut' + (j === 0 ? ' next' : '') + '"><div class="ci">' + (played.length + j + 1) + '</div><div class="cc"><img src="' + esc(crestUrl(l)) + '" alt="" loading="lazy"><img src="' + esc(crestUrl(r)) + '" alt="" loading="lazy"></div>' +
+      '<div class="cd">' + dayMonth(f.at) + '</div><div class="trk2"></div><div class="cv">-</div><div class="cm">-</div></div>');
+  });
+  return '<div class="chart kchart">' + cols.join('') + '</div>';
+}
+/* Profilverlauf so scrollen, dass das letzte gespielte Spiel links im Blick ist */
+export function scrollToCurrent(root = document) {
+  root.querySelectorAll('.kchart').forEach(c => {
+    const last = [...c.querySelectorAll('.col.played')].pop();
+    if (!last) { c.scrollLeft = 0; return; }
+    /* letztes Spiel als zweite Spalte, davor ein Stück vom vorletzten (wie bei Kickbase) */
+    const x = last.getBoundingClientRect().left - c.getBoundingClientRect().left + c.scrollLeft;
+    c.scrollLeft = Math.max(0, x - last.offsetWidth - 10);
+  });
+}

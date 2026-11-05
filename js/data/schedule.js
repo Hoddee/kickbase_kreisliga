@@ -92,3 +92,7 @@ export function lastFixture(team, now = Date.now()) {
   const l = (SCHEDULE[team] || []).filter(x => new Date(x[0]).getTime() <= now);
   return l.length ? fixture(team, l[l.length - 1]) : null;
 }
+/* Alle noch anstehenden Spiele einer Mannschaft */
+export function upcomingFixtures(team, now = Date.now()) {
+  return (SCHEDULE[team] || []).filter(x => new Date(x[0]).getTime() + 4 * H > now).map(r => fixture(team, r));
+}

@@ -25,7 +25,8 @@ js/
   core/util.js, icons.js
   services/api.js       REST-Zugriff (spiele, kader)
   services/auth.js      Admin-Login über Supabase Auth
-  ui/                   live (Spielerkarte), booking (Punktevergabe), setup, hof, admin, share, components
+  ui/                   start (Übersicht), profile (Spielerprofil), setup (Neues Spiel), live (Spielerkarte),
+                        booking (Punktevergabe), hof, admin, share, components
 supabase/migrations/    SQL für Tabellen und Rechte
 assets/                 Schriften und Icons
 ```

@@ -9,24 +9,14 @@ import { marketOf, byDate } from '../core/market.js';
 import { games, loadGames, loadEvents, cachedEvents, forgetEvents, updateGame, deleteGame } from '../services/api.js';
 import { isAdmin } from '../services/auth.js';
 import { ICON } from '../core/icons.js';
-import { avatar, nameWithStatus, rowLi, rowsFromRecord, whistleLi, areaBars, seasonChart, toChartEntry, scrollChartsToEnd, sparkline } from './components.js';
-import { registerView, nav } from '../router.js';
+import { avatar, nameWithStatus, rowLi, rowsFromRecord, whistleLi, areaBars, gameRow } from './components.js';
+import { registerView, show, nav } from '../router.js';
 
-const ui = { tab: 'best', league: 'ALL', player: null, game: null, eventsError: false, edit: false, confirmDelete: false, busy: false };
+const ui = { tab: 'best', league: 'ALL', returnTo: null, player: null, game: null, eventsError: false, edit: false, confirmDelete: false, busy: false };
 
 const leagueOf = id => CL[PL[id].c].lg;
-const inLeague = g => ui.league === 'ALL' || leagueOf(g.player) === ui.league;
+const inLeague = g => ui.league === 'ALL' || (CL[recordTeam(g)] || {}).lg === ui.league;
 const gamesOf = id => byDate((games.list || []).filter(g => g.player === id));
-
-/* ---------- Listenzeilen ---------- */
-function gameRow(g, rank, inProfile) {
-  const mine = recordTeam(g), l = g.home ? mine : g.opp, r = g.home ? g.opp : mine;
-  return '<li class="gr tc' + (rank ? '' : ' nr') + '" data-tier="' + tierOf(g.points) + '"><button type="button" class="ov" data-hof="g:' + esc(g.uid) + '" aria-label="Spiel ansehen"></button>' +
-    (rank ? '<span class="rk' + (rank < 4 ? ' r' + rank : '') + '">' + rank + '</span>' : '') +
-    (inProfile ? avatar(g.player) : '<button type="button" class="hav hb2" data-hof="p:' + g.player + '" aria-label="Profil von ' + esc(PL[g.player].n) + '"><img src="' + esc(photoUrl(g.player)) + '" alt="" loading="lazy"></button>') +
-    '<div class="gi"><b>' + nameWithStatus(g.player) + (g.manual ? ' <i class="tag">Nachtrag</i>' : '') + '</b><span class="gs"><img src="' + esc(crestUrl(l)) + '" alt="">' + scoreText(g, g.home) + '<img src="' + esc(crestUrl(r)) + '" alt=""></span></div>' +
-    '<div class="gp"><span class="gv">' + g.points + '</span><span class="gd">' + dateShort(g.played_at) + ' · ' + POS_NAME[g.pos] + '</span></div></li>';
-}
 
 /* Form: die letzten fünf Spiele als farbige Punkte (wie Kickbase-Formkurve) */
 function formDots(id) {
@@ -54,7 +44,7 @@ function table(list) {
   const rows = [...agg.values()].map(a => Object.assign(a, { avg: Math.round(a.sum / a.n) })).sort((x, y) => y.sum - x.sum);
   return '<ul class="glist">' + rows.map((a, i) => {
     const mw = marketOf(a.p, games.list), last = gamesOf(a.p).slice(-1)[0];
-    return '<li><button type="button" class="gr tc" data-tier="' + tierOf(a.avg) + '" data-hof="p:' + a.p + '"><span class="rk' + (i < 3 ? ' r' + (i + 1) : '') + '">' + (i + 1) + '</span>' + avatar(a.p) +
+    return '<li><button type="button" class="gr tc" data-tier="' + tierOf(a.avg) + '" data-open="p:' + a.p + '"><span class="rk' + (i < 3 ? ' r' + (i + 1) : '') + '">' + (i + 1) + '</span>' + avatar(a.p) +
       '<div class="gi"><b>' + nameWithStatus(a.p) + '</b><span class="gs">' + (last ? '<i class="pbadge">' + POS_SHORT[last.pos] + '</i>' : '') + 'Ø ' + a.avg + ' ' + formDots(a.p) + '</span></div>' +
       '<div class="gp"><span class="gv">' + a.sum + '</span><span class="gd">' + eur(mw.v) + '</span></div></button></li>';
   }).join('') + '</ul>';
@@ -92,36 +82,8 @@ function records(list) {
   const jump = ids.map(id => [id, marketOf(id, games.list).last]).sort((a, b) => b[1] - a[1])[0];
   if (jump && jump[1] > 0) cards.push(['Größter Marktwert-Sprung', jump[0], signedEur(jump[1]), 'p:' + jump[0], null]);
   return '<div class="recs">' + cards.map(([t, id, v, link, pts]) =>
-    '<button type="button" class="rec tc"' + (pts != null ? ' data-tier="' + tierOf(pts) + '"' : '') + ' data-hof="' + esc(link) + '">' + avatar(id) +
+    '<button type="button" class="rec tc"' + (pts != null ? ' data-tier="' + tierOf(pts) + '"' : '') + ' data-' + (link[0] === 'p' ? 'open' : 'hof') + '="' + esc(link) + '">' + avatar(id) +
     '<span class="rec-t">' + esc(t) + '</span><b class="rec-n">' + nameWithStatus(id) + '</b><span class="rec-v">' + esc(v) + '</span></button>').join('') + '</div>';
-}
-
-/* ---------- Spielerprofil ---------- */
-function badges(l) {
-  const B = [
-    ['Gold-Spiel 400+', l.filter(g => g.points >= 400).length, '#E1BE38'],
-    ['Über 200 Punkte', l.filter(g => g.points >= 200).length, '#28DE86'],
-    ['Tore', l.reduce((a, g) => a + (g.goals || 0), 0), '#9CE04A'],
-    ['Vorlagen', l.reduce((a, g) => a + (g.assists || 0), 0), '#9CE04A'],
-    ['Weiße Weste', l.filter(g => g.them === 0 && g.minutes >= 45).length, '#dee4ec'],
-    ['Siege', l.filter(g => g.us > g.them).length, '#ff4600'],
-    ['Durchgespielt', l.filter(g => g.minutes >= 90).length, '#7e8187']
-  ].filter(b => b[1] > 0);
-  return B.length ? '<h2>Erfolge</h2><div class="badges">' + B.map(b => '<span class="bdg" style="--c:' + b[2] + '"><i></i>' + b[0] + '<em>×' + b[1] + '</em></span>').join('') + '</div>' : '';
-}
-function profileHtml() {
-  const id = ui.player, p = PL[id], c = CL[p.c], mine = gamesOf(id);
-  let h = '<button type="button" class="back" style="margin-left:-8px" data-hof="plist"><b aria-hidden="true">‹</b>Übersicht</button>' +
-    '<div class="pf">' + avatar(id) + '<div><h3>' + nameWithStatus(id) + '</h3><p><img src="' + esc(crestUrl(c.id)) + '" alt="">' + esc(c.n) + ' · ' + c.lg + ' · ' + POS_NAME[p.pos] + '</p>' +
-    (p.status !== 'fit' && p.info ? '<p class="st-info">' + esc(p.info) + '</p>' : '') + '</div></div>';
-  const mw = marketOf(id, games.list);
-  const mwCard = '<div class="mwc"><div class="mw-k">Marktwert</div><div class="mw-row"><span class="mw-v">' + eur(mw.v) + '</span><span class="mw-d ' + trendClass(mw.last) + '">' +
-    (mw.last > 0 ? '▲ ' : mw.last < 0 ? '▼ ' : '') + signedEur(mw.last) + '</span></div>' + sparkline(mw.series) + '</div>';
-  if (!mine.length) return h + mwCard + '<p class="hmsg">Noch kein Spiel gespeichert.</p>';
-  const sum = mine.reduce((s, g) => s + g.points, 0), best = Math.max(...mine.map(g => g.points));
-  return h + '<div class="stats4"><div><b>' + mine.length + '</b><span>Spiele</span></div><div><b>' + sum + '</b><span>Gesamt</span></div><div><b>' + Math.round(sum / mine.length) + '</b><span>Schnitt</span></div><div><b>' + best + '</b><span>Bestes</span></div></div>' +
-    mwCard + badges(mine) + seasonChart(mine.map(toChartEntry), 'Verlauf', { clickable: true }) +
-    '<h2>Alle Spiele</h2><ul class="glist">' + mine.slice().reverse().map(g => gameRow(g, 0, true)).join('') + '</ul>';
 }
 
 /* ---------- Spielansicht ---------- */
@@ -156,7 +118,7 @@ function gameHtml() {
   const back = '<button type="button" class="back" style="margin-left:-8px" data-hof="gback"><b aria-hidden="true">‹</b>Zurück</button>';
   if (!g) return back + '<p class="hmsg">Spiel nicht gefunden.</p>';
   const mine = recordTeam(g), l = g.home ? mine : g.opp, r = g.home ? g.opp : mine, ev = cachedEvents(g.uid);
-  const head = back + '<div class="gh tc" data-tier="' + tierOf(g.points) + '"><button type="button" class="hb2" data-hof="p:' + g.player + '" aria-label="Profil">' + avatar(g.player) + '</button>' +
+  const head = back + '<div class="gh tc" data-tier="' + tierOf(g.points) + '"><button type="button" class="hb2" data-open="p:' + g.player + '" aria-label="Profil">' + avatar(g.player) + '</button>' +
     '<div class="gname">' + nameWithStatus(g.player) + '</div><div class="gbig">' + g.points + '</div>' +
     '<div class="gm"><img src="' + esc(crestUrl(l)) + '" alt="">' + scoreText(g, g.home) + '<img src="' + esc(crestUrl(r)) + '" alt=""></div>' +
     '<div class="gsub">' + dateShort(g.played_at) + ' · ' + POS_NAME[g.pos] + ' · ' + g.minutes + ' Min.' + (g.manual ? ' · Nachtrag' : '') + '</div></div>' + adminTools(g);
@@ -176,7 +138,7 @@ function gameHtml() {
 function overviewHtml() {
   let h = '<div class="seg full htabs">' + [['best', 'Top'], ['players', 'Tabelle'], ['new', 'Neueste'], ['records', 'Rekorde']].map(([k, t]) =>
     '<button type="button" data-hof="t:' + k + '" aria-pressed="' + (ui.tab === k) + '">' + t + '</button>').join('') + '</div>' +
-    '<div class="lgs">' + [['ALL', 'Alle'], ['A2', 'Kreisliga A2'], ['B2', 'Kreisliga B2']].map(([k, t]) =>
+    '<div class="lgs">' + [['ALL', 'Alle'], ['A2', 'Kreisliga A2'], ['B2', 'Kreisliga B2'], ['B5', 'B5']].map(([k, t]) =>
       '<button type="button" data-hof="l:' + k + '" aria-pressed="' + (ui.league === k) + '">' + t + '</button>').join('') + '</div>';
   if (games.busy && !games.list) return h + '<p class="hmsg">Lädt …</p>';
   if (!games.list) return h + '<p class="hmsg">Keine Verbindung.</p><button type="button" class="btn full" data-hof="reload">Nochmal versuchen</button>';
@@ -189,8 +151,7 @@ function overviewHtml() {
 }
 
 export function render() {
-  $('hofBody').innerHTML = ui.game ? gameHtml() : ui.player ? profileHtml() : overviewHtml();
-  scrollChartsToEnd($('hofBody'));
+  $('hofBody').innerHTML = ui.game ? gameHtml() : overviewHtml();
   applyTier(0);
 }
 async function reload() {
@@ -233,8 +194,13 @@ async function remove() {
   render();
 }
 
-export function resetHof() { ui.player = null; ui.game = null; ui.edit = false; ui.confirmDelete = false; }
-export function openPlayer(id) { resetHof(); ui.player = id; }
+export function resetHof() { ui.player = null; ui.game = null; ui.edit = false; ui.confirmDelete = false; ui.returnTo = null; }
+/* Spiel aus einer anderen Ansicht (z. B. Profil) öffnen; „Zurück“ führt dorthin zurück */
+export function openHofGame(uid) {
+  const from = nav.current;
+  if (from !== 'hof') { resetHof(); ui.returnTo = from; show('hof'); }
+  openGame(uid);
+}
 
 export function initHof() {
   registerView('hof', { elements: ['hof'], render, enter: () => { reload(); } });
@@ -244,15 +210,16 @@ export function initHof() {
     const k = b.getAttribute('data-hof'), v = k.slice(2);
     if (k === 'reload') { reload(); return; }
     if (k.startsWith('g:')) { openGame(v); return; }
-    if (k === 'plist') { ui.player = null; ui.game = null; }
-    else if (k === 'gback') { ui.game = null; ui.edit = false; ui.confirmDelete = false; }
+    if (k === 'gback') {
+      ui.game = null; ui.edit = false; ui.confirmDelete = false;
+      if (ui.returnTo) { const r = ui.returnTo; ui.returnTo = null; show(r); return; }
+    }
     else if (k === 'edit') ui.edit = true;
     else if (k === 'edit-cancel') ui.edit = false;
     else if (k === 'del') ui.confirmDelete = true;
     else if (k === 'del-yes') { remove(); return; }
     else if (k.startsWith('t:')) ui.tab = v;
     else if (k.startsWith('l:')) ui.league = v;
-    else if (k.startsWith('p:')) { ui.player = v; ui.game = null; window.scrollTo(0, 0); }
     render();
   });
   $('hof').addEventListener('submit', e => {
