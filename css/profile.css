@@ -162,3 +162,10 @@ body.multi .quick { top: calc(58px + var(--sqh, 88px) + env(safe-area-inset-top,
 .intro-dots i.on { width: 22px; background: var(--kb-red); }
 .intro-nav { display: grid; grid-template-columns: 1fr 1.4fr; gap: 10px; }
 .intro-nav .btn { min-height: 50px; }
+
+/* Marktwert-Bewertung auf der Endübersicht */
+.mw-r { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 12px; font-size: 12.5px; }
+.mw-r b { font: 700 13px var(--font-body); margin-right: 2px; }
+.mw-r span { padding: 3px 8px; border-radius: 6px; background: rgba(255, 255, 255, .06); color: var(--muted); }
+.mw-r span.up { color: #2fd673; background: rgba(47, 214, 115, .12); }
+.mw-r span.down { color: #ff6a4a; background: rgba(255, 90, 42, .12); }

@@ -6,7 +6,7 @@ import { buzz } from '../core/util.js';
 import { PL, photoUrl } from '../data/players.js';
 import { CL, crestUrl } from '../data/clubs.js';
 import { statusIcon, ICON } from '../core/icons.js';
-import { marketOf, nextValue } from '../core/market.js';
+import { marketOf, nextValue, rating } from '../core/market.js';
 import { games, loadGames, insertGame } from '../services/api.js';
 import { rowLi, whistleLi, areaBars, seasonChart, toChartEntry, scrollChartsToEnd } from './components.js';
 import { preloadShare, shareCard } from './share.js';
@@ -45,11 +45,14 @@ function chartHtml() {
   return seasonChart(list, names.player, { button: '<button type="button" class="obtn" data-sv="share">' + ICON.share + 'Teilen</button>' });
 }
 function marketHtml() {
-  const S = store.S, m = marketOf(S.match.p, games.list || []);
+  const S = store.S, m = marketOf(S.match.p, games.list || []), e = matchEntry();
+  const g = { points: e.t, minutes: e.m, us: e.us, them: e.them }, r = rating(g);
   let v, d;
-  if (S.saved) { v = m.v; d = m.last; } else { v = nextValue(m.v, total(), S.uid || 'x'); d = v - m.v; }
+  if (S.saved) { v = m.v; d = m.last; } else { v = nextValue(m.v, g, S.uid || 'x'); d = v - m.v; }
+  const sign = n => (n > 0 ? '+' : '') + n;
+  const parts = '<div class="mw-r"><b>Bewertung ' + sign(r.total) + '</b>' + r.parts.map(([l, n]) => '<span class="' + (n > 0 ? 'up' : n < 0 ? 'down' : '') + '">' + l + ' ' + sign(n) + '</span>').join('') + '</div>';
   return '<div class="mwc"><div class="mw-k">' + (S.saved ? 'Marktwert' : 'Marktwert nach diesem Spiel') + '</div><div class="mw-row"><span class="mw-v">' + eur(v) +
-    '</span><span class="mw-d ' + trendClass(d) + '">' + (d > 0 ? '▲ ' : d < 0 ? '▼ ' : '') + signedEur(d) + '</span></div></div>';
+    '</span><span class="mw-d ' + trendClass(d) + '">' + (d > 0 ? '▲ ' : d < 0 ? '▼ ' : '') + signedEur(d) + '</span></div>' + parts + '</div>';
 }
 function saveHtml() {
   const S = store.S;
