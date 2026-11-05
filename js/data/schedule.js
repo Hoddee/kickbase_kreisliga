@@ -1,4 +1,5 @@
-/* Spielpläne Saison 2026/2027 (Hinrunde ab November + Rückrunde) – [Anstoß, Gegner, Heimspiel] */
+/* Spielpläne Saison 2026/2027 – [Anstoß, Gegner, Heimspiel, ID in der Datenbank].
+   Die eingebauten Daten sind nur der Offline-Stand; aktuell ist die Tabelle "spielplan" (im Admin-Bereich pflegbar). */
 export const SCHEDULE = {
   fornsbach: [
     ["2026-11-08T17:30+01:00", "allm3", 0],
@@ -80,7 +81,7 @@ export const SCHEDULE = {
 export const TEAMS = ['vfr', 'vfrk', 'fornsbach', 'sgm5'];
 
 const H = 3600e3;
-const fixture = (team, r) => ({ team, at: new Date(r[0]), o: r[1], home: !!r[2] });
+const fixture = (team, r) => ({ team, at: new Date(r[0]), o: r[1], home: !!r[2], id: r[3] || null });
 
 /* Nächstes Spiel einer Mannschaft. Ein Spiel bleibt bis 4 Stunden nach Anpfiff „aktuell“. */
 export function nextFixture(team, now = Date.now()) {
@@ -95,4 +96,18 @@ export function lastFixture(team, now = Date.now()) {
 /* Alle noch anstehenden Spiele einer Mannschaft */
 export function upcomingFixtures(team, now = Date.now()) {
   return (SCHEDULE[team] || []).filter(x => new Date(x[0]).getTime() + 4 * H > now).map(r => fixture(team, r));
+}
+/* Die letzten n bereits angepfiffenen Spiele (neueste zuerst) – Auswahl beim Nachtrag */
+export function pastFixtures(team, n = 5, now = Date.now()) {
+  return (SCHEDULE[team] || []).filter(x => new Date(x[0]).getTime() <= now).slice(-n).reverse().map(r => fixture(team, r));
+}
+/* Alle Spiele einer Mannschaft (für den Admin-Editor) */
+export const allFixtures = team => (SCHEDULE[team] || []).map(r => fixture(team, r));
+/* Zeilen aus der Datenbank übernehmen (ersetzt den eingebauten Stand) */
+export function applySchedule(rows) {
+  const by = {};
+  for (const r of rows) (by[r.team] = by[r.team] || []).push([r.anstoss, r.gegner, r.heim ? 1 : 0, r.id]);
+  for (const k of Object.keys(SCHEDULE)) delete SCHEDULE[k];
+  for (const [k, l] of Object.entries(by)) SCHEDULE[k] = l.sort((a, b) => new Date(a[0]) - new Date(b[0]));
+  for (const t of TEAMS) if (!SCHEDULE[t]) SCHEDULE[t] = [];
 }

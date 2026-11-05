@@ -7,16 +7,15 @@ import { marketOf, byDate } from '../core/market.js';
 import { statusIcon } from '../core/icons.js';
 import { games, loadGames } from '../services/api.js';
 import { gameRow, profileChart, scrollToCurrent, sparkline, playerStats } from './components.js';
-import { registerView, show, nav } from '../router.js';
+import { registerView, show, back, nav } from '../router.js';
 import { SEASON } from '../config.js';
 import { requestNewGame } from './start.js';
 
-const state = { id: null, from: 'start' };
+const state = { id: null };
 
-/* Profil öffnen; "from" = Ansicht, zu der „Zurück“ führt */
+/* Profil öffnen („Zurück“ führt über den Verlauf zur vorherigen Ansicht) */
 export function openProfile(id) {
   if (!PL[id]) return;
-  if (nav.current !== 'profile') state.from = nav.current || 'start';
   state.id = id;
   show('profile');
   if (!games.list && !games.busy) loadGames().then(() => { if (nav.current === 'profile') render(); });
@@ -77,7 +76,7 @@ export function initProfile() {
     const b = e.target.closest('[data-pf]');
     if (!b) return;
     const k = b.getAttribute('data-pf');
-    if (k === 'back') show(state.from && state.from !== 'profile' ? state.from : 'start');
+    if (k === 'back') back();
     else if (k === 'play') requestNewGame({ player: state.id });
   });
 }

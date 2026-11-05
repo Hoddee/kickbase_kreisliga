@@ -26,6 +26,8 @@
 <script type="module" src="js/main.js"></script>
 </head>
 <body>
+<!-- Startbildschirm, bis die App geladen ist -->
+<div id="splash" aria-hidden="true"><div class="spl"><img src="assets/icons/icon-192.png" alt="" width="96" height="96"><b>KREISLIGA</b><i>EDITION</i><span class="spl-bar"><span></span></span></div></div>
 
 <!-- Spielerkarte (Live / Endstand) -->
 <div id="home" hidden>
@@ -45,6 +47,7 @@
       </div>
     </div>
   </section>
+  <div class="squad flat" id="squadH" hidden></div>
   <main class="wrap"><div id="summary"></div><div class="rows-wrap"><h2 class="sec" id="listH" hidden>Alle Punkte</h2><ul class="rows" id="rows"></ul></div></main>
 </div>
 
@@ -116,6 +119,7 @@
       <div class="chip" id="eTot">0</div>
     </div>
   </header>
+  <div class="squad" id="squadE" hidden></div>
   <div class="quick" id="quick" hidden><div class="qrow" id="qrow"></div></div>
   <main class="wrap eb" id="editBody"></main>
   <div class="undo" id="undo" hidden>

@@ -1,6 +1,8 @@
 /* Spielerkarte (Live-Ansicht) mit Punkteliste; nach Spielende zusätzlich die Endübersicht */
 import { $, esc, setNum, setSrc, applyTier, signedEur, eur, trendClass } from '../core/util.js';
-import { store, saveGame, names, teamOf, isHome, scoreText, score, total, started, elapsed, startLine, endLines, withMarkers, breakdown, matchEntry, gameRecord } from '../core/game.js';
+import { store, saveGame, names, teamOf, isHome, scoreText, score, total, started, elapsed, startLine, endLines, withMarkers, breakdown, matchEntry, gameRecord, isMulti, eachPlayer, withPlayer, allSaved } from '../core/game.js';
+import { renderSquadBar, bindSquad } from './squad.js';
+import { buzz } from '../core/util.js';
 import { PL, photoUrl } from '../data/players.js';
 import { CL, crestUrl } from '../data/clubs.js';
 import { statusIcon, ICON } from '../core/icons.js';
@@ -52,10 +54,11 @@ function marketHtml() {
 function saveHtml() {
   const S = store.S;
   let b;
-  if (S.saved) b = '<div class="ok">✓ In der Hall of Fame gespeichert</div><button type="button" class="btn full" style="margin-top:10px" data-nav="hof">Hall of Fame ansehen</button>';
+  const multi = isMulti(), open = multi ? eachPlayer(() => !store.S.saved).filter(Boolean).length : 0;
+  if (multi ? allSaved() : S.saved) b = '<div class="ok">✓ ' + (multi ? 'Alle Spieler in der Hall of Fame gespeichert' : 'In der Hall of Fame gespeichert') + '</div><button type="button" class="btn full" style="margin-top:10px" data-nav="hof">Hall of Fame ansehen</button>';
   else if (save.busy) b = '<button type="button" class="btn primary" disabled>Speichere …</button>';
-  else if (save.confirm) b = '<p>Für alle sichtbar speichern?</p><div class="duo" style="margin-top:0"><button type="button" class="btn primary" data-sv="yes">Ja, speichern</button><button type="button" class="btn" data-sv="no">Abbrechen</button></div>';
-  else b = '<button type="button" class="btn primary" data-sv="ask">' + (S.manual ? 'Nachtrag speichern' : 'In Hall of Fame speichern') + '</button>';
+  else if (save.confirm) b = '<p>' + (multi ? open + ' Spieler für alle sichtbar speichern?' : 'Für alle sichtbar speichern?') + '</p><div class="duo" style="margin-top:0"><button type="button" class="btn primary" data-sv="yes">Ja, speichern</button><button type="button" class="btn" data-sv="no">Abbrechen</button></div>';
+  else b = '<button type="button" class="btn primary" data-sv="ask">' + (S.manual ? 'Nachtrag speichern' : multi ? (open === S.squad.length ? 'Alle ' + open + ' Spieler speichern' : open + ' Spieler speichern') : 'In Hall of Fame speichern') + '</button>';
   return '<div class="svc">' + b + (save.error ? '<div class="err">' + esc(save.error) + '</div>' : '') + '</div>';
 }
 function summaryHtml() {
@@ -68,11 +71,16 @@ function renderSummary() {
 
 async function saveToCloud() {
   const S = store.S;
-  if (!S.ended || S.saved || save.busy) return;
+  if (!S.ended || allSaved() || save.busy) return;
   save.busy = true; save.error = ''; save.confirm = false; render();
   try {
-    await insertGame(gameRecord(SEASON));
-    S.saved = true; saveGame();
+    /* Bei mehreren Spielern: jeden noch nicht gespeicherten einzeln speichern */
+    const recs = eachPlayer(i => (store.S.saved ? null : { i, row: gameRecord(SEASON) })).filter(Boolean);
+    for (const r of recs) {
+      await insertGame(r.row);
+      withPlayer(r.i, () => { store.S.saved = true; });
+      saveGame();
+    }
     await loadGames(true);
   } catch (e) {
     save.error = e.status === 401 || e.status === 403 ? 'Keine Berechtigung (Nachträge nur als Admin).' : 'Speichern hat nicht geklappt. Netz prüfen und nochmal tippen.';
@@ -102,25 +110,27 @@ export function render() {
     if (!games.list && !games.busy) loadGames().then(() => { if (nav.current === 'home' && store.S.ended) renderSummary(); });
   } else $('summary').innerHTML = '';
   $('rows').innerHTML = rowsData().map(rowLi).join('') + (started() ? whistleLi() : '');
+  renderSquadBar($('squadH'));
   seenId = S.nextId - 1;
-  signature = t + '|' + S.events.length + '|' + S.ended;
+  signature = t + '|' + S.events.length + '|' + S.ended + '|' + (S.cur || 0);
   updateLiveState();
 }
 
 /* Sekundentakt: Status aktualisieren, bei Änderungen neu zeichnen */
 export function tick() {
   updateLiveState();
-  const S = store.S, sig = total() + '|' + S.events.length + '|' + S.ended;
+  const S = store.S, sig = total() + '|' + S.events.length + '|' + S.ended + '|' + (S.cur || 0);
   if (sig !== signature) render();
 }
 
 export function initLive() {
   registerView('home', {
     elements: ['home', 'cta'],
-    guard: () => (store.S.match ? null : 'setup'),
+    guard: () => (store.S.match ? null : 'start'),
     enter: () => { save.confirm = false; },
     render
   });
+  bindSquad($('squadH'), document.querySelector('#home .hero'), () => { buzz(8); render(); });
   document.addEventListener('click', e => {
     const b = e.target.closest('[data-sv]');
     if (!b) return;

@@ -37,6 +37,7 @@ assets/                 Schriften und Icons
 | `spiele` | gespeicherte Spiele mit allen Aktionen | alle lesen und live eintragen; Nachträge, Ändern, Löschen nur Admin |
 | `kader`  | Spieler, Position, Start-Marktwert, Status | alle lesen; ändern nur Admin |
 | `admins` | Benutzer-IDs mit Admin-Rechten | nur per SQL |
+| `spielplan` | Spielpläne aller Teams (Anstoß, Gegner, Heim) | alle lesen; ändern nur Admin (im Admin-Bereich) |
 | `spieler_konten` | Spielerkonten: Nutzer ↔ Spieler, Status offen/frei/abgelehnt | eigener Antrag; freischalten nur Admin |
 
 Registrierungen sind offen (ohne Bestätigungsmail): Spieler wählen beim Registrieren ihren Spieler, der Admin schaltet

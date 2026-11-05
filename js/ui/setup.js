@@ -3,8 +3,8 @@ import { $, esc, eur, tierOf, trendClass, applyTier, readJson, writeJson, random
 import { KEYS } from '../config.js';
 import { PL, PLAYER_LIST, POS_NAME, POS_SHORT, POS_ORDER, fullName, guestId, isGuest } from '../data/players.js';
 import { CL, CLUB_LIST, LEAGUES, OWN_CLUBS, crestUrl, customClubId, isCustomClub } from '../data/clubs.js';
-import { TEAMS, nextFixture, lastFixture } from '../data/schedule.js';
-import { store, replaceGame, freshGame, applyMatchNames, applyMedia } from '../core/game.js';
+import { TEAMS, nextFixture, lastFixture, pastFixtures } from '../data/schedule.js';
+import { store, replaceGame, freshGame, applyMatchNames, applyMedia, eachPlayer, isMulti, newSlot, MAX_SQUAD } from '../core/game.js';
 import { marketOf } from '../core/market.js';
 import { cutout } from '../core/cutout.js';
 import { games, loadGames, uploadGuestImage } from '../services/api.js';
@@ -19,7 +19,7 @@ let sel = blank();
 /* Offene Formulare (Gastspieler, eigener Gegner) inkl. Eingaben und Bild */
 const forms = { guest: false, opp: false, err: '', busy: false, status: '', gname: '', gclub: 'vfr', oname: '', gimg: null, oimg: null };
 
-function blank() { return { p: null, team: null, o: null, home: true, pos: 'ABW', manual: false, plan: true, lg: null, fx: null, pf: null, of: null }; }
+function blank() { return { p: null, team: null, o: null, home: true, pos: 'ABW', manual: false, plan: true, lg: null, fx: null, pf: null, of: null, multi: false, ps: [], poss: {} }; }
 
 const defaultTeam = p => (PL[p] && CL[PL[p].c] ? PL[p].c : 'vfr');
 const fixtureFor = team => (sel.manual ? lastFixture(team) : nextFixture(team));
@@ -48,11 +48,17 @@ function lastSelection() {
 }
 
 /* Öffnet die Auswahl; mit match = vorhandene Auswahl bearbeiten, manual = Nachtrag (nur Admin) */
-export function openSetup(match = null, { manual = false, player = null } = {}) {
+export function openSetup(match = null, { manual = false, player = null, squad = false } = {}) {
   if (match) {
     sel = Object.assign(blank(), { p: match.p, o: match.o, home: !!match.home, pos: store.S.pos, team: match.team || defaultTeam(match.p), pf: match.pf || null, of: match.of || null });
     const fx = nextFixture(sel.team);
     sel.plan = !!(fx && fx.o === match.o);
+    /* Spiel mit mehreren Spielern: Auswahl übernehmen */
+    if (squad && isMulti()) {
+      sel.multi = true;
+      for (const [p, pos] of eachPlayer(() => [store.S.match.p, store.S.pos])) { sel.ps.push(p); sel.poss[p] = pos; }
+      sel.p = sel.ps[0];
+    }
   } else sel = lastSelection();
   if (!match && player && PL[player]) { sel = blank(); sel.p = player; sel.pos = PL[player].pos || 'ABW'; sel.team = defaultTeam(player); }
   sel.manual = !!manual;
@@ -67,7 +73,27 @@ export function openSetup(match = null, { manual = false, player = null } = {}) 
   show('setup');
 }
 
-const playerRow = p => baseRow(p, 'data-pick="p:' + p.id + '" aria-pressed="' + (sel.p === p.id) + '"', '<span class="ck">✓</span>');
+/* Einzelauswahl: Haken; Mehrfachauswahl: Nummer in der Reihenfolge der Auswahl */
+function checkMark(id) {
+  if (!sel.multi) return '<span class="ck">✓</span>';
+  const i = sel.ps.indexOf(id);
+  return '<span class="ck num">' + (i >= 0 ? i + 1 : '') + '</span>';
+}
+const isPicked = id => (sel.multi ? sel.ps.includes(id) : sel.p === id);
+const playerRow = p => baseRow(p, 'data-pick="p:' + p.id + '" aria-pressed="' + isPicked(p.id) + '"', checkMark(p.id));
+/* Spieler in der Mehrfachauswahl an- oder abwählen */
+function togglePick(id) {
+  const i = sel.ps.indexOf(id);
+  if (i >= 0) { sel.ps.splice(i, 1); delete sel.poss[id]; }
+  else {
+    if (sel.ps.length >= MAX_SQUAD) { toast('Maximal ' + MAX_SQUAD + ' Spieler gleichzeitig'); return false; }
+    sel.ps.push(id); sel.poss[id] = (PL[id] && PL[id].pos) || 'MIT';
+  }
+  const first = sel.ps[0] || null;
+  if (first !== sel.p) { sel.p = first; if (first) newPlayerTeam(defaultTeam(first)); }
+  if (sel.p) sel.pos = sel.poss[sel.p];
+  return true;
+}
 
 /* Bild-Auswahl mit Vorschau (Hintergrund wird automatisch entfernt) */
 function imageField(which, img, label) {
@@ -93,10 +119,19 @@ function fixtureCard(fx) {
     dayLabel(fx.at) + ' · ' + pad2(fx.at.getHours()) + ':' + pad2(fx.at.getMinutes()) + ' Uhr</b></div>' +
     '<div class="fx-m"><div><img src="' + esc(crestUrl(home)) + '" alt=""><span>' + esc(CL[home].n) + '</span></div><i>vs</i>' +
     '<div><img src="' + esc(crestUrl(away)) + '" alt=""><span>' + esc(CL[away].n) + '</span></div></div>' +
-    '<div class="fx-f">Kreisliga ' + CL[fx.team].lg + ' · ' + (fx.home ? 'Heimspiel' : 'Auswärtsspiel') + '</div></div>' +
+    '<div class="fx-f">Kreisliga ' + CL[fx.team].lg + ' · ' + (fx.home ? 'Heimspiel' : 'Auswärtsspiel') + '</div></div>' + pastPicker(fx) +
     '<button type="button" class="add-row" data-pick="manual-opp"><span class="plus">⇄</span><span>Anderen Gegner wählen<small>z. B. Pokal, Nachholspiel oder andere Liga</small></span></button>';
 }
 
+/* Nachtrag: die letzten Spiele laut Spielplan zur Auswahl (Datum wird übernommen) */
+function pastPicker(cur) {
+  if (!sel.manual) return '';
+  const l = pastFixtures(sel.team, 6);
+  if (l.length < 2) return '';
+  return '<div class="fxpick" role="group" aria-label="Anderes Spiel aus dem Spielplan">' + l.map((f, i) =>
+    '<button type="button" data-pick="fx:' + i + '" aria-pressed="' + (f.at.getTime() === cur.at.getTime()) + '"><img src="' + esc(crestUrl(f.o)) + '" alt=""><span>' +
+    pad2(f.at.getDate()) + '.' + pad2(f.at.getMonth() + 1) + '.</span></button>').join('') + '</div>';
+}
 function oppPicker() {
   let h = '';
   if (sel.fx) h += '<button type="button" class="back" data-pick="plan"><b aria-hidden="true">‹</b>Zurück zum Spielplan</button>';
@@ -126,7 +161,9 @@ function html() {
   let h = '';
   if (sel.manual) h += '<div class="note-badge">Nachtrag: Spiel nachträglich eintragen</div>';
   else if (store.S.match) h += '<button type="button" class="back" data-pick="back"><b aria-hidden="true">‹</b>Zurück zum Spiel</button>';
-  h += '<h2>Spieler</h2>';
+  h += '<div class="sh2"><h2>Spieler</h2>' + (sel.manual ? '' : '<button type="button" class="multibtn" data-pick="multi" aria-pressed="' + sel.multi + '">' +
+    '<span class="mbi" aria-hidden="true"><i></i><i></i><i></i></span>' + (sel.multi ? 'Mehrere · ' + sel.ps.length + '/' + MAX_SQUAD : 'Mehrere Spieler') + '</button>') + '</div>' +
+    (sel.multi ? '<p class="muted small hint">Tippe bis zu ' + MAX_SQUAD + ' Spieler an. Beim Punkte vergeben wechselst du oben mit einem Tipp zwischen ihnen.</p>' : '');
   if (sel.lock) {
     h += '<div class="plist">' + (PL[sel.p] ? playerRow(PL[sel.p]) : '') + '</div>';
     return h + matchHtml();
@@ -147,8 +184,11 @@ function matchHtml() {
   if (sel.p) {
     h += '<h2 id="oppH">Spielt für</h2>' + teamChips();
     h += '<h2>Gegner</h2>' + (sel.plan && sel.fx ? fixtureCard(sel.fx) : oppPicker());
-    h += '<h2>Spielort</h2><div class="seg full"><button type="button" data-pick="h:1" aria-pressed="' + sel.home + '">Heim</button><button type="button" data-pick="h:0" aria-pressed="' + !sel.home + '">Auswärts</button></div>' +
-      '<h2>Position</h2><div class="seg full">' + POS_ORDER.map(k => '<button type="button" data-pick="s:' + k + '" aria-pressed="' + (sel.pos === k) + '">' + POS_NAME[k] + '</button>').join('') + '</div>';
+    h += '<h2>Spielort</h2><div class="seg full"><button type="button" data-pick="h:1" aria-pressed="' + sel.home + '">Heim</button><button type="button" data-pick="h:0" aria-pressed="' + !sel.home + '">Auswärts</button></div>';
+    if (sel.multi && sel.ps.length > 1) {
+      h += '<h2>Positionen</h2><ul class="poslist">' + sel.ps.map(id => '<li>' + avatar(id) + '<b>' + esc(PL[id].n) + '</b><span class="seg">' +
+        POS_ORDER.map(k => '<button type="button" data-pick="ps:' + esc(id) + ':' + k + '" aria-pressed="' + (sel.poss[id] === k) + '">' + POS_SHORT[k] + '</button>').join('') + '</span></li>').join('') + '</ul>';
+    } else h += '<h2>Position</h2><div class="seg full">' + POS_ORDER.map(k => '<button type="button" data-pick="s:' + k + '" aria-pressed="' + (sel.pos === k) + '">' + POS_NAME[k] + '</button>').join('') + '</div>';
   }
   return h;
 }
@@ -156,10 +196,10 @@ function matchHtml() {
 /* Gastspieler: nur für dieses Spiel, optional mit Foto */
 function guestHtml() {
   let h = '';
-  if (isGuest(sel.p)) {
-    const g = PL[sel.p];
-    h += '<div class="grp"><span>Gastspieler</span></div><div class="plist"><button type="button" class="prow" data-pick="p:' + esc(sel.p) + '" aria-pressed="true">' + avatar(sel.p) +
-      '<span><b>' + esc(g.n) + ' <i class="tag">Gast</i></b><span class="ps">' + esc(CL[g.c].n) + '</span></span><span></span><span class="ck">✓</span></button></div>';
+  const guests = (sel.multi ? sel.ps : [sel.p]).filter(isGuest);
+  if (guests.length) {
+    h += '<div class="grp"><span>Gastspieler</span></div><div class="plist">' + guests.map(id => '<button type="button" class="prow" data-pick="p:' + esc(id) + '" aria-pressed="true">' + avatar(id) +
+      '<span><b>' + esc(PL[id].n) + ' <i class="tag">Gast</i></b><span class="ps">' + esc(CL[PL[id].c].n) + '</span></span><span></span>' + checkMark(id) + '</button>').join('') + '</div>';
   }
   if (!forms.guest) return h + '<button type="button" class="add-row" data-pick="add-guest"><span class="plus">+</span><span>Gastspieler hinzufügen<small>nur für dieses Spiel</small></span></button>';
   const opts = LEAGUES.map(lg => '<optgroup label="Kreisliga ' + lg + '">' + CLUB_LIST.filter(c => c.lg === lg).map(c => '<option value="' + c.id + '"' + (c.id === forms.gclub ? ' selected' : '') + '>' + esc(c.n) + '</option>').join('') + '</optgroup>').join('');
@@ -175,7 +215,7 @@ export function render() {
   if (!games.list && !games.busy) loadGames().then(() => { if (nav.current === 'setup' && games.list) render(); });
   $('setupBody').innerHTML = html();
   $('goBtn').disabled = !(sel.p && sel.o) || forms.busy;
-  $('goBtn').textContent = sel.manual ? 'Weiter zum Nachtrag' : 'Spiel starten';
+  $('goBtn').textContent = sel.manual ? 'Weiter zum Nachtrag' : sel.multi && sel.ps.length > 1 ? 'Spiel starten · ' + sel.ps.length + ' Spieler' : 'Spiel starten';
   applyTier(0);
 }
 
@@ -187,6 +227,13 @@ function start() {
   if (isGuest(sel.p) && sel.pf) g.match.pf = sel.pf;
   if (isCustomClub(sel.o) && sel.of) g.match.of = sel.of;
   g.uid = randomId();
+  if (!sel.manual && sel.multi && sel.ps.length > 1) {
+    /* Mehrere Spieler: jeder bekommt einen eigenen Eintrag, der erste ist zuerst aktiv */
+    g.squad = sel.ps.map((p, i) => newSlot(p, sel.poss[p] || 'MIT', i === 0 ? g.uid : randomId()));
+    g.cur = 0;
+    g.match.p = sel.ps[0]; g.pos = g.squad[0].pos;
+    if (g.squad[0].pf) g.match.pf = g.squad[0].pf; else delete g.match.pf;
+  }
   if (sel.manual && sel.plan && sel.fx) g.playedAt = sel.fx.at.toISOString();
   if (!isGuest(sel.p)) writeJson(KEYS.lastSelection, { p: sel.p, team: g.match.team });
   replaceGame(g);
@@ -247,8 +294,8 @@ export function initSetup() {
       const path = await uploadIfAny('gimg');
       const id = guestId(String(f.get('club')), name);
       if (path) { PL[id].foto = path; sel.pf = path; } else sel.pf = PL[id].foto || null;
-      sel.p = id; sel.pos = 'MIT';
-      newPlayerTeam(PL[id].c);
+      if (sel.multi) { if (!sel.ps.includes(id)) togglePick(id); }
+      else { sel.p = id; sel.pos = 'MIT'; newPlayerTeam(PL[id].c); }
       Object.assign(forms, { guest: false, busy: false, err: '', status: '', gname: '', gimg: null });
       render(); scrollToOpp();
     } else if (e.target.id === 'oppForm') {
@@ -274,6 +321,26 @@ export function initSetup() {
     if (k.startsWith('img-clear:')) { forms[k.slice(10)] = null; forms.status = ''; render(); return; }
     if (k === 'manual-opp') { sel.plan = false; sel.lg = CL[sel.team].lg || 'A2'; render(); return; }
     if (k === 'plan') { sel.plan = true; applyPlan(); render(); return; }
+    if (k.startsWith('fx:')) {
+      const f = pastFixtures(sel.team, 6)[+k.slice(3)];
+      if (f) { sel.fx = f; sel.o = f.o; sel.home = f.home; sel.plan = true; }
+      render(); return;
+    }
+    if (k === 'multi') {
+      sel.multi = !sel.multi;
+      if (sel.multi) { sel.ps = sel.p ? [sel.p] : []; sel.poss = sel.p ? { [sel.p]: sel.pos } : {}; }
+      else { sel.ps = []; sel.poss = {}; }
+      render(); return;
+    }
+    if (k.startsWith('ps:')) {
+      const [, id, pos] = k.split(':').length > 3 ? [null, k.slice(3, k.lastIndexOf(':')), k.slice(k.lastIndexOf(':') + 1)] : k.split(':');
+      sel.poss[id] = pos; if (id === sel.p) sel.pos = pos;
+      render(); return;
+    }
+    if (k.startsWith('p:') && sel.multi && !sel.lock) {
+      if (togglePick(v)) render();
+      return;
+    }
     if (k.startsWith('p:')) {
       const changed = sel.p !== v;
       sel.p = v; sel.pos = PL[v].pos || 'ABW';

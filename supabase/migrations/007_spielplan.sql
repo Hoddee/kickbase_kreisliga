@@ -1,0 +1,87 @@
+-- Spielplan in der Datenbank: lesen alle, ändern nur Admins (Bearbeiten im Admin-Bereich der App)
+create table if not exists public.spielplan (
+  id bigint generated always as identity primary key,
+  team text not null check (team ~ '^[A-Za-z0-9_]{1,24}$'),
+  anstoss timestamptz not null,
+  gegner text not null check (char_length(gegner) between 1 and 40),
+  heim boolean not null default true,
+  updated_at timestamptz not null default now(),
+  unique (team, anstoss)
+);
+alter table public.spielplan enable row level security;
+drop policy if exists "spielplan lesen" on public.spielplan;
+create policy "spielplan lesen" on public.spielplan for select to anon, authenticated using (true);
+drop policy if exists "spielplan admin" on public.spielplan;
+create policy "spielplan admin" on public.spielplan for all to authenticated using (public.is_admin()) with check (public.is_admin());
+
+-- Startdaten: Spielpläne Saison 2026/2027 (VfR A2, VfR II B2, SC Fornsbach B2, SGM Fornsbach II B5)
+insert into public.spielplan (team, anstoss, gegner, heim) values
+  ('fornsbach', '2026-11-08T17:30+01:00', 'allm3', false),
+  ('fornsbach', '2026-11-15T14:30+01:00', 'oberbr', true),
+  ('fornsbach', '2026-11-22T13:00+01:00', 'grosser', false),
+  ('fornsbach', '2026-11-29T14:30+01:00', 'kirchberg', true),
+  ('fornsbach', '2026-12-04T19:30+01:00', 'vfrk', false),
+  ('fornsbach', '2027-02-28T14:30+01:00', 'leuten', false),
+  ('fornsbach', '2027-03-07T15:00+01:00', 'erbB', true),
+  ('fornsbach', '2027-03-14T12:45+01:00', 'ruder2', false),
+  ('fornsbach', '2027-03-21T15:00+01:00', 'lippold', true),
+  ('fornsbach', '2027-04-04T15:00+02:00', 'aspach', false),
+  ('fornsbach', '2027-04-11T15:00+02:00', 'althuette', true),
+  ('fornsbach', '2027-04-18T15:00+02:00', 'winn', false),
+  ('fornsbach', '2027-05-02T15:00+02:00', 'tuerk', false),
+  ('fornsbach', '2027-05-09T15:00+02:00', 'allm3', true),
+  ('fornsbach', '2027-05-23T15:00+02:00', 'oberbr', false),
+  ('fornsbach', '2027-05-30T15:00+02:00', 'grosser', true),
+  ('fornsbach', '2027-06-05T13:30+02:00', 'kirchberg', false),
+  ('vfrk', '2026-11-08T14:30+01:00', 'tuerk', false),
+  ('vfrk', '2026-11-15T12:15+01:00', 'allm3', true),
+  ('vfrk', '2026-11-22T13:00+01:00', 'oberbr', true),
+  ('vfrk', '2026-11-29T12:15+01:00', 'grosser', true),
+  ('vfrk', '2026-12-04T19:30+01:00', 'fornsbach', true),
+  ('vfrk', '2027-02-21T14:30+01:00', 'kirchberg', false),
+  ('vfrk', '2027-03-07T15:00+01:00', 'leuten', false),
+  ('vfrk', '2027-03-14T12:15+01:00', 'erbB', false),
+  ('vfrk', '2027-03-21T12:45+01:00', 'ruder2', true),
+  ('vfrk', '2027-04-04T15:00+02:00', 'lippold', false),
+  ('vfrk', '2027-04-11T12:45+02:00', 'aspach', true),
+  ('vfrk', '2027-04-18T15:00+02:00', 'althuette', false),
+  ('vfrk', '2027-04-25T12:45+02:00', 'winn', true),
+  ('vfrk', '2027-05-09T12:45+02:00', 'tuerk', true),
+  ('vfrk', '2027-05-23T12:45+02:00', 'allm3', false),
+  ('vfrk', '2027-05-30T15:00+02:00', 'oberbr', false),
+  ('vfrk', '2027-06-05T13:30+02:00', 'grosser', false),
+  ('vfr', '2026-11-08T12:45+01:00', 'allm2', false),
+  ('vfr', '2026-11-15T14:30+01:00', 'unter2', true),
+  ('vfr', '2026-11-22T13:00+01:00', 'klein', false),
+  ('vfr', '2026-11-29T14:30+01:00', 'weiler', true),
+  ('vfr', '2026-12-06T14:30+01:00', 'spiegel', false),
+  ('vfr', '2027-02-21T14:30+01:00', 'sulzm', true),
+  ('vfr', '2027-02-28T14:30+01:00', 'alex', false),
+  ('vfr', '2027-03-07T15:00+01:00', 'erbA', true),
+  ('vfr', '2027-03-14T15:00+01:00', 'ruder', false),
+  ('vfr', '2027-03-21T15:00+01:00', 'oppen2', true),
+  ('vfr', '2027-04-04T15:00+02:00', 'tsc', false),
+  ('vfr', '2027-04-11T15:00+02:00', 'stein2', true),
+  ('vfr', '2027-04-18T15:00+02:00', 'sulzl', false),
+  ('vfr', '2027-04-25T15:00+02:00', 'sk_fichtenberg', true),
+  ('vfr', '2027-05-09T15:00+02:00', 'allm2', true),
+  ('vfr', '2027-05-23T12:45+02:00', 'unter2', false),
+  ('vfr', '2027-05-30T16:00+02:00', 'klein', true),
+  ('vfr', '2027-06-05T16:00+02:00', 'weiler', false),
+  ('sgm5', '2026-11-15T12:15+01:00', 'oberbr2', true),
+  ('sgm5', '2026-11-22T15:15+01:00', 'klein2', false),
+  ('sgm5', '2026-11-29T12:15+01:00', 'kirchberg2', true),
+  ('sgm5', '2026-12-06T12:15+01:00', 'spiegel2', false),
+  ('sgm5', '2027-02-21T12:15+01:00', 'sulzm2', true),
+  ('sgm5', '2027-02-28T12:15+01:00', 'alex2', false),
+  ('sgm5', '2027-03-14T12:45+01:00', 'leuten2', false),
+  ('sgm5', '2027-03-21T12:45+01:00', 'oppen3', true),
+  ('sgm5', '2027-04-18T12:45+02:00', 'sulzl2', false),
+  ('sgm5', '2027-04-25T12:45+02:00', 'fichten2', true),
+  ('sgm5', '2027-05-02T12:45+02:00', 'tuerk2', false),
+  ('sgm5', '2027-05-23T12:45+02:00', 'oberbr2', false),
+  ('sgm5', '2027-05-30T12:45+02:00', 'klein2', true),
+  ('sgm5', '2027-06-05T14:00+02:00', 'kirchberg2', false)
+on conflict (team, anstoss) do nothing;
+
+select team, count(*) from public.spielplan group by team order by team;

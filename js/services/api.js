@@ -4,6 +4,7 @@ import { accessToken } from './auth.js';
 import { PL, PLAYER_LIST, addPlayer } from '../data/players.js';
 import { CL } from '../data/clubs.js';
 import { applyMedia } from '../core/game.js';
+import { applySchedule } from '../data/schedule.js';
 import { readJson, writeJson } from '../core/util.js';
 
 export async function rest(path, opt = {}) {
@@ -155,4 +156,36 @@ export async function decideAccount(userId, status) {
   const d = await r.json();
   if (!d.length) throw new Error('Keine Berechtigung.');
   return d[0];
+}
+
+/* ---------- Spielplan ---------- */
+const cachedPlan = readJson(KEYS.schedule, null);
+if (Array.isArray(cachedPlan) && cachedPlan.length) applySchedule(cachedPlan);
+let planRows = Array.isArray(cachedPlan) ? cachedPlan : null;
+export async function loadSchedule() {
+  try {
+    const r = await rest('spielplan?select=id,team,anstoss,gegner,heim&order=anstoss&limit=1000');
+    const rows = await r.json();
+    if (Array.isArray(rows) && rows.length) { planRows = rows; applySchedule(rows); writeJson(KEYS.schedule, rows); }
+    return true;
+  } catch (e) { return false; }
+}
+function storePlan() { applySchedule(planRows || []); writeJson(KEYS.schedule, planRows || []); }
+export async function saveFixture(row, id = null) {
+  row.updated_at = new Date().toISOString();
+  const r = await rest(id ? 'spielplan?id=eq.' + id : 'spielplan', {
+    method: id ? 'PATCH' : 'POST', headers: Object.assign({ Prefer: 'return=representation' }, json), body: JSON.stringify(row)
+  });
+  const d = await r.json();
+  if (!d.length) throw new Error('Keine Berechtigung.');
+  planRows = (planRows || []).filter(x => x.id !== d[0].id).concat(d);
+  storePlan();
+  return d[0];
+}
+export async function deleteFixture(id) {
+  const r = await rest('spielplan?id=eq.' + id, { method: 'DELETE', headers: { Prefer: 'return=representation' } });
+  const d = await r.json();
+  if (!d.length) throw new Error('Keine Berechtigung.');
+  planRows = (planRows || []).filter(x => x.id !== id);
+  storePlan();
 }
