@@ -7,7 +7,7 @@ import { TEAMS } from '../data/schedule.js';
 import { CAT, scoreText, recordTeam } from '../core/game.js';
 import { marketOf, byDate } from '../core/market.js';
 import { games, loadGames, loadEvents, cachedEvents, forgetEvents, updateGame, deleteGame } from '../services/api.js';
-import { isAdmin } from '../services/auth.js';
+import { isAdmin, canManage } from '../services/auth.js';
 import { ICON } from '../core/icons.js';
 import { avatar, nameWithStatus, rowLi, rowsFromRecord, whistleLi, areaBars, gameRow } from './components.js';
 import { registerView, show, nav } from '../router.js';
@@ -106,9 +106,9 @@ function editForm(g) {
     '<div class="duo"><button type="submit" class="btn primary">Speichern</button><button type="button" class="btn" data-hof="edit-cancel">Abbrechen</button></div></form></div>';
 }
 function adminTools(g) {
-  if (!isAdmin()) return '';
+  if (!canManage(g.player)) return '';
   if (ui.edit) return editForm(g);
-  return '<div class="admin-tools"><div class="fl">' + ICON.shield + 'Admin</div><div class="duo">' +
+  return '<div class="admin-tools"><div class="fl">' + ICON.shield + (isAdmin() ? 'Admin' : 'Dein Spiel') + '</div><div class="duo">' +
     '<button type="button" class="btn" data-hof="edit">' + ICON.edit + 'Bearbeiten</button>' +
     (ui.confirmDelete ? '<button type="button" class="btn danger" data-hof="del-yes">Wirklich löschen?</button>' : '<button type="button" class="btn danger" data-hof="del">' + ICON.trash + 'Löschen</button>') +
     '</div></div>';

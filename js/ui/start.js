@@ -6,7 +6,7 @@ import { CL, OWN_CLUBS, crestUrl } from '../data/clubs.js';
 import { TEAMS, nextFixture } from '../data/schedule.js';
 import { store, total, score, started, isHome, teamOf } from '../core/game.js';
 import { games, loadGames } from '../services/api.js';
-import { isAdmin } from '../services/auth.js';
+import { isAdmin, isLoggedIn, pendingRequests } from '../services/auth.js';
 import { avatar, playerRow, nameWithStatus } from './components.js';
 import { registerView, show, nav } from '../router.js';
 import { openSetup } from './setup.js';
@@ -87,7 +87,12 @@ function html() {
 export function render() {
   if (!games.list && !games.busy) loadGames().then(() => { if (nav.current === 'start') render(); });
   $('startBody').innerHTML = html();
-  $('adminBtn').classList.toggle('on', isAdmin());
+  const btn = $('adminBtn'), n = isAdmin() ? pendingRequests() : 0;
+  btn.classList.toggle('on', isLoggedIn());
+  let badge = btn.querySelector('.nbadge');
+  if (n && !badge) { badge = document.createElement('i'); badge.className = 'nbadge'; btn.appendChild(badge); }
+  if (badge) { if (n) badge.textContent = n > 9 ? '9+' : String(n); else badge.remove(); }
+  btn.setAttribute('aria-label', n ? 'Konto – ' + n + ' offene Anfragen' : 'Konto');
   applyTier(0);
 }
 

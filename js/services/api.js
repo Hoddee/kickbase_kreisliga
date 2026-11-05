@@ -141,3 +141,18 @@ export async function updatePlayer(id, patch) {
   writeJson(KEYS.roster, all.map(x => (x.id === id ? d[0] : x)));
   return d[0];
 }
+
+/* ---------- Spielerkonten (Admin) ---------- */
+export async function loadAccounts() {
+  const r = await rest('spieler_konten?select=*&order=created_at.desc');
+  return r.json();
+}
+export async function decideAccount(userId, status) {
+  const r = await rest('spieler_konten?user_id=eq.' + encodeURIComponent(userId), {
+    method: 'PATCH', headers: Object.assign({ Prefer: 'return=representation' }, json),
+    body: JSON.stringify({ status, entschieden_at: new Date().toISOString() })
+  });
+  const d = await r.json();
+  if (!d.length) throw new Error('Keine Berechtigung.');
+  return d[0];
+}

@@ -1,17 +1,27 @@
-/* Admin-Bereich: Login, Passwort, Spiel nachtragen, Kader pflegen (Status, Position, Marktwert) */
+/* Konto-Bereich: Anmelden, Registrieren (Spielerkonto), Passwort.
+   Spieler: Freigabe-Status, eigene Spiele nachtragen. Admin: Anfragen freischalten, Spiel nachtragen, Kader pflegen. */
 import { $, esc, eur, toast, applyTier } from '../core/util.js';
 import { PL, PLAYER_LIST, POS_NAME, POS_ORDER, STATUS_NAME, fullName } from '../data/players.js';
 import { CL, CLUB_LIST } from '../data/clubs.js';
-import { login, logout, currentUser, isLoggedIn, isAdmin, refreshAdminFlag, requestPasswordReset, updatePassword, onAuthChange } from '../services/auth.js';
+import { login, logout, signup, currentUser, isLoggedIn, isAdmin, myAccount, myPlayer, requestAccount, refreshAdminFlag, requestPasswordReset, updatePassword, onAuthChange } from '../services/auth.js';
 import { cutout } from '../core/cutout.js';
-import { loadRoster, updatePlayer, insertPlayer, uploadPhoto, games } from '../services/api.js';
+import { loadRoster, updatePlayer, insertPlayer, uploadPhoto, games, loadAccounts, decideAccount } from '../services/api.js';
+import { openProfile } from './profile.js';
 import { marketOf } from '../core/market.js';
 import { ICON, statusIcon } from '../core/icons.js';
 import { avatar } from './components.js';
 import { registerView, show, nav } from '../router.js';
 import { openSetup } from './setup.js';
 
-const ui = { mode: 'login', busy: false, msg: '', editing: null, passwordMode: false, email: '', adding: false };
+const ui = { mode: 'login', busy: false, msg: '', editing: null, passwordMode: false, email: '', adding: false, accounts: null, changePlayer: false };
+
+/* Auswahl „Welcher Spieler bist du?“ (alle aktiven Kaderspieler, nach Verein gruppiert) */
+function playerSelect(cur) {
+  const groups = new Map();
+  for (const p of PLAYER_LIST.filter(x => x.active !== false)) { if (!groups.has(p.c)) groups.set(p.c, []); groups.get(p.c).push(p); }
+  return '<select class="fi" name="spieler" required><option value="">Bitte wählen …</option>' + [...groups].map(([c, l]) => '<optgroup label="' + esc(CL[c] ? CL[c].n : c) + '">' +
+    l.map(p => '<option value="' + esc(p.id) + '"' + (p.id === cur ? ' selected' : '') + '>' + esc(fullName(p)) + '</option>').join('') + '</optgroup>').join('') + '</select>';
+}
 
 /* ---------- Login-Ansicht ---------- */
 function loginHtml() {
@@ -22,12 +32,63 @@ function loginHtml() {
       '<button type="submit" class="btn primary full"' + (ui.busy ? ' disabled' : '') + '>Link senden</button></form>' +
       '<button type="button" class="lnk" data-adm="mode-login">Zurück zum Login</button></div>';
   }
-  return '<div class="auth card"><div class="auth-icon">' + ICON.shield + '</div><h3>Admin-Login</h3><p class="muted">Nur für die Spielleitung: Spiele nachtragen, bearbeiten und den Kader pflegen.</p>' +
+  if (ui.mode === 'register') {
+    return '<div class="auth card"><div class="auth-icon">' + ICON.user + '</div><h3>Registrieren</h3><p class="muted">Leg dir ein Konto an und wähle aus, welcher Spieler du bist. Sobald die Spielleitung dich freischaltet, kannst du deine Spiele selbst nachtragen.</p>' +
+      '<form id="registerForm" class="form"><label class="nf"><span>E-Mail</span><input class="fi" type="email" name="email" autocomplete="username" required value="' + esc(ui.email) + '"></label>' +
+      '<label class="nf"><span>Passwort (mind. 8 Zeichen)</span><input class="fi" type="password" name="pw" autocomplete="new-password" minlength="8" required></label>' +
+      '<label class="nf"><span>Passwort wiederholen</span><input class="fi" type="password" name="pw2" autocomplete="new-password" minlength="8" required></label>' +
+      '<label class="nf"><span>Welcher Spieler bist du?</span>' + playerSelect(ui.regPlayer) + '</label>' +
+      (ui.msg ? '<div class="form-msg bad">' + esc(ui.msg) + '</div>' : '') +
+      '<button type="submit" class="btn primary full"' + (ui.busy ? ' disabled' : '') + '>' + (ui.busy ? 'Konto wird angelegt …' : 'Konto anlegen') + '</button></form>' +
+      '<button type="button" class="lnk" data-adm="mode-login">Schon ein Konto? Anmelden</button></div>';
+  }
+  return '<div class="auth card"><div class="auth-icon">' + ICON.shield + '</div><h3>Anmelden</h3><p class="muted">Für Spieler mit Konto und die Spielleitung.</p>' +
     '<form id="loginForm" class="form"><label class="nf"><span>E-Mail</span><input class="fi" type="email" name="email" autocomplete="username" required value="' + esc(ui.email) + '"></label>' +
     '<label class="nf"><span>Passwort</span><input class="fi" type="password" name="password" autocomplete="current-password" required></label>' +
     (ui.msg ? '<div class="form-msg bad">' + esc(ui.msg) + '</div>' : '') +
     '<button type="submit" class="btn primary full"' + (ui.busy ? ' disabled' : '') + '>' + (ui.busy ? 'Anmelden …' : 'Anmelden') + '</button></form>' +
-    '<button type="button" class="lnk" data-adm="mode-forgot">Passwort vergessen?</button></div>';
+    '<button type="button" class="lnk" data-adm="mode-forgot">Passwort vergessen?</button></div>' +
+    '<button type="button" class="add-row" data-adm="mode-register"><span class="plus">+</span><span>Noch kein Konto? Registrieren<small>für Spieler: eigene Spiele nachtragen</small></span></button>';
+}
+
+/* ---------- Spielerkonto (angemeldet, kein Admin) ---------- */
+function playerHtml() {
+  const u = currentUser(), acc = myAccount(), mine = myPlayer();
+  let h = '<div class="card acct"><div>' + ICON.user + '</div><div><b>' + esc(u && u.email ? u.email : 'Angemeldet') + '</b><small>' + (mine ? 'Spieler' : acc && acc.status === 'offen' ? 'Wartet auf Freigabe' : 'Konto') + '</small></div>' +
+    '<button type="button" class="btn" data-adm="logout">Abmelden</button></div>';
+  const choose = (title, text) => '<div class="card inline-form"><div class="fl">' + title + '</div><p class="muted small" style="margin:0">' + text + '</p>' +
+    '<form id="requestForm" class="form"><label class="nf"><span>Welcher Spieler bist du?</span>' + playerSelect(acc && acc.spieler_id) + '</label>' +
+    (ui.msg ? '<div class="form-msg bad">' + esc(ui.msg) + '</div>' : '') +
+    '<div class="duo"><button type="submit" class="btn primary"' + (ui.busy ? ' disabled' : '') + '>Anfrage senden</button>' + (acc && acc.status === 'offen' ? '<button type="button" class="btn" data-adm="change-cancel">Abbrechen</button>' : '') + '</div></form></div>';
+  if (mine && PL[mine]) {
+    h += '<button type="button" class="pcard" data-adm="my-profile">' + avatar(mine) + '<span><small>Freigeschaltet als</small><b>' + esc(fullName(PL[mine])) + '</b></span><span class="chev">›</span></button>' +
+      '<div class="tiles"><button type="button" class="tile" data-adm="my-manual">' + ICON.plus + '<b>Spiel nachtragen</b><small>Mit Datum, Einsatzminuten und Aktionen</small></button>' +
+      '<button type="button" class="tile" data-adm="my-profile">' + ICON.trophy + '<b>Mein Profil</b><small>Verlauf, Marktwert – dort jedes Spiel öffnen und bearbeiten</small></button></div>';
+  } else if (!acc) h += choose('Spieler auswählen', 'Wähle aus, welcher Spieler du bist. Die Spielleitung bekommt die Anfrage und schaltet dich frei.');
+  else if (acc.status === 'abgelehnt') h += choose('Anfrage abgelehnt', 'Deine Anfrage wurde nicht freigegeben. Falls du den falschen Spieler gewählt hast, kannst du es hier nochmal versuchen.');
+  else if (ui.changePlayer) h += choose('Anderen Spieler wählen', 'Deine Anfrage bleibt offen, bis die Spielleitung entscheidet.');
+  else {
+    const p = PL[acc.spieler_id];
+    h += '<div class="card waitc"><div class="waiti">⏳</div><div><b>Wartet auf Freigabe</b><p class="muted small">Du hast <b>' + esc(p ? fullName(p) : acc.spieler_id) + '</b> gewählt. Sobald die Spielleitung dein Konto freischaltet, kannst du hier deine Spiele nachtragen.</p>' +
+      '<button type="button" class="lnk inline" data-adm="change-player">Falscher Spieler? Ändern</button> · <button type="button" class="lnk inline" data-adm="refresh">Status prüfen</button></div></div>';
+  }
+  return h + '<button type="button" class="lnk" data-adm="pw-open">Passwort ändern</button>';
+}
+
+/* ---------- Spielerkonten freischalten (Admin) ---------- */
+function accountsHtml() {
+  const l = ui.accounts;
+  if (!l) return '<h2>Spielerkonten</h2><p class="muted small">Lädt …</p>';
+  const open = l.filter(a => a.status === 'offen'), active = l.filter(a => a.status === 'frei');
+  const when = a => new Date(a.created_at).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+  const row = (a, buttons) => '<li class="kreq">' + (PL[a.spieler_id] ? avatar(a.spieler_id) : '<span class="hav"></span>') +
+    '<span><b>' + esc(PL[a.spieler_id] ? fullName(PL[a.spieler_id]) : a.spieler_id) + '</b><small>' + esc(a.email || '') + ' · ' + when(a) + '</small></span>' + buttons + '</li>';
+  let h = '<h2>Spielerkonten' + (open.length ? ' <i class="nb">' + open.length + '</i>' : '') + '</h2>';
+  h += open.length
+    ? '<ul class="klist">' + open.map(a => row(a, '<span class="kreq-b"><button type="button" class="btn primary sm" data-adm="ok:' + a.user_id + '">Freischalten</button><button type="button" class="btn sm" data-adm="no:' + a.user_id + '">Ablehnen</button></span>')).join('') + '</ul>'
+    : '<p class="muted small">Keine offenen Anfragen.</p>';
+  if (active.length) h += '<details class="kact"><summary>Freigeschaltet (' + active.length + ')</summary><ul class="klist">' + active.map(a => row(a, '<span class="kreq-b"><button type="button" class="btn sm" data-adm="no:' + a.user_id + '">Entziehen</button></span>')).join('') + '</ul></details>';
+  return h;
 }
 
 /* ---------- Passwort setzen (nach E-Mail-Link) ---------- */
@@ -101,7 +162,7 @@ function adminHtml() {
     '<div class="tiles">' +
       '<button type="button" class="tile" data-adm="manual">' + ICON.plus + '<b>Spiel nachtragen</b><small>Mit Datum, Einsatzminuten und Aktionen</small></button>' +
       '<button type="button" class="tile" data-nav="hof">' + ICON.trophy + '<b>Spiele verwalten</b><small>In der Hall of Fame ein Spiel öffnen → Bearbeiten/Löschen</small></button>' +
-    '</div>' +
+    '</div>' + accountsHtml() +
     '<h2>Kader</h2><p class="muted small">Status (Verletzung), Stammposition und Start-Marktwert gelten sofort für alle.</p>' +
     newPlayerHtml() +
     '<ul class="klist">' + PLAYER_LIST.map(rosterRow).join('') + '</ul>' +
@@ -113,8 +174,9 @@ export function render() {
   if (ui.passwordMode && isLoggedIn()) h = passwordHtml();
   else if (!isLoggedIn()) h = loginHtml();
   else if (isAdmin()) h = adminHtml();
-  else h = '<div class="auth card"><h3>Kein Admin</h3><p class="muted">Dieses Konto hat keine Admin-Rechte.</p><button type="button" class="btn full" data-adm="logout">Abmelden</button></div>';
+  else h = playerHtml();
   $('adminBody').innerHTML = h;
+  $('admTitle').textContent = isLoggedIn() && isAdmin() ? 'Admin' : 'Konto';
   applyTier(0);
 }
 
@@ -126,8 +188,29 @@ async function onSubmit(form) {
     try {
       await login(String(f.get('email')).trim(), String(f.get('password')));
       ui.msg = '';
-      toast(isAdmin() ? 'Angemeldet' : 'Angemeldet, aber ohne Admin-Rechte');
+      toast('Angemeldet');
+      if (isAdmin()) reloadAccounts();
     } catch (e) { ui.msg = e.message; }
+    ui.busy = false; render();
+  } else if (form.id === 'registerForm') {
+    const email = String(f.get('email')).trim(), pw = String(f.get('pw')), pw2 = String(f.get('pw2')), sp = String(f.get('spieler') || '');
+    ui.email = email; ui.regPlayer = sp;
+    if (pw.length < 8) { ui.msg = 'Das Passwort braucht mindestens 8 Zeichen.'; render(); return; }
+    if (pw !== pw2) { ui.msg = 'Die Passwörter stimmen nicht überein.'; render(); return; }
+    if (!PL[sp]) { ui.msg = 'Bitte auswählen, welcher Spieler du bist.'; render(); return; }
+    ui.busy = true; ui.msg = ''; render();
+    try {
+      const loggedIn = await signup(email, pw, sp);
+      ui.mode = 'login';
+      toast(loggedIn ? 'Konto angelegt – wartet auf Freigabe' : 'Fast geschafft: bitte die E-Mail bestätigen');
+    } catch (e) { ui.msg = e.message; }
+    ui.busy = false; render();
+  } else if (form.id === 'requestForm') {
+    const sp = String(f.get('spieler') || '');
+    if (!PL[sp]) { ui.msg = 'Bitte einen Spieler auswählen.'; render(); return; }
+    ui.busy = true; ui.msg = ''; render();
+    try { await requestAccount(sp); ui.changePlayer = false; toast('Anfrage gesendet'); }
+    catch (e) { ui.msg = 'Das hat nicht geklappt: ' + e.message; }
     ui.busy = false; render();
   } else if (form.id === 'forgotForm') {
     ui.busy = true; render();
@@ -173,10 +256,29 @@ async function onSubmit(form) {
 /* Nach Klick auf einen Passwort-Link aus der E-Mail */
 export function startPasswordFlow() { ui.passwordMode = true; ui.msg = ''; show('admin'); }
 
+async function reloadAccounts() {
+  try { ui.accounts = await loadAccounts(); } catch (e) { ui.accounts = []; }
+  if (nav.current === 'admin') render();
+}
+async function decide(userId, status) {
+  try {
+    await decideAccount(userId, status);
+    toast(status === 'frei' ? 'Konto freigeschaltet' : 'Erledigt');
+  } catch (e) {
+    toast(/duplicate|unique/i.test(e.message) ? 'Für diesen Spieler ist schon ein anderes Konto freigeschaltet.' : 'Fehlgeschlagen: ' + e.message, 'bad');
+  }
+  await reloadAccounts();
+  refreshAdminFlag();
+}
+
 export function initAdmin() {
   registerView('admin', {
     elements: ['admin'], render,
-    enter: () => { ui.msg = ''; if (isLoggedIn()) refreshAdminFlag(); loadRoster().then(() => { if (nav.current === 'admin') render(); }); }
+    enter: () => {
+      ui.msg = ''; ui.changePlayer = false;
+      if (isLoggedIn()) refreshAdminFlag().then(a => { if (a) reloadAccounts(); });
+      loadRoster().then(() => { if (nav.current === 'admin') render(); });
+    }
   });
   onAuthChange(() => { if (nav.current === 'admin') render(); });
   $('admin').addEventListener('submit', e => { e.preventDefault(); onSubmit(e.target); });
@@ -186,6 +288,14 @@ export function initAdmin() {
     const k = b.getAttribute('data-adm');
     if (k === 'mode-forgot') { ui.mode = 'forgot'; ui.msg = ''; }
     else if (k === 'mode-login') { ui.mode = 'login'; ui.msg = ''; }
+    else if (k === 'mode-register') { ui.mode = 'register'; ui.msg = ''; }
+    else if (k === 'change-player') { ui.changePlayer = true; ui.msg = ''; }
+    else if (k === 'change-cancel') ui.changePlayer = false;
+    else if (k === 'refresh') { await refreshAdminFlag(); toast(myPlayer() ? 'Du bist freigeschaltet!' : 'Noch nicht freigeschaltet'); }
+    else if (k === 'my-manual') { openSetup(null, { manual: true, player: myPlayer() }); return; }
+    else if (k === 'my-profile') { openProfile(myPlayer()); return; }
+    else if (k.startsWith('ok:')) { decide(k.slice(3), 'frei'); return; }
+    else if (k.startsWith('no:')) { decide(k.slice(3), 'abgelehnt'); return; }
     else if (k === 'logout') { await logout(); toast('Abgemeldet'); }
     else if (k === 'manual') { openSetup(null, { manual: true }); return; }
     else if (k === 'pw-open') { ui.passwordMode = true; ui.msg = ''; }
