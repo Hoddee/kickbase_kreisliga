@@ -60,9 +60,13 @@ const SILHOUETTE = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 907 1255"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a5260"/><stop offset="1" stop-color="#2a2f37"/></linearGradient></defs>' +
   '<circle cx="453" cy="330" r="190" fill="url(#g)"/><path d="M90 1255c0-300 160-560 363-560s363 260 363 560z" fill="url(#g)"/></svg>');
 
-export function photoUrl(id) {
+/* Fotos des Stammkaders liegen verkleinert im Repo (assets/img/p, Vorschaubilder in p/s) und kommen von GitHub Pages –
+   das kostet kein Supabase-Datenvolumen. Später in der App hochgeladene Fotos kommen aus dem Supabase-Bucket. */
+const LOCAL_PHOTOS = new Set(["Barbano", "Doez", "Heckmann", "Kugler", "Pace", "Sipala", "Buehler", "Fechter", "Filenberg", "Klenk", "Knoedler", "Krauss", "Reule", "Schauss", "Schoenenberg", "Schwer", "Collin", "Collin2"]);
+export function photoUrl(id, small = false) {
   const p = PL[id];
   if (!p || p.foto === '') return SILHOUETTE;
   if (p.foto) return storageUrl(p.foto) + (p.fotoV ? '?v=' + p.fotoV : '');
+  if (LOCAL_PHOTOS.has(id)) return 'assets/img/p/' + (small ? 's/' : '') + id + '.webp';
   return storageUrl('spieler/' + id + '.png');
 }

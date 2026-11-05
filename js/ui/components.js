@@ -84,7 +84,7 @@ export function sparkline(series) {
     '<circle cx="' + last[0].toFixed(1) + '" cy="' + last[1].toFixed(1) + '" r="4" fill="' + c + '"/></svg>';
 }
 
-export const avatar = id => '<span class="hav"><img src="' + esc(photoUrl(id)) + '" alt="" loading="lazy"></span>';
+export const avatar = id => '<span class="hav"><img src="' + esc(photoUrl(id, true)) + '" alt="" loading="lazy" decoding="async"></span>';
 export const nameWithStatus = (id, label) => esc(label != null ? label : PL[id].n) + statusIcon(id) + (PL[id] && PL[id].guest ? ' <i class="tag">Gast</i>' : '');
 
 /* ---------- Spielerzeile (Übersicht und Auswahl) ---------- */
@@ -107,7 +107,7 @@ export function gameRow(g, rank, inProfile) {
   const mine = recordTeam(g), l = g.home ? mine : g.opp, r = g.home ? g.opp : mine;
   return '<li class="gr tc' + (rank ? '' : ' nr') + '" data-tier="' + tierOf(g.points) + '"><button type="button" class="ov" data-open="g:' + esc(g.uid) + '" aria-label="Spiel ansehen"></button>' +
     (rank ? '<span class="rk' + (rank < 4 ? ' r' + rank : '') + '">' + rank + '</span>' : '') +
-    (inProfile ? avatar(g.player) : '<button type="button" class="hav hb2" data-open="p:' + esc(g.player) + '" aria-label="Profil von ' + esc(PL[g.player].n) + '"><img src="' + esc(photoUrl(g.player)) + '" alt="" loading="lazy"></button>') +
+    (inProfile ? avatar(g.player) : '<button type="button" class="hav hb2" data-open="p:' + esc(g.player) + '" aria-label="Profil von ' + esc(PL[g.player].n) + '"><img src="' + esc(photoUrl(g.player, true)) + '" alt="" loading="lazy"></button>') +
     '<div class="gi"><b>' + nameWithStatus(g.player) + (g.manual ? ' <i class="tag">Nachtrag</i>' : '') + '</b><span class="gs"><img src="' + esc(crestUrl(l)) + '" alt="">' + scoreText(g, g.home) + '<img src="' + esc(crestUrl(r)) + '" alt=""></span></div>' +
     '<div class="gp"><span class="gv">' + g.points + '</span><span class="gd">' + dateShort(g.played_at) + ' · ' + POS_NAME[g.pos] + '</span></div></li>';
 }

@@ -89,5 +89,6 @@ export function crestUrl(clubId) {
   const c = CL[clubId];
   if (!c) return generatedCrest('?');
   if (c.img) return c.img;
+  if (!c.custom) return 'assets/img/c/' + c.id + '.webp'; // verkleinert im Repo (GitHub Pages)
   return c.f ? storageUrl(c.f) : generatedCrest(c.n);
 }

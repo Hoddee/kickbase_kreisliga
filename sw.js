@@ -1,10 +1,11 @@
 /* Service Worker: App läuft auch bei schlechtem Netz am Sportplatz.
    App-Dateien: erst Netz, bei Ausfall aus dem Cache (so kommen Updates sofort an).
-   Spielerfotos und Wappen: aus dem Cache, im Hintergrund aktualisiert.
+   Bilder (Spielerfotos, Wappen): nur einmal laden, danach immer aus dem Cache – kein erneutes Herunterladen.
+   Geänderte Fotos bekommen eine neue Adresse (?v=…), alte Einträge werden beim Versionswechsel aufgeräumt.
    Datenbank-Anfragen (REST/Auth) werden nie zwischengespeichert. */
-const VERSION = 'kl-v3.2.0';
+const VERSION = 'kl-v3.3.0';
 const APP = 'app-' + VERSION;
-const IMG = 'img-v1';
+const IMG = 'img-v2';
 const SHELL = [
   './', 'index.html', 'manifest.webmanifest',
   'css/fonts.css', 'css/tokens.css', 'css/base.css', 'css/live.css', 'css/booking.css', 'css/views.css', 'css/theme.css', 'css/admin.css',
@@ -23,7 +24,7 @@ self.addEventListener('install', e => {
   e.waitUntil(caches.open(APP).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
 });
 self.addEventListener('activate', e => {
-  e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => k.startsWith('app-') && k !== APP).map(k => caches.delete(k)))).then(() => self.clients.claim()));
+  e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => (k.startsWith('app-') && k !== APP) || (k.startsWith('img-') && k !== IMG)).map(k => caches.delete(k)))).then(() => self.clients.claim()));
 });
 
 self.addEventListener('fetch', e => {
@@ -32,12 +33,16 @@ self.addEventListener('fetch', e => {
   const url = new URL(req.url);
   if (url.pathname.includes('/rest/v1/') || url.pathname.includes('/auth/v1/')) return;
 
-  /* Nur normale Bild-Anfragen cachen; CORS-Anfragen (Teilen-Bild) gehen direkt ans Netz */
-  if (url.pathname.includes('/storage/v1/object/public/') && req.mode === 'no-cors') {
+  /* Bilder: Cache zuerst, Netz nur beim allerersten Mal (Supabase-Bucket und assets/img im Repo) */
+  const isImg = url.pathname.includes('/storage/v1/object/public/') || (url.origin === self.location.origin && url.pathname.includes('/assets/img/'));
+  if (isImg) {
     e.respondWith(caches.open(IMG).then(async cache => {
-      const hit = await cache.match(req);
-      const net = fetch(req).then(r => { if (r.ok) cache.put(req, r.clone()); return r; }).catch(() => hit);
-      return hit || net;
+      const hit = await cache.match(req, { ignoreVary: true });
+      /* Teilen-Bild lädt mit CORS: eine „undurchsichtige“ Kopie darf dafür nicht verwendet werden */
+      if (hit && !(req.mode === 'cors' && hit.type === 'opaque')) return hit;
+      const r = await fetch(req);
+      if (r.ok || r.type === 'opaque') cache.put(req, r.clone());
+      return r;
     }));
     return;
   }

@@ -7,11 +7,11 @@ const LIB_URL = 'https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.7.0/+e
 let libPromise = null;
 const loadLib = () => libPromise || (libPromise = import(LIB_URL).catch(e => { libPromise = null; throw e; }));
 
-/* Ausgabeformate: Spieler wie die vorhandenen Fotos (Hochformat 907×1255), Wappen quadratisch */
+/* Ausgabeformate: Spieler im Hochformat der Kickbase-Fotos (klein genug für wenig Datenvolumen), Wappen quadratisch */
 const FORMAT = {
-  player: { w: 907, h: 1255 },
-  guest: { w: 600, h: 830 },
-  crest: { w: 256, h: 256 }
+  player: { w: 600, h: 830 },
+  guest: { w: 480, h: 664 },
+  crest: { w: 192, h: 192 }
 };
 
 function canvasOf(w, h) {
@@ -159,6 +159,8 @@ export async function cutout(file, kind, onStatus = () => {}) {
     }
   }
   const final = fit(trim(cv), kind);
-  const blob = await toBlob(final);
+  /* WebP ist ca. 10× kleiner als PNG; Browser ohne WebP-Export (ältere iPhones) liefern PNG */
+  let blob = await new Promise(res => final.toBlob(b => res(b), 'image/webp', 0.84));
+  if (!blob || blob.type !== 'image/webp') blob = await toBlob(final);
   return { blob, url: URL.createObjectURL(blob), method };
 }
