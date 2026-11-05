@@ -10,7 +10,7 @@ import { games, loadGames, loadEvents, cachedEvents, forgetEvents, updateGame, d
 import { isAdmin, canManage } from '../services/auth.js';
 import { ICON } from '../core/icons.js';
 import { avatar, nameWithStatus, rowLi, rowsFromRecord, whistleLi, areaBars, gameRow } from './components.js';
-import { registerView, show, nav } from '../router.js';
+import { registerView, show, back as goBack, nav } from '../router.js';
 
 const ui = { tab: 'best', league: 'ALL', returnTo: null, player: null, game: null, eventsError: false, edit: false, confirmDelete: false, busy: false };
 
@@ -197,23 +197,25 @@ async function remove() {
 export function resetHof() { ui.player = null; ui.game = null; ui.edit = false; ui.confirmDelete = false; ui.returnTo = null; }
 /* Spiel aus einer anderen Ansicht (z. B. Profil) öffnen; „Zurück“ führt dorthin zurück */
 export function openHofGame(uid) {
-  const from = nav.current;
-  if (from !== 'hof') { resetHof(); ui.returnTo = from; show('hof'); }
+  if (nav.current !== 'hof') { resetHof(); ui.returnTo = nav.current; show('hof'); }
   openGame(uid);
+}
+/* Interner Schritt zurück: Spieldetail schließen (außer es wurde von außen geöffnet) */
+function hofBack() {
+  if (ui.game && !ui.returnTo) { ui.game = null; ui.edit = false; ui.confirmDelete = false; return true; }
+  ui.game = null; ui.returnTo = null;
+  return false;
 }
 
 export function initHof() {
-  registerView('hof', { elements: ['hof'], render, enter: () => { reload(); } });
+  registerView('hof', { elements: ['hof'], render, back: hofBack, enter: () => { reload(); } });
   $('hof').addEventListener('click', e => {
     const b = e.target.closest('[data-hof]');
     if (!b) return;
     const k = b.getAttribute('data-hof'), v = k.slice(2);
     if (k === 'reload') { reload(); return; }
     if (k.startsWith('g:')) { openGame(v); return; }
-    if (k === 'gback') {
-      ui.game = null; ui.edit = false; ui.confirmDelete = false;
-      if (ui.returnTo) { const r = ui.returnTo; ui.returnTo = null; show(r); return; }
-    }
+    if (k === 'gback') { goBack(); return; }
     else if (k === 'edit') ui.edit = true;
     else if (k === 'edit-cancel') ui.edit = false;
     else if (k === 'del') ui.confirmDelete = true;

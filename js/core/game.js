@@ -20,6 +20,8 @@ function loadGame() {
       if (!POS_NAME[s.pos]) s.pos = 'ABW';
       if (!s.match || !PL[s.match.p] || !CL[s.match.o]) s.match = null;
       else applyMedia(s.match.p, s.match.o, s.match.pf, s.match.of);
+      if (s.squad && !(s.match && s.squad.every(x => PL[x.p]))) { delete s.squad; delete s.cur; }
+      if (s.squad) s.squad.forEach(x => applyMedia(x.p, null, x.pf, null));
       s.subs = s.subs || [];
       return s;
     }
@@ -27,7 +29,58 @@ function loadGame() {
   return null;
 }
 export const store = { S: loadGame() || freshGame() };
-export function saveGame() { try { localStorage.setItem(KEYS.game, JSON.stringify(store.S)); } catch (e) {} }
+export function saveGame() {
+  if (isMulti()) store.S.squad[store.S.cur] = extract(store.S);
+  try { localStorage.setItem(KEYS.game, JSON.stringify(store.S)); } catch (e) {}
+}
+
+/* ---------- Mehrere Spieler in einem Spiel ----------
+   Gemeinsam: Uhr, Gegner, Spielort, Mannschaft, Spielende. Pro Spieler: Position, Startelf, Einsatzzeiten,
+   Aktionen, Wechsel, Halbzeit-Marke, eigene Spiel-ID und ob er schon gespeichert ist.
+   Der gerade gewählte Spieler liegt wie bisher direkt in store.S, die anderen in store.S.squad. */
+const SLOT_KEYS = ['pos', 'startelf', 'stints', 'events', 'subs', 'nextId', 'h2Id', 'uid', 'saved'];
+export const MAX_SQUAD = 5;
+export const isMulti = () => !!(store.S.squad && store.S.squad.length > 1);
+function extract(S) {
+  const o = { p: S.match.p, pf: S.match.pf || null };
+  for (const k of SLOT_KEYS) o[k] = S[k];
+  return o;
+}
+function load(S, o) {
+  S.match.p = o.p;
+  if (o.pf) S.match.pf = o.pf; else delete S.match.pf;
+  for (const k of SLOT_KEYS) S[k] = o[k];
+}
+/* Neuer Spieler-Eintrag für den Kader eines Spiels */
+export function newSlot(p, pos, uid) {
+  return { p, pf: PL[p] && PL[p].guest && PL[p].foto ? PL[p].foto : null, pos, startelf: true, stints: [{ from: 0, to: null }], events: [], subs: [], nextId: 1, h2Id: null, uid, saved: false };
+}
+/* fn für Spieler i ausführen (Spieler wird kurz „eingewechselt“ und danach zurückgetauscht) */
+export function withPlayer(i, fn) {
+  const S = store.S;
+  if (!isMulti() || i === S.cur) return fn(S.cur);
+  S.squad[S.cur] = extract(S);
+  load(S, S.squad[i]);
+  try { return fn(i); } finally { S.squad[i] = extract(S); load(S, S.squad[S.cur]); }
+}
+export function eachPlayer(fn) {
+  if (!isMulti()) return [fn(0)];
+  return store.S.squad.map((_, i) => withPlayer(i, fn));
+}
+export function switchPlayer(i) {
+  const S = store.S;
+  if (!isMulti() || i === S.cur || !S.squad[i]) return;
+  S.squad[S.cur] = extract(S);
+  load(S, S.squad[i]);
+  S.cur = i;
+  saveGame();
+  applyMatchNames();
+}
+/* Übersicht aller Spieler im Spiel (für die Spielerleiste) */
+export function squadInfo() {
+  return eachPlayer(i => ({ i, p: store.S.match.p, t: total(), on: onField(), started: !!store.S.stints.length, saved: !!store.S.saved }));
+}
+export const allSaved = () => (isMulti() ? store.S.squad.every((x, i) => (i === store.S.cur ? store.S.saved : x.saved)) : !!store.S.saved);
 export function replaceGame(next) { store.S = next; saveGame(); }
 
 /* Eigene Bilder von Gastspielern / eigenen Gegnern an die (temporären) Einträge hängen */

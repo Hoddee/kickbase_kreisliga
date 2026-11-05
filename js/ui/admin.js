@@ -2,18 +2,21 @@
    Spieler: Freigabe-Status, eigene Spiele nachtragen. Admin: Anfragen freischalten, Spiel nachtragen, Kader pflegen. */
 import { $, esc, eur, toast, applyTier } from '../core/util.js';
 import { PL, PLAYER_LIST, POS_NAME, POS_ORDER, STATUS_NAME, fullName } from '../data/players.js';
-import { CL, CLUB_LIST } from '../data/clubs.js';
+import { CL, CLUB_LIST, LEAGUES, crestUrl } from '../data/clubs.js';
+import { TEAMS, allFixtures } from '../data/schedule.js';
+import { pad2 } from '../core/util.js';
 import { login, logout, signup, currentUser, isLoggedIn, isAdmin, myAccount, myPlayer, requestAccount, refreshAdminFlag, requestPasswordReset, updatePassword, onAuthChange } from '../services/auth.js';
 import { cutout } from '../core/cutout.js';
-import { loadRoster, updatePlayer, insertPlayer, uploadPhoto, games, loadAccounts, decideAccount } from '../services/api.js';
+import { loadRoster, updatePlayer, insertPlayer, uploadPhoto, games, loadAccounts, decideAccount, loadSchedule, saveFixture, deleteFixture } from '../services/api.js';
 import { openProfile } from './profile.js';
+import { showIntro } from './intro.js';
 import { marketOf } from '../core/market.js';
 import { ICON, statusIcon } from '../core/icons.js';
 import { avatar } from './components.js';
 import { registerView, show, nav } from '../router.js';
 import { openSetup } from './setup.js';
 
-const ui = { mode: 'login', busy: false, msg: '', editing: null, passwordMode: false, email: '', adding: false, accounts: null, changePlayer: false };
+const ui = { spTeam: 'vfr', spEdit: null, spDel: null, mode: 'login', busy: false, msg: '', editing: null, passwordMode: false, email: '', adding: false, accounts: null, changePlayer: false };
 
 /* Auswahl „Welcher Spieler bist du?“ (alle aktiven Kaderspieler, nach Verein gruppiert) */
 function playerSelect(cur) {
@@ -91,6 +94,34 @@ function accountsHtml() {
   return h;
 }
 
+/* ---------- Spielplan pflegen (Admin) ---------- */
+const localInput = d => d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()) + 'T' + pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+function fixtureForm(f) {
+  const team = ui.spTeam, opt = (v, t, cur) => '<option value="' + esc(v) + '"' + (v === cur ? ' selected' : '') + '>' + esc(t) + '</option>';
+  const opps = LEAGUES.map(lg => '<optgroup label="Kreisliga ' + lg + '">' + CLUB_LIST.filter(c => c.lg === lg && c.id !== team).map(c => opt(c.id, c.n, f ? f.o : '')).join('') + '</optgroup>').join('');
+  const when = f ? localInput(f.at) : localInput(new Date(Date.now() + 7 * 864e5)).slice(0, 11) + '15:00';
+  return '<form class="card inline-form" id="fxForm" data-id="' + (f && f.id ? f.id : '') + '"><div class="fl">' + (f ? 'Spiel bearbeiten' : 'Spiel hinzufügen') + ' · ' + esc(CL[team].n) + '</div>' +
+    '<label class="nf"><span>Anstoß</span><input class="fi" type="datetime-local" name="at" required value="' + when + '"></label>' +
+    '<div class="nf2" style="margin-top:0"><label class="nf"><span>Gegner</span><select class="fi" name="opp" required>' + opps + '</select></label>' +
+    '<label class="nf"><span>Spielort</span><select class="fi" name="home">' + opt('1', 'Heim', f && !f.home ? '0' : '1') + opt('0', 'Auswärts', f && !f.home ? '0' : '1') + '</select></label></div>' +
+    '<div class="duo"><button type="submit" class="btn primary"' + (ui.busy ? ' disabled' : '') + '>Speichern</button><button type="button" class="btn" data-adm="fx-cancel">Abbrechen</button></div>' +
+    (f && f.id ? (ui.spDel === f.id ? '<button type="button" class="btn danger full" data-adm="fx-del-yes:' + f.id + '">Wirklich löschen?</button>' : '<button type="button" class="lnk" data-adm="fx-del:' + f.id + '">Spiel löschen</button>') : '') + '</form>';
+}
+function scheduleHtml() {
+  const team = ui.spTeam, list = allFixtures(team), now = Date.now();
+  let h = '<h2>Spielplan</h2><div class="seg full spteams">' + TEAMS.map(t => '<button type="button" data-adm="sp:' + t + '" aria-pressed="' + (t === team) + '">' + esc(CL[t].n.replace('VfR Murrhardt/ Kirchenkirnberg II', 'VfR II').replace('SGM Fornsbach II', 'SGM II')) + '<small>' + CL[t].lg + '</small></button>').join('') + '</div>';
+  if (ui.spEdit === 'new') h += fixtureForm(null);
+  else h += '<button type="button" class="add-row" data-adm="fx-new"><span class="plus">+</span><span>Spiel hinzufügen<small>z. B. Nachholspiel oder verlegtes Spiel</small></span></button>';
+  h += '<ul class="fxlist">' + list.map(f => {
+    if (ui.spEdit === f.id) return '<li>' + fixtureForm(f) + '</li>';
+    const past = f.at.getTime() + 4 * 3600e3 < now;
+    return '<li><button type="button" class="fxr' + (past ? ' past' : '') + '" data-adm="fx-edit:' + f.id + '"' + (f.id ? '' : ' disabled') + '>' +
+      '<span class="fxr-d"><b>' + pad2(f.at.getDate()) + '.' + pad2(f.at.getMonth() + 1) + '.</b><small>' + pad2(f.at.getHours()) + ':' + pad2(f.at.getMinutes()) + '</small></span>' +
+      '<img src="' + esc(crestUrl(f.o)) + '" alt=""><span class="fxr-n">' + esc(CL[f.o] ? CL[f.o].n : f.o) + '<small>' + (f.home ? 'Heim' : 'Auswärts') + '</small></span><i class="kr-e">' + ICON.edit + '</i></button></li>';
+  }).join('') + '</ul>' + (list.length && !list[0].id ? '<p class="muted small">Spielplan wird geladen …</p>' : '');
+  return h;
+}
+
 /* ---------- Passwort setzen (nach E-Mail-Link) ---------- */
 function passwordHtml() {
   return '<div class="auth card"><h3>Neues Passwort</h3><p class="muted">Mindestens 8 Zeichen.</p>' +
@@ -162,7 +193,7 @@ function adminHtml() {
     '<div class="tiles">' +
       '<button type="button" class="tile" data-adm="manual">' + ICON.plus + '<b>Spiel nachtragen</b><small>Mit Datum, Einsatzminuten und Aktionen</small></button>' +
       '<button type="button" class="tile" data-nav="hof">' + ICON.trophy + '<b>Spiele verwalten</b><small>In der Hall of Fame ein Spiel öffnen → Bearbeiten/Löschen</small></button>' +
-    '</div>' + accountsHtml() +
+    '</div>' + accountsHtml() + scheduleHtml() +
     '<h2>Kader</h2><p class="muted small">Status (Verletzung), Stammposition und Start-Marktwert gelten sofort für alle.</p>' +
     newPlayerHtml() +
     '<ul class="klist">' + PLAYER_LIST.map(rosterRow).join('') + '</ul>' +
@@ -175,7 +206,7 @@ export function render() {
   else if (!isLoggedIn()) h = loginHtml();
   else if (isAdmin()) h = adminHtml();
   else h = playerHtml();
-  $('adminBody').innerHTML = h;
+  $('adminBody').innerHTML = h + '<button type="button" class="lnk" data-adm="intro">Einführung ansehen</button>';
   $('admTitle').textContent = isLoggedIn() && isAdmin() ? 'Admin' : 'Konto';
   applyTier(0);
 }
@@ -204,6 +235,15 @@ async function onSubmit(form) {
       ui.mode = 'login';
       toast(loggedIn ? 'Konto angelegt – wartet auf Freigabe' : 'Fast geschafft: bitte die E-Mail bestätigen');
     } catch (e) { ui.msg = e.message; }
+    ui.busy = false; render();
+  } else if (form.id === 'fxForm') {
+    const id = form.dataset.id ? +form.dataset.id : null, at = new Date(String(f.get('at')));
+    if (isNaN(at)) { toast('Bitte Datum und Uhrzeit eingeben.', 'bad'); return; }
+    ui.busy = true; render();
+    try {
+      await saveFixture({ team: ui.spTeam, anstoss: at.toISOString(), gegner: String(f.get('opp')), heim: f.get('home') === '1' }, id);
+      ui.spEdit = null; toast('Spielplan gespeichert');
+    } catch (e) { toast(/duplicate|unique/i.test(e.message) ? 'Zu dieser Zeit gibt es schon ein Spiel.' : 'Speichern fehlgeschlagen: ' + e.message, 'bad'); }
     ui.busy = false; render();
   } else if (form.id === 'requestForm') {
     const sp = String(f.get('spieler') || '');
@@ -276,7 +316,7 @@ export function initAdmin() {
     elements: ['admin'], render,
     enter: () => {
       ui.msg = ''; ui.changePlayer = false;
-      if (isLoggedIn()) refreshAdminFlag().then(a => { if (a) reloadAccounts(); });
+      if (isLoggedIn()) refreshAdminFlag().then(a => { if (a) { reloadAccounts(); loadSchedule().then(() => { if (nav.current === 'admin') render(); }); } });
       loadRoster().then(() => { if (nav.current === 'admin') render(); });
     }
   });
@@ -289,11 +329,20 @@ export function initAdmin() {
     if (k === 'mode-forgot') { ui.mode = 'forgot'; ui.msg = ''; }
     else if (k === 'mode-login') { ui.mode = 'login'; ui.msg = ''; }
     else if (k === 'mode-register') { ui.mode = 'register'; ui.msg = ''; }
+    else if (k === 'intro') { showIntro(); return; }
     else if (k === 'change-player') { ui.changePlayer = true; ui.msg = ''; }
     else if (k === 'change-cancel') ui.changePlayer = false;
     else if (k === 'refresh') { await refreshAdminFlag(); toast(myPlayer() ? 'Du bist freigeschaltet!' : 'Noch nicht freigeschaltet'); }
     else if (k === 'my-manual') { openSetup(null, { manual: true, player: myPlayer() }); return; }
     else if (k === 'my-profile') { openProfile(myPlayer()); return; }
+    else if (k.startsWith('sp:')) { ui.spTeam = k.slice(3); ui.spEdit = null; }
+    else if (k === 'fx-new') { ui.spEdit = 'new'; ui.spDel = null; }
+    else if (k === 'fx-cancel') { ui.spEdit = null; ui.spDel = null; }
+    else if (k.startsWith('fx-edit:')) { ui.spEdit = +k.slice(8); ui.spDel = null; }
+    else if (k.startsWith('fx-del:')) ui.spDel = +k.slice(7);
+    else if (k.startsWith('fx-del-yes:')) {
+      try { await deleteFixture(+k.slice(11)); toast('Spiel gelöscht'); ui.spEdit = null; } catch (e) { toast('Löschen fehlgeschlagen: ' + e.message, 'bad'); }
+    }
     else if (k.startsWith('ok:')) { decide(k.slice(3), 'frei'); return; }
     else if (k.startsWith('no:')) { decide(k.slice(3), 'abgelehnt'); return; }
     else if (k === 'logout') { await logout(); toast('Abgemeldet'); }

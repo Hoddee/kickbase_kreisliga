@@ -5,9 +5,11 @@ import { GROUPS, QUICK_DEFAULTS } from '../data/actions.js';
 import { POS_NAME, POS_ORDER } from '../data/players.js';
 import {
   store, saveGame, replaceGame, freshGame, names, isHome, scoreText, ACT, val, count, score, elapsed, onField, started,
-  startLine, endLines, total, withMarkers, summaryText
+  startLine, endLines, total, withMarkers, summaryText, isMulti, withPlayer, eachPlayer, allSaved
 } from '../core/game.js';
-import { halftimeLi, subLi } from './components.js';
+import { PL } from '../data/players.js';
+import { halftimeLi, subLi, avatar } from './components.js';
+import { renderSquadBar, bindSquad } from './squad.js';
 import { registerView, show, nav } from '../router.js';
 import { openSetup } from './setup.js';
 
@@ -46,12 +48,12 @@ function settingsHtml(disabled) {
 function endHtml() {
   const S = store.S;
   let h = '<h2>Spielende</h2>';
-  if (S.ended) h += S.saved ? '' : '<button type="button" class="btn full" style="min-height:54px" data-do="reopen">Spiel wieder öffnen</button>';
+  if (S.ended) h += allSaved() ? '' : '<button type="button" class="btn full" style="min-height:54px" data-do="reopen">Spiel wieder öffnen</button>';
   else if (confirm.end) h += '<div class="duo" style="margin-top:0"><button type="button" class="btn primary" data-do="end-yes" style="min-height:54px">Ja, beenden</button><button type="button" class="btn" data-do="end-no" style="min-height:54px">Abbrechen</button></div>';
   else h += '<button type="button" class="btn primary full" style="min-height:56px;font-size:16px" data-do="end">' + (S.manual ? 'Nachtrag abschließen' : 'Spiel beenden') + '</button>';
   h += '<div class="duo">';
-  if (confirm.reset) h += '<button type="button" class="btn danger" data-do="reset-yes">' + (S.ended && !S.saved ? 'Ohne Speichern weg' : 'Ja, neues Spiel') + '</button><button type="button" class="btn" data-do="reset-no">Abbrechen</button>';
-  else h += '<button type="button" class="btn danger"' + (started() ? ' style="grid-column:1/-1"' : '') + ' data-do="reset">Neues Spiel</button>' + (!started() ? '<button type="button" class="btn" data-do="change">Spieler ändern</button>' : '');
+  if (confirm.reset) h += '<button type="button" class="btn danger" data-do="reset-yes">' + (S.ended && !allSaved() ? 'Ohne Speichern weg' : 'Ja, neues Spiel') + '</button><button type="button" class="btn" data-do="reset-no">Abbrechen</button>';
+  else h += '<button type="button" class="btn danger"' + (started() ? ' style="grid-column:1/-1"' : '') + ' data-do="reset">Neues Spiel</button>' + (!started() ? '<button type="button" class="btn" data-do="change">' + (isMulti() ? 'Spieler/Gegner ändern' : 'Spieler ändern') + '</button>' : '');
   return h + '</div>';
 }
 
@@ -66,12 +68,28 @@ function liveGameHtml() {
     '<h2>Spielstand</h2>' +
     '<div class="scorebox">' + scoreText(sc, isHome()) + '</div>' +
     '<div class="grid">' + (isHome() ? actBtn('tg') + actBtn('cg') : actBtn('cg') + actBtn('tg')) + '</div>' +
-    '<h2>Einsatz</h2><div class="card">' +
+    (isMulti() ? '<p class="muted small hint">Tore zählen automatisch für alle Spieler, die gerade auf dem Platz stehen.</p>' + lineupHtml(d) +
+      '<h2>Einstellungen · ' + esc(names.player) + '</h2><div class="card">' + settingsHtml() + '</div>'
+    : '<h2>Einsatz</h2><div class="card">' +
       seg('Start', [['start1', 'Startelf'], ['start0', 'Bank']], S.startelf ? 'start1' : 'start0') +
       '<button type="button" class="btn full" style="margin-top:10px" data-do="field"' + d + '>' + (onField() ? 'Auswechseln' : 'Einwechseln') + '</button>' +
       settingsHtml() +
-    '</div>' +
+    '</div>') +
     '<h2>Automatische Punkte</h2><div class="card" id="autoBox">' + autoHtml() + '</div>' + endHtml();
+}
+
+/* Aufstellung bei mehreren Spielern: Startelf/Bank vor dem Anpfiff, danach Ein-/Auswechseln – ohne Spielerwechsel */
+function lineupHtml(d) {
+  const pre = !started();
+  const rows = eachPlayer(i => {
+    const S = store.S, on = onField(), p = PL[S.match.p];
+    const state = pre ? (S.startelf ? 'Startelf' : 'Bank') : on ? 'Auf dem Platz' : S.stints.length ? 'Ausgewechselt' : 'Bank';
+    const btns = pre
+      ? '<span class="seg lseg"><button type="button" data-do="sb1:' + i + '" aria-pressed="' + S.startelf + '">Startelf</button><button type="button" data-do="sb0:' + i + '" aria-pressed="' + !S.startelf + '">Bank</button></span>'
+      : '<button type="button" class="btn sm' + (on ? '' : ' primary') + '" data-do="fld:' + i + '"' + d + '>' + (on ? 'Raus' : 'Rein') + '</button>';
+    return '<li class="lup' + (on ? ' on' : '') + '">' + avatar(S.match.p) + '<span><b>' + esc(p.n) + '</b><small>' + state + '</small></span>' + btns + '</li>';
+  });
+  return '<h2>Aufstellung</h2><ul class="lups">' + rows.join('') + '</ul>';
 }
 
 /* ---------- Reiter "Spiel" (Nachtrag) ---------- */
@@ -152,9 +170,23 @@ function refresh() {
   updateQuick();
   applyTier(t);
   setNum($('eTot'), t);
-  const last = [...S.events].reverse().find(e => !(S.manual && (e.key === 'tg' || e.key === 'cg')));
-  $('undo').hidden = !last;
-  if (last) $('undoTx').innerHTML = esc((minStamp(last.t) ? minStamp(last.t) + ' ' : '') + last.label) + '<b class="' + cls(last.pts) + '">' + fmt(last.pts) + '</b>';
+  const lu = lastUndo();
+  $('undo').hidden = !lu;
+  if (lu) {
+    const last = lu.e, who = isMulti() ? (lu.grp ? 'Alle · ' : PL[lu.p].n + ' · ') : '';
+    $('undoTx').innerHTML = esc(who + (minStamp(last.t) ? minStamp(last.t) + ' ' : '') + last.label) + '<b class="' + cls(last.pts) + '">' + fmt(last.pts) + '</b>';
+  }
+  document.body.classList.toggle('multi', isMulti());
+  renderSquadBar($('squadE'));
+  if (isMulti()) document.body.style.setProperty('--sqh', $('squadE').offsetHeight + 'px');
+}
+/* Letzte rückgängig machbare Aktion (bei mehreren Spielern: die jüngste über alle Spieler) */
+function lastUndo() {
+  const S = store.S, ok = e => !(S.manual && (e.key === 'tg' || e.key === 'cg'));
+  if (!isMulti()) { const e = [...S.events].reverse().find(ok); return e ? { e, i: S.cur } : null; }
+  let best = null;
+  eachPlayer(i => { for (const e of store.S.events) if ((e.ts || 0) >= (best ? best.e.ts || 0 : -1)) best = { e, i, p: store.S.match.p, grp: e.grp }; });
+  return best;
 }
 export function render() {
   const S = store.S;
@@ -172,8 +204,12 @@ export function render() {
 function addEvent(key) {
   const S = store.S, a = ACT[key];
   if (!a) return;
-  const live = !S.manual && (S.clock.startedAt !== null || S.clock.offset > 0);
-  S.events.push({ id: S.nextId++, key, label: a.s || a.l, pts: val(a), t: live ? Math.floor(elapsed()) : -1 });
+  const live = !S.manual && (S.clock.startedAt !== null || S.clock.offset > 0), t = live ? Math.floor(elapsed()) : -1, ts = Date.now();
+  if (isMulti() && (key === 'tg' || key === 'cg')) {
+    /* Tore betreffen alle: jeder Spieler bekommt den Eintrag, Punkte nur wer auf dem Platz steht */
+    const grp = 'g' + ts;
+    eachPlayer(() => { const P = store.S; P.events.push({ id: P.nextId++, key, label: a.s || a.l, pts: val(a), t, ts, grp }); });
+  } else S.events.push({ id: S.nextId++, key, label: a.s || a.l, pts: val(a), t, ts });
   saveGame(); buzz(12);
   if (tab === 'spiel') { render(); return; }
   main().querySelectorAll('[data-k="' + key + '"]').forEach(el => { el.outerHTML = actBtn(key); });
@@ -185,12 +221,23 @@ function setField(on) {
   if (on) { if (!l || l.to !== null) S.stints.push({ from: el, to: null }); }
   else if (l && l.to === null) l.to = el;
 }
+function toggleField(S, el) {
+  const goOn = !onField();
+  setField(goOn);
+  const last = S.subs[S.subs.length - 1];
+  if (last && last.at === S.nextId && last.o !== (goOn ? 'in' : 'out')) S.subs.pop(); // Doppel-Tipp hebt sich auf
+  else S.subs.push({ o: goOn ? 'in' : 'out', at: S.nextId, t: Math.floor(el) });
+}
 function setClock(sec, run) { store.S.clock.offset = Math.max(0, sec); store.S.clock.startedAt = run ? Date.now() : null; }
 /* 2. Halbzeit: Uhr springt auf 45:00 zurück; die Nachspielzeit der 1. Halbzeit bleibt Einsatzzeit */
 function startHalf2() {
-  const S = store.S, el = elapsed(), l = S.stints[S.stints.length - 1];
-  if (el > 2700 && l && l.to === null) { l.to = el; S.stints.push({ from: 2700, to: null }); }
-  if (!S.h2) { S.h2 = true; S.h2Id = S.nextId; }
+  const S = store.S, el = elapsed(), first = !S.h2;
+  eachPlayer(() => {
+    const P = store.S, l = P.stints[P.stints.length - 1];
+    if (el > 2700 && l && l.to === null) { l.to = el; P.stints.push({ from: 2700, to: null }); }
+    if (first) P.h2Id = P.nextId;
+  });
+  S.h2 = true;
   setClock(2700, true);
 }
 function doAct(what) {
@@ -202,33 +249,38 @@ function doAct(what) {
     case 'half2': if (S.ended) return; startHalf2(); break;
     case 'start1': S.startelf = true; if (S.manual) applyManual(); else if (!started()) S.stints = [{ from: 0, to: null }]; break;
     case 'start0': S.startelf = false; if (S.manual) applyManual(); else if (!started()) S.stints = []; break;
-    case 'field': {
-      const goOn = !onField();
-      setField(goOn);
-      const last = S.subs[S.subs.length - 1];
-      if (last && last.at === S.nextId && last.o !== (goOn ? 'in' : 'out')) S.subs.pop(); // Doppel-Tipp hebt sich auf
-      else S.subs.push({ o: goOn ? 'in' : 'out', at: S.nextId, t: Math.floor(el) });
-      break;
-    }
+    case 'field': toggleField(S, el); break;
     case 'end': confirm.end = true; render(); return;
     case 'end-no': confirm.end = false; render(); return;
     case 'end-yes':
-      if (!S.manual) { setClock(el, false); setField(false); }
+      if (!S.manual) { setClock(el, false); eachPlayer(() => setField(false)); }
       S.ended = true; confirm.end = false; saveGame(); show('home'); return;
-    case 'reopen': if (S.saved) return; S.ended = false; break;
+    case 'reopen': if (allSaved()) return; S.ended = false; break;
     case 'reset': confirm.reset = true; render(); return;
     case 'reset-no': confirm.reset = false; render(); return;
     case 'reset-yes': replaceGame(freshGame({ pos: S.pos })); confirm.reset = false; openSetup(); return;
     case 'pTW': case 'pABW': case 'pMIT': case 'pANG': S.pos = what.slice(1); break;
     case 'homeY': S.match.home = true; break;
     case 'homeN': S.match.home = false; break;
-    case 'change': openSetup(S.match, { manual: S.manual }); return;
+    case 'change': openSetup(S.match, { manual: S.manual, squad: isMulti() }); return;
     case 'undo': {
-      const idx = S.events.map(e => !(S.manual && (e.key === 'tg' || e.key === 'cg'))).lastIndexOf(true);
-      if (idx >= 0) S.events.splice(idx, 1);
+      const lu = lastUndo();
+      if (!lu) break;
+      if (lu.grp) eachPlayer(() => { store.S.events = store.S.events.filter(e => e.grp !== lu.grp); });
+      else withPlayer(lu.i, () => { store.S.events = store.S.events.filter(e => e !== lu.e); });
       break;
     }
     case 'copy': copySummary(); return;
+    default: {
+      /* Aufstellung bei mehreren Spielern: sb1:i / sb0:i (Startelf/Bank), fld:i (rein/raus) */
+      const m = /^(sb1|sb0|fld):(\d+)$/.exec(what);
+      if (!m) return;
+      withPlayer(+m[2], () => {
+        const P = store.S;
+        if (m[1] === 'fld') toggleField(P, el);
+        else if (!started()) { P.startelf = m[1] === 'sb1'; P.stints = P.startelf ? [{ from: 0, to: null }] : []; }
+      });
+    }
   }
   saveGame(); render();
 }
@@ -249,7 +301,7 @@ export function tick() {
 export function initBooking() {
   registerView('edit', {
     elements: ['edit'],
-    guard: () => (store.S.match ? null : 'setup'),
+    guard: () => (store.S.match ? null : 'start'),
     enter: () => { confirm.end = false; confirm.reset = false; },
     render
   });
@@ -270,6 +322,8 @@ export function initBooking() {
     saveGame(); render();
   });
   $('quick').addEventListener('click', e => { const b = e.target.closest('[data-k]'); if (b) addEvent(b.getAttribute('data-k')); });
+  /* Spielerleiste: Tipp wechselt den Spieler, Wischen über die Aktionen springt zum nächsten */
+  bindSquad($('squadE'), main(), () => { buzz(8); render(); });
   $('undo').addEventListener('click', e => { if (e.target.closest('[data-do="undo"]')) doAct('undo'); });
   document.querySelector('.tabs').addEventListener('click', e => {
     const b = e.target.closest('[data-tab]');

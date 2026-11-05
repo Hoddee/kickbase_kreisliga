@@ -2,14 +2,14 @@
    App-Dateien: erst Netz, bei Ausfall aus dem Cache (so kommen Updates sofort an).
    Spielerfotos und Wappen: aus dem Cache, im Hintergrund aktualisiert.
    Datenbank-Anfragen (REST/Auth) werden nie zwischengespeichert. */
-const VERSION = 'kl-v3.1.0';
+const VERSION = 'kl-v3.2.0';
 const APP = 'app-' + VERSION;
 const IMG = 'img-v1';
 const SHELL = [
   './', 'index.html', 'manifest.webmanifest',
   'css/fonts.css', 'css/tokens.css', 'css/base.css', 'css/live.css', 'css/booking.css', 'css/views.css', 'css/theme.css', 'css/admin.css',
   'js/main.js', 'js/config.js', 'js/router.js',
-  'js/data/actions.js', 'js/data/clubs.js', 'js/data/players.js', 'js/data/schedule.js', 'js/core/cutout.js', 'js/ui/start.js', 'js/ui/profile.js', 'css/profile.css',
+  'js/data/actions.js', 'js/data/clubs.js', 'js/data/players.js', 'js/data/schedule.js', 'js/core/cutout.js', 'js/ui/start.js', 'js/ui/profile.js', 'js/ui/squad.js', 'js/ui/intro.js', 'css/profile.css',
   'js/core/game.js', 'js/core/icons.js', 'js/core/market.js', 'js/core/util.js',
   'js/services/api.js', 'js/services/auth.js',
   'js/ui/admin.js', 'js/ui/booking.js', 'js/ui/components.js', 'js/ui/hof.js', 'js/ui/live.js', 'js/ui/setup.js', 'js/ui/share.js',

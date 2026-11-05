@@ -11,7 +11,7 @@ export const SEASON = '2026/2027';
 /* localStorage-Schlüssel (alte Namen bleiben, damit laufende Spiele ein Update überstehen) */
 export const KEYS = {
   game: 'matchday-punkte-v3',
-  lastSelection: 'matchday-last-v1',
+  lastSelection: 'matchday-last-v1', schedule: 'kl-schedule-v1', intro: 'kl-intro-v1',
   roster: 'kl-roster-v1',
   auth: 'kl-auth-v1'
 };

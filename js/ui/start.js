@@ -4,7 +4,7 @@ import { $, esc, tierOf, applyTier, pad2 } from '../core/util.js';
 import { PL, PLAYER_LIST } from '../data/players.js';
 import { CL, OWN_CLUBS, crestUrl } from '../data/clubs.js';
 import { TEAMS, nextFixture } from '../data/schedule.js';
-import { store, total, score, started, isHome, teamOf } from '../core/game.js';
+import { store, total, score, started, isHome, teamOf, isMulti, allSaved } from '../core/game.js';
 import { games, loadGames } from '../services/api.js';
 import { isAdmin, isLoggedIn, pendingRequests } from '../services/auth.js';
 import { avatar, playerRow, nameWithStatus } from './components.js';
@@ -16,7 +16,7 @@ const CHEVRON = '<span class="chev" aria-hidden="true">›</span>';
 /* Läuft gerade ein Spiel, das man durch ein neues verlieren würde? */
 function liveGameAtRisk() {
   const S = store.S;
-  return !!(S.match && !(S.ended && S.saved) && (started() || S.events.length || S.manual));
+  return !!(S.match && !(S.ended && allSaved()) && (started() || S.events.length || S.manual));
 }
 
 /* Kleine Rückfrage als Bottom-Sheet */
@@ -44,11 +44,11 @@ export async function requestNewGame({ player = null } = {}) {
 
 function runningCard() {
   const S = store.S, m = S.match;
-  if (!m || !PL[m.p] || !CL[m.o] || (S.ended && S.saved)) return '';
+  if (!m || !PL[m.p] || !CL[m.o] || (S.ended && allSaved())) return '';
   const t = total(), sc = score(), mine = teamOf(m), l = isHome() ? mine : m.o, r = isHome() ? m.o : mine;
   const label = S.ended ? 'Spiel beendet · noch nicht gespeichert' : S.manual ? 'Nachtrag in Arbeit' : started() ? 'Laufendes Spiel' : 'Spiel bereit';
   return '<button type="button" class="runc tc" data-tier="' + tierOf(t) + '" data-st="resume">' + avatar(m.p) +
-    '<span class="runc-t"><small>' + (S.ended ? '' : '<i class="dot"></i>') + label + '</small><b>' + nameWithStatus(m.p) + '</b>' +
+    '<span class="runc-t"><small>' + (S.ended ? '' : '<i class="dot"></i>') + label + '</small><b>' + nameWithStatus(m.p) + (isMulti() ? ' <i class="tag">+' + (S.squad.length - 1) + ' weitere</i>' : '') + '</b>' +
     '<span class="gs"><img src="' + esc(crestUrl(l)) + '" alt="">' + (isHome() ? sc.us + ' : ' + sc.them : sc.them + ' : ' + sc.us) + '<img src="' + esc(crestUrl(r)) + '" alt=""></span></span>' +
     '<span class="runc-v">' + t + '</span>' + CHEVRON + '</button>';
 }
