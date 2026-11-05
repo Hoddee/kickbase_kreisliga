@@ -22,12 +22,14 @@
 <link rel="stylesheet" href="css/views.css">
 <link rel="stylesheet" href="css/theme.css">
 <link rel="stylesheet" href="css/admin.css">
+<link rel="stylesheet" href="css/profile.css">
 <script type="module" src="js/main.js"></script>
 </head>
 <body>
 
 <!-- Spielerkarte (Live / Endstand) -->
 <div id="home" hidden>
+  <button type="button" class="homeback" data-nav="start" aria-label="Zur Übersicht"><b aria-hidden="true">‹</b>Übersicht</button>
   <section class="hero">
     <div class="wrap hero-in">
       <div class="photo"><img id="hPhoto" src="" alt="" width="907" height="1255"></div>
@@ -48,8 +50,8 @@
 
 <div class="cta" id="cta" hidden><div class="wrap"><button type="button" data-nav="edit"><span class="ic" id="ctaI" aria-hidden="true">+</span><span id="ctaL">Punkte vergeben</span></button></div></div>
 
-<!-- Spiel einrichten -->
-<section id="setup" hidden>
+<!-- Startseite: Übersicht -->
+<section id="start" hidden>
   <header class="ehead">
     <div class="wrap">
       <div class="brand"><svg viewBox="0 0 30 30" aria-hidden="true"><rect width="30" height="30" rx="8" fill="#ff4600"/><circle cx="15" cy="15" r="7.2" fill="none" stroke="#fff" stroke-width="2.2"/><path d="M15 3v24M3 15h4.8M22.2 15H27" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg><b>KREISLIGA</b><i>EDITION</i></div>
@@ -57,6 +59,24 @@
         <button type="button" class="hofbtn" data-nav="hof"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H4v1a4 4 0 0 0 4 4M16 6h4v1a4 4 0 0 1-4 4M12 13v4M8 20h8M10 17h4"/></svg>Hall of Fame</button>
         <button type="button" class="iconbtn" id="adminBtn" data-nav="admin" aria-label="Admin"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></button>
       </div>
+    </div>
+  </header>
+  <main class="wrap eb sb" id="startBody"></main>
+  <div class="go"><div class="wrap"><button type="button" class="newgame" data-st="new"><span aria-hidden="true">+</span>Neues Spiel</button></div></div>
+</section>
+
+<!-- Spielerprofil -->
+<section id="profile" hidden>
+  <main id="profileBody" class="pb"></main>
+</section>
+
+<!-- Neues Spiel einrichten -->
+<section id="setup" hidden>
+  <header class="ehead">
+    <div class="wrap">
+      <button type="button" class="back" data-nav="start" aria-label="Zur Übersicht"><b aria-hidden="true">‹</b>Übersicht</button>
+      <div class="etitle">Neues Spiel</div>
+      <span></span>
     </div>
   </header>
   <main class="wrap eb sb" id="setupBody"></main>
@@ -79,7 +99,7 @@
 <section id="admin" hidden>
   <header class="ehead">
     <div class="wrap">
-      <button type="button" class="back" data-nav="setup" aria-label="Zurück"><b aria-hidden="true">‹</b>Zurück</button>
+      <button type="button" class="back" data-nav="start" aria-label="Zurück"><b aria-hidden="true">‹</b>Zurück</button>
       <div class="etitle">Admin</div>
       <span></span>
     </div>
