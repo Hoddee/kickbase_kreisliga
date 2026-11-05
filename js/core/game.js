@@ -90,12 +90,12 @@ export function startLine() {
   return S.startelf ? { l: 'Startelf', p: 5, r: '1’' } : { l: 'Eingewechselt', p: 2, r: minStamp(Math.floor(S.stints[0].from)) };
 }
 /* Minutenbonus, Zu null und Sieg/Niederlage kommen erst nach Spielende dazu.
-   Zu null: nur Gegentore, während der Spieler auf dem Platz stand, und mindestens eine Halbzeit Einsatz. */
+   Zu null: nur wenn das eigene Team im ganzen Spiel kein Gegentor bekommt (auch nicht nach einer Auswechslung)
+   und der Spieler mindestens eine Halbzeit gespielt hat. */
 export function endLines() {
   const S = store.S, out = [], m = minPlayed(), sc = score(), r = Math.ceil(playedSec() / 60) + '’';
   if (!S.ended || !S.stints.length) return out;
-  const concededOnField = S.events.filter(e => e.key === 'cg' && e.pts < 0).length;
-  if (concededOnField === 0 && m >= 45) {
+  if (sc.them === 0 && m >= 45) {
     const v = CLEAN_SHEET[S.pos] || 2;
     out.push({ l: 'Zu null', h: '+' + v + ' je 10 Minuten, +' + v + ' bei voller Spielzeit', p: Math.floor(m / 10) * v + (m >= 90 ? v : 0), r });
   }
