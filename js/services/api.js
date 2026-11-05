@@ -3,6 +3,7 @@ import { SUPABASE_URL, SUPABASE_KEY, KEYS } from '../config.js';
 import { accessToken } from './auth.js';
 import { PL, PLAYER_LIST, addPlayer } from '../data/players.js';
 import { CL } from '../data/clubs.js';
+import { applyMedia } from '../core/game.js';
 import { readJson, writeJson } from '../core/util.js';
 
 export async function rest(path, opt = {}) {
@@ -22,7 +23,7 @@ export async function rest(path, opt = {}) {
 const json = { 'Content-Type': 'application/json' };
 
 /* ---------- Spiele ---------- */
-const LIST_FIELDS = 'uid,created_at,played_at,season,player,opp,home,pos,us,them,minutes,points,goals,assists,manual';
+const LIST_FIELDS = 'uid,created_at,played_at,season,player,opp,home,pos,us,them,minutes,points,goals,assists,manual,team,player_foto,opp_foto';
 
 export const games = { list: null, busy: false, error: false };
 const gameListeners = new Set();
@@ -35,6 +36,7 @@ export async function loadGames(force = false) {
     const r = await rest('spiele?select=' + LIST_FIELDS + '&order=played_at.desc&limit=2000');
     const d = await r.json();
     games.list = (Array.isArray(d) ? d : []).filter(g => PL[g.player] && CL[g.opp]);
+    for (const g of games.list.slice().reverse()) applyMedia(g.player, g.opp, g.player_foto, g.opp_foto);
   } catch (e) { games.error = true; }
   games.busy = false;
   gameListeners.forEach(fn => fn());
@@ -105,16 +107,28 @@ export async function insertPlayer(row) {
   writeJson(KEYS.roster, readJson(KEYS.roster, []).concat(d));
   return d[0];
 }
+async function upload(path, blob, upsert) {
+  const headers = { apikey: SUPABASE_KEY, 'Content-Type': 'image/png', 'x-upsert': upsert ? 'true' : 'false' };
+  const token = await accessToken();
+  if (token) headers.Authorization = 'Bearer ' + token;
+  const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 30000);
+  try {
+    const r = await fetch(SUPABASE_URL + '/storage/v1/object/kickbase/' + path, { method: 'POST', headers, body: blob, signal: ctl.signal });
+    if (!r.ok) { const b = await r.json().catch(() => ({})); throw new Error(b.message || b.error || 'Upload fehlgeschlagen'); }
+    return path;
+  } catch (e) {
+    throw e.name === 'AbortError' ? new Error('Upload hat zu lange gedauert.') : e;
+  } finally { clearTimeout(timer); }
+}
 /* Spielerfoto in den Bucket laden (nur Admin); liefert den Pfad im Bucket */
 export async function uploadPhoto(id, blob) {
-  const token = await accessToken();
-  if (!token) throw new Error('Nicht angemeldet.');
-  const path = 'spieler/' + id + '.png';
-  const r = await fetch(SUPABASE_URL + '/storage/v1/object/kickbase/' + path, {
-    method: 'POST', headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + token, 'Content-Type': blob.type || 'image/png', 'x-upsert': 'true' }, body: blob
-  });
-  if (!r.ok) { const b = await r.json().catch(() => ({})); throw new Error(b.message || b.error || 'Upload fehlgeschlagen'); }
-  return path;
+  if (!(await accessToken())) throw new Error('Nicht angemeldet.');
+  return upload('spieler/' + id + '.png', blob, true);
+}
+/* Bild für Gastspieler / eigenen Gegner (darf jeder hochladen, nur neue Dateien) */
+export function uploadGuestImage(blob) {
+  const rnd = [...crypto.getRandomValues(new Uint8Array(12))].map(b => b.toString(16).padStart(2, '0')).join('');
+  return upload('gast/' + rnd + '.png', blob, false);
 }
 
 export async function updatePlayer(id, patch) {

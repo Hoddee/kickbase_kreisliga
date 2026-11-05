@@ -1,4 +1,4 @@
-/* Vereine der Kreisliga A2 und B2 (Rems/Murr/Hall). Wappen liegen im Supabase-Bucket "kickbase". */
+/* Vereine der Kreisliga A2, B2 und B5 (Rems/Murr/Hall). In der B5 nutzen die Teams das Wappen des Stammvereins. Wappen liegen im Supabase-Bucket "kickbase". */
 import { STORAGE_BASE } from '../config.js';
 
 const FA = 'Wappen_KreisligaA2_Rems__Murr__Hall/';
@@ -33,8 +33,21 @@ export const CLUB_LIST = [
   { id: 'lippold', n: 'TSV Lippoldsweiler', lg: 'B2', f: FB + 'TSV_Lippoldsweiler.png' },
   { id: 'oberbr', n: 'TSV Oberbrüden', lg: 'B2', f: FB + 'TSV_Oberbrueden.png' },
   { id: 'ruder2', n: 'TSV Rudersberg II', lg: 'B2', f: FB + 'TSV_Rudersberg_II.png' },
-  { id: 'tuerk', n: 'Türkspor Schorndorf', lg: 'B2', f: FB + 'Tuerkspor_Schorndorf.png' }
+  { id: 'tuerk', n: 'Türkspor Schorndorf', lg: 'B2', f: FB + 'Tuerkspor_Schorndorf.png' },
+  { id: 'sgm5', n: 'SGM Fornsbach II', lg: 'B5', f: FB + 'SC_Fornsbach.png' },
+  { id: 'oberbr2', n: 'TSV Oberbrüden II', lg: 'B5', f: FB + 'TSV_Oberbrueden.png' },
+  { id: 'klein2', n: 'Kleinaspach/ Allmersbach II', lg: 'B5', f: FA + 'Kleinaspach.png' },
+  { id: 'kirchberg2', n: 'SVG Kirchberg II', lg: 'B5', f: FB + 'SVG_Kirchberg.png' },
+  { id: 'spiegel2', n: 'SV Spiegelberg II', lg: 'B5', f: FA + 'SV_Spiegelberg.png' },
+  { id: 'sulzm2', n: 'FV Sulzbach/Murr II', lg: 'B5', f: FA + 'FV_SulzbachMurr.png' },
+  { id: 'alex2', n: 'Großer Alexander II', lg: 'B5', f: FA + 'Grosser_Alexander.png' },
+  { id: 'leuten2', n: 'SGM Leutenbach II/ Weiler II', lg: 'B5', f: FB + 'TSV_Leutenbach.png' },
+  { id: 'oppen3', n: 'Oppenweiler III', lg: 'B5', f: FA + 'Oppenweiler_II.png' },
+  { id: 'sulzl2', n: 'SGM Sulzbach-Laufen/ Gschwend II', lg: 'B5', f: FA + 'SGM_Sulzbach_Laufen__Gschwend.png' },
+  { id: 'fichten2', n: 'SK Fichtenberg II', lg: 'B5', f: FA + 'SK_Fichtenberg.png' },
+  { id: 'tuerk2', n: 'Türkspor Schorndorf II', lg: 'B5', f: FB + 'Tuerkspor_Schorndorf.png' }
 ];
+export const LEAGUES = ['A2', 'B2', 'B5'];
 
 /* Eigene Gegner (z. B. Pokal) haben die ID "x:Name" und gelten nur für ein Spiel.
    CL liefert für solche IDs automatisch einen Eintrag ohne Liga mit generiertem Wappen. */
@@ -50,7 +63,7 @@ export const CL = new Proxy(clubBase, {
 });
 
 /* Vereine, aus denen Spieler gebucht werden (Reihenfolge in der Auswahl) */
-export const OWN_CLUBS = ['vfr', 'vfrk', 'fornsbach'];
+export const OWN_CLUBS = ['vfr', 'vfrk', 'fornsbach', 'sgm5'];
 
 export function storageUrl(path) {
   return STORAGE_BASE + path.split('/').map(encodeURIComponent).join('/');
@@ -75,5 +88,6 @@ function generatedCrest(name) {
 export function crestUrl(clubId) {
   const c = CL[clubId];
   if (!c) return generatedCrest('?');
-  return c.custom ? generatedCrest(c.n) : storageUrl(c.f);
+  if (c.img) return c.img;
+  return c.f ? storageUrl(c.f) : generatedCrest(c.n);
 }

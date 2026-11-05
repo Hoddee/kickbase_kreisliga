@@ -2,7 +2,7 @@
 import { esc, fmt, cls, tierOf, minStamp } from '../core/util.js';
 import { ICON, statusIcon } from '../core/icons.js';
 import { PL, photoUrl } from '../data/players.js';
-import { crestUrl } from '../data/clubs.js';
+import { CL, crestUrl } from '../data/clubs.js';
 import { scoreText } from '../core/game.js';
 import { SEASON } from '../config.js';
 
@@ -49,13 +49,13 @@ function barHeight(t) {
   }
   return 100;
 }
-export const toChartEntry = g => ({ u: g.uid, t: g.points, m: g.minutes, us: g.us, them: g.them, g: g.goals, a: g.assists, p: g.player, o: g.opp, h: g.home ? 1 : 0 });
+export const toChartEntry = g => ({ tm: g.team, u: g.uid, t: g.points, m: g.minutes, us: g.us, them: g.them, g: g.goals, a: g.assists, p: g.player, o: g.opp, h: g.home ? 1 : 0 });
 
 /* Senkrechte Balken je Spiel wie im Kickbase-Spielerprofil */
 export function seasonChart(list, title, { clickable = false, button = '' } = {}) {
   return '<div class="lh"><div><b>' + esc(title) + '</b><span>' + SEASON + '</span></div>' + button + '</div><div class="chart">' + list.map((x, i) => {
     const icons = ICON.ball.repeat(x.g || 0) + ICON.boot.repeat(x.a || 0);
-    const mine = PL[x.p].c, left = x.h ? mine : x.o, right = x.h ? x.o : mine;
+    const mine = x.tm && CL[x.tm] ? x.tm : PL[x.p].c, left = x.h ? mine : x.o, right = x.h ? x.o : mine;
     return '<div class="col' + (i === list.length - 1 ? ' cur' : '') + '" data-tier="' + tierOf(x.t) + '"' + (clickable && x.u ? ' data-hof="g:' + esc(x.u) + '" role="button"' : '') + '>' +
       '<div class="ci">' + (i === 0 ? '#' : '') + (i + 1) + '</div>' +
       '<div class="cc"><img src="' + esc(crestUrl(left)) + '" alt=""><img src="' + esc(crestUrl(right)) + '" alt=""></div>' +

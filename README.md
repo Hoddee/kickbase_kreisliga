@@ -18,7 +18,8 @@ js/
   main.js               Einstieg: Ansichten verdrahten, Sekundentakt, Service Worker
   config.js             Supabase-URL/Key, Saison, Speicher-Schlüssel
   router.js             Ansichtswechsel
-  data/                 Vereine, Kader (Offline-Stand), Aktionen/Punktetabelle
+  data/                 Vereine (A2, B2, B5), Spielpläne, Kader (Offline-Stand), Aktionen/Punktetabelle
+  core/cutout.js        Bilder freistellen (Hintergrund entfernen) und zuschneiden
   core/game.js          Spielzustand und komplette Punkteberechnung
   core/market.js        Marktwert-Modell
   core/util.js, icons.js
@@ -40,7 +41,9 @@ Neue Registrierungen sind in Supabase abgeschaltet. Admin werden: Benutzer unter
 dann `supabase/migrations/003_admin_eintragen.sql` ausführen.
 
 Fotos neuer Spieler landen im Bucket `kickbase` unter `spieler/<id>.png` (Upload nur für Admins, siehe
-`supabase/migrations/004_spieler_fotos.sql`).
+`supabase/migrations/004_spieler_fotos.sql`). Bilder von Gastspielern und eigenen Gegnern darf jeder unter
+`gast/<zufall>.png` hochladen – nur neue Dateien, nichts überschreiben (`005_spielplan_gastbilder.sql`).
+Die Spalten `team`, `player_foto`, `opp_foto` in `spiele` speichern Mannschaft (z. B. B5-Einsatz) und diese Bilder.
 
 ## Eigene Gegner, Gastspieler, neue Spieler
 
@@ -50,3 +53,17 @@ Fotos neuer Spieler landen im Bucket `kickbase` unter `spieler/<id>.png` (Upload
   Gespeicherte Spiele erscheinen in der Hall of Fame mit dem Hinweis „Gast".
 - **Spieler hinzufügen** (Admin → Kader): dauerhaft für alle, mit Verein, Position, Start-Marktwert und optionalem Foto.
   Im Kader-Bearbeiten kann das Foto auch nachträglich getauscht werden.
+
+## Spielplan
+
+`js/data/schedule.js` enthält die Spielpläne von VfR Murrhardt (A2), SG VfR Murrhardt/Kirchenkirnberg II (B2),
+SC Fornsbach (B2) und SGM Fornsbach II (B5). Nach der Spielerauswahl wird automatisch das nächste Spiel seiner
+Mannschaft vorgeschlagen (Gegner + Heim/Auswärts; ein Spiel bleibt bis 4 h nach Anpfiff aktuell, beim Nachtrag das
+letzte Spiel). Unter „Spielt für“ lässt sich die Mannschaft wechseln (z. B. B5), über „Anderen Gegner wählen“
+jeder Verein aus A2/B2/B5 oder eine eigene Mannschaft.
+
+## Bilder freistellen
+
+Wappen auf einfarbigem Hintergrund werden direkt im Browser per Flächenfüllung freigestellt. Für Fotos lädt die App
+einmalig [@imgly/background-removal](https://github.com/imgly/background-removal-js) (AGPL-3.0, KI-Modell ca. 45 MB)
+von einem CDN; danach liegt es im Browser-Cache.

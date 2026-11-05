@@ -2,8 +2,9 @@
    Admins können Spiele hier bearbeiten und löschen. */
 import { $, esc, eur, signedEur, trendClass, tierOf, dateShort, applyTier, toast } from '../core/util.js';
 import { PL, PLAYER_LIST, POS_NAME, POS_SHORT, POS_ORDER, photoUrl } from '../data/players.js';
-import { CL, CLUB_LIST, crestUrl } from '../data/clubs.js';
-import { CAT, scoreText } from '../core/game.js';
+import { CL, CLUB_LIST, LEAGUES, crestUrl } from '../data/clubs.js';
+import { TEAMS } from '../data/schedule.js';
+import { CAT, scoreText, recordTeam } from '../core/game.js';
 import { marketOf, byDate } from '../core/market.js';
 import { games, loadGames, loadEvents, cachedEvents, forgetEvents, updateGame, deleteGame } from '../services/api.js';
 import { isAdmin } from '../services/auth.js';
@@ -19,7 +20,7 @@ const gamesOf = id => byDate((games.list || []).filter(g => g.player === id));
 
 /* ---------- Listenzeilen ---------- */
 function gameRow(g, rank, inProfile) {
-  const mine = PL[g.player].c, l = g.home ? mine : g.opp, r = g.home ? g.opp : mine;
+  const mine = recordTeam(g), l = g.home ? mine : g.opp, r = g.home ? g.opp : mine;
   return '<li class="gr tc' + (rank ? '' : ' nr') + '" data-tier="' + tierOf(g.points) + '"><button type="button" class="ov" data-hof="g:' + esc(g.uid) + '" aria-label="Spiel ansehen"></button>' +
     (rank ? '<span class="rk' + (rank < 4 ? ' r' + rank : '') + '">' + rank + '</span>' : '') +
     (inProfile ? avatar(g.player) : '<button type="button" class="hav hb2" data-hof="p:' + g.player + '" aria-label="Profil von ' + esc(PL[g.player].n) + '"><img src="' + esc(photoUrl(g.player)) + '" alt="" loading="lazy"></button>') +
@@ -38,7 +39,7 @@ function potw(list) {
   let best = null;
   for (const g of list) if (now - new Date(g.played_at).getTime() < 7 * 864e5 && (!best || g.points > best.points)) best = g;
   if (!best) return '';
-  const mine = PL[best.player].c, l = best.home ? mine : best.opp, r = best.home ? best.opp : mine;
+  const mine = recordTeam(best), l = best.home ? mine : best.opp, r = best.home ? best.opp : mine;
   return '<button type="button" class="potw tc" data-tier="' + tierOf(best.points) + '" data-hof="g:' + esc(best.uid) + '"><img class="pw-ph" src="' + esc(photoUrl(best.player)) + '" alt="">' +
     '<div class="pw-tx"><span class="pw-k">Spieler der Woche</span><b class="pw-n">' + nameWithStatus(best.player) + '</b><span class="pw-v">' + best.points + '</span>' +
     '<span class="pw-m"><img src="' + esc(crestUrl(l)) + '" alt="">' + scoreText(best, best.home) + '<img src="' + esc(crestUrl(r)) + '" alt=""></span></div></button>';
@@ -125,11 +126,15 @@ function profileHtml() {
 
 /* ---------- Spielansicht ---------- */
 function editForm(g) {
-  const own = PL[g.player].c, lg = CL[own].lg;
+  const own = recordTeam(g);
   const opt = (v, t, cur) => '<option value="' + esc(v) + '"' + (v === cur ? ' selected' : '') + '>' + esc(t) + '</option>';
+  const teams = [...new Set([...TEAMS, own])];
+  const oppOpts = (CL[g.opp].custom ? opt(g.opp, CL[g.opp].n + ' (eigener Gegner)', g.opp) : '') +
+    LEAGUES.map(lg => '<optgroup label="Kreisliga ' + lg + '">' + CLUB_LIST.filter(c => c.lg === lg).map(c => opt(c.id, c.n, g.opp)).join('') + '</optgroup>').join('');
   return '<div class="card admin-edit"><div class="fl">Spiel bearbeiten</div><form id="gameEdit" class="form">' +
     '<label class="nf"><span>Datum</span><input class="fi" type="date" name="date" value="' + g.played_at.slice(0, 10) + '"></label>' +
-    '<label class="nf"><span>Gegner</span><select class="fi" name="opp">' + (CL[g.opp].custom ? opt(g.opp, CL[g.opp].n + ' (eigener Gegner)', g.opp) : '') + CLUB_LIST.filter(c => c.lg === lg && c.id !== own).map(c => opt(c.id, c.n, g.opp)).join('') + '</select></label>' +
+    '<label class="nf"><span>Mannschaft</span><select class="fi" name="team">' + teams.map(t => opt(t, CL[t].n + ' (' + CL[t].lg + ')', own)).join('') + '</select></label>' +
+    '<label class="nf"><span>Gegner</span><select class="fi" name="opp">' + oppOpts + '</select></label>' +
     '<div class="nf2"><label class="nf"><span>Spielort</span><select class="fi" name="home">' + opt('1', 'Heim', g.home ? '1' : '0') + opt('0', 'Auswärts', g.home ? '1' : '0') + '</select></label>' +
     '<label class="nf"><span>Position</span><select class="fi" name="pos">' + POS_ORDER.map(k => opt(k, POS_NAME[k], g.pos)).join('') + '</select></label>' +
     '<label class="nf"><span>Tore eigenes Team</span><input class="fi" type="number" min="0" max="50" name="us" value="' + g.us + '"></label>' +
@@ -150,7 +155,7 @@ function gameHtml() {
   const g = (games.list || []).find(x => x.uid === ui.game);
   const back = '<button type="button" class="back" style="margin-left:-8px" data-hof="gback"><b aria-hidden="true">‹</b>Zurück</button>';
   if (!g) return back + '<p class="hmsg">Spiel nicht gefunden.</p>';
-  const mine = PL[g.player].c, l = g.home ? mine : g.opp, r = g.home ? g.opp : mine, ev = cachedEvents(g.uid);
+  const mine = recordTeam(g), l = g.home ? mine : g.opp, r = g.home ? g.opp : mine, ev = cachedEvents(g.uid);
   const head = back + '<div class="gh tc" data-tier="' + tierOf(g.points) + '"><button type="button" class="hb2" data-hof="p:' + g.player + '" aria-label="Profil">' + avatar(g.player) + '</button>' +
     '<div class="gname">' + nameWithStatus(g.player) + '</div><div class="gbig">' + g.points + '</div>' +
     '<div class="gm"><img src="' + esc(crestUrl(l)) + '" alt="">' + scoreText(g, g.home) + '<img src="' + esc(crestUrl(r)) + '" alt=""></div>' +
@@ -207,7 +212,7 @@ async function saveEdit(form) {
   const g = games.list.find(x => x.uid === uid);
   const patch = {
     played_at: new Date(f.get('date') + 'T' + (g.played_at.slice(11, 19) || '15:00:00') + 'Z').toISOString(),
-    opp: f.get('opp'), home: f.get('home') === '1', pos: f.get('pos'),
+    team: f.get('team'), opp: f.get('opp'), home: f.get('home') === '1', pos: f.get('pos'),
     us: +f.get('us'), them: +f.get('them'), minutes: +f.get('minutes'), points: +f.get('points')
   };
   try {
