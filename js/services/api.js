@@ -1,7 +1,7 @@
 /* Zugriff auf die Supabase-REST-Schnittstelle (Tabellen "spiele" und "kader") */
 import { SUPABASE_URL, SUPABASE_KEY, KEYS } from '../config.js';
 import { accessToken } from './auth.js';
-import { PL, PLAYER_LIST } from '../data/players.js';
+import { PL, PLAYER_LIST, addPlayer } from '../data/players.js';
 import { CL } from '../data/clubs.js';
 import { readJson, writeJson } from '../core/util.js';
 
@@ -76,9 +76,12 @@ export const forgetEvents = uid => (uid ? eventCache.delete(uid) : eventCache.cl
 /* ---------- Kader ---------- */
 function applyRoster(rows) {
   for (const r of rows) {
-    const p = PL[r.id];
-    if (!p) continue;
-    Object.assign(p, { vn: r.vorname, n: r.nachname, pos: r.pos, mw: Number(r.mw_start), exact: r.mw_exakt, status: r.status, info: r.status_info || '', active: r.aktiv, sort: r.sort });
+    if (!CL[r.verein]) continue;
+    const p = PL[r.id] || addPlayer({ id: r.id });
+    Object.assign(p, {
+      vn: r.vorname, n: r.nachname, c: r.verein, pos: r.pos, mw: Number(r.mw_start), exact: r.mw_exakt, status: r.status,
+      info: r.status_info || '', active: r.aktiv, sort: r.sort, foto: r.foto, fotoV: r.foto ? Date.parse(r.updated_at) || 0 : 0
+    });
   }
   PLAYER_LIST.sort((a, b) => (a.sort || 0) - (b.sort || 0));
 }
@@ -93,6 +96,27 @@ export async function loadRoster() {
     return true;
   } catch (e) { return false; }
 }
+/* Neuer Stammspieler (nur Admin) */
+export async function insertPlayer(row) {
+  row.updated_at = new Date().toISOString();
+  const r = await rest('kader', { method: 'POST', headers: Object.assign({ Prefer: 'return=representation' }, json), body: JSON.stringify(row) });
+  const d = await r.json();
+  applyRoster(d);
+  writeJson(KEYS.roster, readJson(KEYS.roster, []).concat(d));
+  return d[0];
+}
+/* Spielerfoto in den Bucket laden (nur Admin); liefert den Pfad im Bucket */
+export async function uploadPhoto(id, blob) {
+  const token = await accessToken();
+  if (!token) throw new Error('Nicht angemeldet.');
+  const path = 'spieler/' + id + '.png';
+  const r = await fetch(SUPABASE_URL + '/storage/v1/object/kickbase/' + path, {
+    method: 'POST', headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + token, 'Content-Type': blob.type || 'image/png', 'x-upsert': 'true' }, body: blob
+  });
+  if (!r.ok) { const b = await r.json().catch(() => ({})); throw new Error(b.message || b.error || 'Upload fehlgeschlagen'); }
+  return path;
+}
+
 export async function updatePlayer(id, patch) {
   patch.updated_at = new Date().toISOString();
   const r = await rest('kader?id=eq.' + encodeURIComponent(id), { method: 'PATCH', headers: Object.assign({ Prefer: 'return=representation' }, json), body: JSON.stringify(patch) });

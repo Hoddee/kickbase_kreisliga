@@ -36,7 +36,18 @@ export const CLUB_LIST = [
   { id: 'tuerk', n: 'Türkspor Schorndorf', lg: 'B2', f: FB + 'Tuerkspor_Schorndorf.png' }
 ];
 
-export const CL = Object.fromEntries(CLUB_LIST.map(c => [c.id, c]));
+/* Eigene Gegner (z. B. Pokal) haben die ID "x:Name" und gelten nur für ein Spiel.
+   CL liefert für solche IDs automatisch einen Eintrag ohne Liga mit generiertem Wappen. */
+export const CUSTOM_PREFIX = 'x:';
+export const isCustomClub = id => typeof id === 'string' && id.startsWith(CUSTOM_PREFIX);
+export const customClubId = name => CUSTOM_PREFIX + name.trim().replace(/\s+/g, ' ').slice(0, 30);
+const clubBase = Object.fromEntries(CLUB_LIST.map(c => [c.id, c]));
+export const CL = new Proxy(clubBase, {
+  get(t, k) {
+    if (typeof k === 'string' && !(k in t) && isCustomClub(k) && k.length > 2) t[k] = { id: k, n: k.slice(2), lg: null, custom: true };
+    return t[k];
+  }
+});
 
 /* Vereine, aus denen Spieler gebucht werden (Reihenfolge in der Auswahl) */
 export const OWN_CLUBS = ['vfr', 'vfrk', 'fornsbach'];
@@ -44,4 +55,25 @@ export const OWN_CLUBS = ['vfr', 'vfrk', 'fornsbach'];
 export function storageUrl(path) {
   return STORAGE_BASE + path.split('/').map(encodeURIComponent).join('/');
 }
-export function crestUrl(clubId) { return storageUrl(CL[clubId].f); }
+/* Generiertes Wappen (Schild mit Initialen) für eigene Gegner */
+function initials(name) {
+  const w = name.replace(/[^\p{L}\p{N} ]/gu, ' ').split(' ').filter(x => x && !/^(fc|sv|tsv|sc|sg|sgm|fsv|vfr|vfb|tsg|sf|svg|fv|tsc|sk)$/i.test(x));
+  return ((w[0] || name)[0] + (w[1] ? w[1][0] : (w[0] || '').slice(1, 2))).toUpperCase();
+}
+const crestCache = new Map();
+function generatedCrest(name) {
+  if (!crestCache.has(name)) {
+    let h = 0;
+    for (const ch of name) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+    const hue = h % 360;
+    const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M50 4l40 12v30c0 26-17 42-40 50C27 88 10 72 10 46V16z" fill="hsl(' + hue + ',55%,38%)" stroke="#fff" stroke-width="4"/>' +
+      '<text x="50" y="60" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="700" font-size="30" fill="#fff">' + initials(name).replace(/[<&>]/g, '') + '</text></svg>';
+    crestCache.set(name, 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg));
+  }
+  return crestCache.get(name);
+}
+export function crestUrl(clubId) {
+  const c = CL[clubId];
+  if (!c) return generatedCrest('?');
+  return c.custom ? generatedCrest(c.n) : storageUrl(c.f);
+}

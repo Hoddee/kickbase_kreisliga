@@ -83,4 +83,4 @@ export function sparkline(series) {
 }
 
 export const avatar = id => '<span class="hav"><img src="' + esc(photoUrl(id)) + '" alt="" loading="lazy"></span>';
-export const nameWithStatus = (id, label) => esc(label != null ? label : PL[id].n) + statusIcon(id);
+export const nameWithStatus = (id, label) => esc(label != null ? label : PL[id].n) + statusIcon(id) + (PL[id] && PL[id].guest ? ' <i class="tag">Gast</i>' : '');

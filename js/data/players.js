@@ -23,8 +23,31 @@ export const PLAYER_LIST = [
   { id: 'Collin2', vn: 'Niklas', n: 'Collin', c: 'fornsbach', pos: 'MIT', mw: 4500000, status: 'fit' }
 ];
 
+/* Gastspieler gelten nur für ein Spiel. ID-Format: "gast:<Vereins-ID>:<Name>".
+   PL liefert für solche IDs automatisch einen Eintrag (ohne Foto, Standard-Marktwert). */
+export const GUEST_PREFIX = 'gast:';
+export const isGuest = id => typeof id === 'string' && id.startsWith(GUEST_PREFIX);
+export function guestId(clubId, name) { return GUEST_PREFIX + clubId + ':' + name.trim().replace(/\s+/g, ' ').slice(0, 20); }
+function guestFromId(id) {
+  const rest = id.slice(GUEST_PREFIX.length), i = rest.indexOf(':');
+  if (i < 1) return undefined;
+  return { id, vn: '', n: rest.slice(i + 1), c: rest.slice(0, i), pos: 'MIT', mw: 500000, status: 'fit', guest: true, foto: '' };
+}
+
 /* Lookup nach ID; wird bei Kader-Updates in place aktualisiert */
-export const PL = Object.fromEntries(PLAYER_LIST.map(p => [p.id, p]));
+const playerBase = Object.fromEntries(PLAYER_LIST.map(p => [p.id, p]));
+export const PL = new Proxy(playerBase, {
+  get(t, k) {
+    if (typeof k === 'string' && !(k in t) && isGuest(k)) { const g = guestFromId(k); if (g) t[k] = g; }
+    return t[k];
+  }
+});
+/* Neuen Stammspieler aus der Datenbank aufnehmen */
+export function addPlayer(p) {
+  if (playerBase[p.id]) return playerBase[p.id];
+  playerBase[p.id] = p; PLAYER_LIST.push(p);
+  return p;
+}
 
 export const POS_NAME = { TW: 'Torwart', ABW: 'Abwehr', MIT: 'Mittelfeld', ANG: 'Angriff' };
 export const POS_SHORT = { TW: 'TW', ABW: 'ABW', MIT: 'MF', ANG: 'ANG' };
@@ -32,4 +55,14 @@ export const POS_ORDER = ['TW', 'ABW', 'MIT', 'ANG'];
 export const STATUS_NAME = { fit: 'Fit', hit: 'Angeschlagen', inj: 'Verletzt' };
 
 export function fullName(p) { return p.vn ? p.vn + ' ' + p.n : p.n; }
-export function photoUrl(id) { return storageUrl('spieler/' + id + '.png'); }
+/* Platzhalter-Silhouette für Spieler ohne Foto (gleiches Format wie die Spielerfotos) */
+const SILHOUETTE = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 907 1255"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a5260"/><stop offset="1" stop-color="#2a2f37"/></linearGradient></defs>' +
+  '<circle cx="453" cy="330" r="190" fill="url(#g)"/><path d="M90 1255c0-300 160-560 363-560s363 260 363 560z" fill="url(#g)"/></svg>');
+
+export function photoUrl(id) {
+  const p = PL[id];
+  if (!p || p.foto === '') return SILHOUETTE;
+  if (p.foto) return storageUrl(p.foto) + (p.fotoV ? '?v=' + p.fotoV : '');
+  return storageUrl('spieler/' + id + '.png');
+}
