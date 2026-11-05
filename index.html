@@ -500,6 +500,9 @@ body { font-size: 15px; }
 .ht.sub svg { fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
 .ht.sub.out svg { stroke: var(--neg); }
 .ht.sub.in svg { stroke: var(--hi); }
+.sti { display: inline-block; width: .9em; height: .9em; min-width: 16px; min-height: 16px; margin-left: .35em; vertical-align: -.08em; }
+.sti svg { display: block; width: 100%; height: 100%; }
+.pf h3 .sti, .gh .gname .sti { width: .7em; height: .7em; }
 </style>
 
 <div id="home">
@@ -614,6 +617,15 @@ body { font-size: 15px; }
   function photoUrl(id) { return url('spieler/' + id + '.png'); }
   function crestUrl(id) { return url(CL[id].f); }
   var SBURL = 'https://eewvsquscmflxdhkgvna.supabase.co', SBKEY = 'sb_publishable_tWF4nhJLNDqHsuGSK07zmw_54ZiRmPU';
+  /* Verletzungsstatus wie bei Kickbase: rotes Kreuz = verletzt (fällt länger aus), Pflaster = angeschlagen */
+  var STATUS = { Buehler: 'inj', Schwer: 'inj', Sipala: 'hit' };
+  var ICON_INJ = '<svg viewBox="0 0 20 20" aria-hidden="true"><rect width="20" height="20" rx="5" fill="#E5262D"/><path d="M8 4.5h4v3.5h3.5v4H12v3.5H8V12H4.5V8H8z" fill="#fff"/></svg>';
+  var ICON_HIT = '<svg viewBox="0 0 20 20" aria-hidden="true"><g transform="rotate(-45 10 10)"><rect x="1" y="6" width="18" height="8" rx="4" fill="#F2A33A"/><rect x="7" y="6" width="6" height="8" fill="#F7C987"/><circle cx="8.8" cy="8.6" r=".7" fill="#B9701C"/><circle cx="11.2" cy="8.6" r=".7" fill="#B9701C"/><circle cx="8.8" cy="11.4" r=".7" fill="#B9701C"/><circle cx="11.2" cy="11.4" r=".7" fill="#B9701C"/></g></svg>';
+  function stIcon(p) {
+    var st = STATUS[p];
+    if (!st) return '';
+    return '<span class="sti" title="' + (st === 'inj' ? 'Verletzt' : 'Angeschlagen') + '" aria-label="' + (st === 'inj' ? 'Verletzt' : 'Angeschlagen') + '">' + (st === 'inj' ? ICON_INJ : ICON_HIT) + '</span>';
+  }
   var PLAYER = '', TEAM = '', OPP = '';
   function applyMatch(m) {
     if (!m || !PL[m.p] || !CL[m.o]) return;
@@ -968,7 +980,7 @@ body { font-size: 15px; }
     setNum($('hNum'), t);
     var mine = PL[S.match.p].c, left = isHome() ? mine : S.match.o, right = isHome() ? S.match.o : mine;
     setSrc($('hPhoto'), photoUrl(S.match.p), PLAYER); setSrc($('hBL'), crestUrl(left), CL[left].n); setSrc($('hBR'), crestUrl(right), CL[right].n);
-    $('hName').textContent = PLAYER;
+    $('hName').innerHTML = esc(PLAYER) + stIcon(S.match.p);
     $('hScore').textContent = scoreText(sc, isHome());
     $('ctaL').textContent = S.ended ? 'Bearbeiten' : 'Punkte vergeben';
     $('ctaI').textContent = S.ended ? '✎' : '+';
@@ -1355,7 +1367,7 @@ body { font-size: 15px; }
     if (!best) return '';
     var mine = PL[best.player].c, l = best.home ? mine : best.opp, r = best.home ? best.opp : mine;
     return '<button type="button" class="potw tc" data-tier="' + tierOf(best.points) + '" data-hof="g:' + esc(best.uid) + '"><img class="pw-ph" src="' + esc(photoUrl(best.player)) + '" alt="">' +
-      '<div class="pw-tx"><span class="pw-k">Spieler der Woche</span><b class="pw-n">' + esc(PL[best.player].n) + '</b><span class="pw-v">' + best.points + '</span>' +
+      '<div class="pw-tx"><span class="pw-k">Spieler der Woche</span><b class="pw-n">' + esc(PL[best.player].n) + stIcon(best.player) + '</b><span class="pw-v">' + best.points + '</span>' +
       '<span class="pw-m"><img src="' + esc(crestUrl(l)) + '" alt="">' + scoreText(best, best.home) + '<img src="' + esc(crestUrl(r)) + '" alt=""></span></div></button>';
   }
 
@@ -1370,7 +1382,7 @@ body { font-size: 15px; }
     return '<li class="gr tc' + (rank ? '' : ' nr') + '" data-tier="' + tierOf(g.points) + '"><button type="button" class="ov" data-hof="g:' + esc(g.uid) + '" aria-label="Spiel ansehen"></button>' +
       (rank ? '<span class="rk' + (rank < 4 ? ' r' + rank : '') + '">' + rank + '</span>' : '') +
       (inProfile ? avatar(g.player) : '<button type="button" class="hav hb2" data-hof="p:' + g.player + '" aria-label="Profil von ' + esc(PL[g.player].n) + '"><img src="' + esc(photoUrl(g.player)) + '" alt="" loading="lazy"></button>') +
-      '<div class="gi"><b>' + esc(PL[g.player].n) + '</b><span class="gs"><img src="' + esc(crestUrl(l)) + '" alt="">' + scoreText(g, g.home) + '<img src="' + esc(crestUrl(r)) + '" alt=""></span></div>' +
+      '<div class="gi"><b>' + esc(PL[g.player].n) + stIcon(g.player) + '</b><span class="gs"><img src="' + esc(crestUrl(l)) + '" alt="">' + scoreText(g, g.home) + '<img src="' + esc(crestUrl(r)) + '" alt=""></span></div>' +
       '<div class="gp"><span class="gv">' + g.points + '</span><span class="gd">' + dstr(g.created_at) + ' · ' + POSN[g.pos] + '</span></div></li>';
   }
   var evCache = {}, evErr = false;
@@ -1387,7 +1399,7 @@ body { font-size: 15px; }
     if (!g) return back + '<p class="hmsg">Spiel nicht gefunden.</p>';
     var pl = PL[g.player], mine = pl.c, l = g.home ? mine : g.opp, r = g.home ? g.opp : mine, ev = evCache[g.uid];
     var h = back + '<div class="gh tc" data-tier="' + tierOf(g.points) + '"><button type="button" class="hb2" data-hof="p:' + g.player + '" aria-label="Profil"><span class="hav"><img src="' + esc(photoUrl(g.player)) + '" alt=""></span></button>' +
-      '<div class="gname">' + esc(pl.n) + '</div><div class="gbig">' + g.points + '</div>' +
+      '<div class="gname">' + esc(pl.n) + stIcon(g.player) + '</div><div class="gbig">' + g.points + '</div>' +
       '<div class="gm"><img src="' + esc(crestUrl(l)) + '" alt="">' + scoreText(g, g.home) + '<img src="' + esc(crestUrl(r)) + '" alt=""></div>' +
       '<div class="gsub">' + dstr(g.created_at) + ' · ' + POSN[g.pos] + ' · ' + g.minutes + ' Min.</div></div>';
     if (!ev) return h + (evErr ? '<p class="hmsg">Keine Verbindung.</p><button type="button" class="btn full" data-hof="g:' + esc(g.uid) + '">Nochmal versuchen</button>' : '<p class="hmsg">Lädt …</p>');
@@ -1423,7 +1435,7 @@ body { font-size: 15px; }
       mine.forEach(function (g) { sum += g.points; best = Math.max(best, g.points); });
       var c = CL[pl.c];
       h += '<button type="button" class="back" style="margin-left:-8px" data-hof="plist"><b aria-hidden="true">‹</b>Spieler</button>' +
-        '<div class="pf">' + avatar(hofP) + '<div><h3>' + esc(pl.n) + '</h3><p><img src="' + esc(crestUrl(c.id)) + '" alt="">' + esc(c.n) + ' · ' + c.lg + '</p></div></div>';
+        '<div class="pf">' + avatar(hofP) + '<div><h3>' + esc(pl.n) + stIcon(hofP) + '</h3><p><img src="' + esc(crestUrl(c.id)) + '" alt="">' + esc(c.n) + ' · ' + c.lg + '</p></div></div>';
       if (!mine.length) return h + '<p class="hmsg">Noch kein Spiel gespeichert.</p>';
       var mw = mwOf(hofP);
       h += '<div class="stats4"><div><b>' + mine.length + '</b><span>Spiele</span></div><div><b>' + sum + '</b><span>Gesamt</span></div><div><b>' + Math.round(sum / mine.length) + '</b><span>Schnitt</span></div><div><b>' + best + '</b><span>Bestes</span></div></div>' +
@@ -1449,7 +1461,7 @@ body { font-size: 15px; }
       h += '<ul class="glist">' + aggPlayers().map(function (a, i) {
         var mw = mwOf(a.p), lastPos = statsOf(a.p).pos;
         return '<li><button type="button" class="gr tc" data-tier="' + tierOf(a.avg) + '" data-hof="p:' + a.p + '"><span class="rk' + (i < 3 ? ' r' + (i + 1) : '') + '">' + (i + 1) + '</span>' + avatar(a.p) +
-          '<div class="gi"><b>' + esc(PL[a.p].n) + '</b><span class="gs">' + (lastPos ? '<i class="pbadge">' + POSA[lastPos] + '</i>' : '') + a.n + (a.n === 1 ? ' Spiel' : ' Spiele') + ' · Ø ' + a.avg + '</span></div>' +
+          '<div class="gi"><b>' + esc(PL[a.p].n) + stIcon(a.p) + '</b><span class="gs">' + (lastPos ? '<i class="pbadge">' + POSA[lastPos] + '</i>' : '') + a.n + (a.n === 1 ? ' Spiel' : ' Spiele') + ' · Ø ' + a.avg + '</span></div>' +
           '<div class="gp"><span class="gv">' + a.sum + '</span><span class="gd">' + eur(mw.v) + '</span></div></button></li>';
       }).join('') + '</ul>';
     }
@@ -1503,7 +1515,7 @@ body { font-size: 15px; }
         PLIST.filter(function (p) { return p.c === c.id; }).map(function (p) {
           var st = statsOf(p.id), mw = mwOf(p.id), pos = p.pos || 'ABW';
           return '<button type="button" class="prow" data-pick="p:' + p.id + '" aria-pressed="' + (sel.p === p.id) + '"><span class="hav"><img src="' + esc(photoUrl(p.id)) + '" alt="" loading="lazy"></span>' +
-            '<span><b>' + esc(p.n) + '</b><span class="ps"><i class="pbadge">' + POSA[pos] + '</i>' + eur(mw.v) + (mw.last ? ' <span class="mw-d ' + dcls(mw.last) + '" style="font-size:12px">' + (mw.last > 0 ? '▲' : '▼') + '</span>' : '') + '</span></span>' +
+            '<span><b>' + esc(p.n) + stIcon(p.id) + '</b><span class="ps"><i class="pbadge">' + POSA[pos] + '</i>' + eur(mw.v) + (mw.last ? ' <span class="mw-d ' + dcls(mw.last) + '" style="font-size:12px">' + (mw.last > 0 ? '▲' : '▼') + '</span>' : '') + '</span></span>' +
             '<span class="pv tc"' + (st.avg != null ? ' data-tier="' + tierOf(st.avg) + '"' : '') + '><b>' + (st.avg != null ? st.avg : '–') + '</b><small>Ø Punkte</small></span><span class="ck">✓</span></button>';
         }).join('') + '</div>';
     });
