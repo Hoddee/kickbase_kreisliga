@@ -129,7 +129,7 @@ function editForm(g) {
   const opt = (v, t, cur) => '<option value="' + esc(v) + '"' + (v === cur ? ' selected' : '') + '>' + esc(t) + '</option>';
   return '<div class="card admin-edit"><div class="fl">Spiel bearbeiten</div><form id="gameEdit" class="form">' +
     '<label class="nf"><span>Datum</span><input class="fi" type="date" name="date" value="' + g.played_at.slice(0, 10) + '"></label>' +
-    '<label class="nf"><span>Gegner</span><select class="fi" name="opp">' + CLUB_LIST.filter(c => c.lg === lg && c.id !== own).map(c => opt(c.id, c.n, g.opp)).join('') + '</select></label>' +
+    '<label class="nf"><span>Gegner</span><select class="fi" name="opp">' + (CL[g.opp].custom ? opt(g.opp, CL[g.opp].n + ' (eigener Gegner)', g.opp) : '') + CLUB_LIST.filter(c => c.lg === lg && c.id !== own).map(c => opt(c.id, c.n, g.opp)).join('') + '</select></label>' +
     '<div class="nf2"><label class="nf"><span>Spielort</span><select class="fi" name="home">' + opt('1', 'Heim', g.home ? '1' : '0') + opt('0', 'Auswärts', g.home ? '1' : '0') + '</select></label>' +
     '<label class="nf"><span>Position</span><select class="fi" name="pos">' + POS_ORDER.map(k => opt(k, POS_NAME[k], g.pos)).join('') + '</select></label>' +
     '<label class="nf"><span>Tore eigenes Team</span><input class="fi" type="number" min="0" max="50" name="us" value="' + g.us + '"></label>' +

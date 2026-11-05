@@ -38,3 +38,15 @@ assets/                 Schriften und Icons
 
 Neue Registrierungen sind in Supabase abgeschaltet. Admin werden: Benutzer unter Authentication → Users anlegen,
 dann `supabase/migrations/003_admin_eintragen.sql` ausführen.
+
+Fotos neuer Spieler landen im Bucket `kickbase` unter `spieler/<id>.png` (Upload nur für Admins, siehe
+`supabase/migrations/004_spieler_fotos.sql`).
+
+## Eigene Gegner, Gastspieler, neue Spieler
+
+- **Anderer Gegner** (Kachel „+" in der Gegnerauswahl): für jeden Nutzer, z. B. Pokalspiele. Gilt nur für dieses
+  Spiel, bekommt ein automatisch erzeugtes Wappen und taucht später nicht in der Auswahl auf.
+- **Gastspieler** („+ Gastspieler hinzufügen"): für jeden Nutzer, nur für dieses Spiel, Platzhalter-Foto.
+  Gespeicherte Spiele erscheinen in der Hall of Fame mit dem Hinweis „Gast".
+- **Spieler hinzufügen** (Admin → Kader): dauerhaft für alle, mit Verein, Position, Start-Marktwert und optionalem Foto.
+  Im Kader-Bearbeiten kann das Foto auch nachträglich getauscht werden.

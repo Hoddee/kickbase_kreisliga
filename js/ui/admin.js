@@ -1,16 +1,16 @@
 /* Admin-Bereich: Login, Passwort, Spiel nachtragen, Kader pflegen (Status, Position, Marktwert) */
 import { $, esc, eur, toast, applyTier } from '../core/util.js';
-import { PLAYER_LIST, POS_NAME, POS_ORDER, STATUS_NAME, fullName } from '../data/players.js';
-import { CL } from '../data/clubs.js';
+import { PL, PLAYER_LIST, POS_NAME, POS_ORDER, STATUS_NAME, fullName } from '../data/players.js';
+import { CL, CLUB_LIST } from '../data/clubs.js';
 import { login, logout, currentUser, isLoggedIn, isAdmin, refreshAdminFlag, requestPasswordReset, updatePassword, onAuthChange } from '../services/auth.js';
-import { loadRoster, updatePlayer, games } from '../services/api.js';
+import { loadRoster, updatePlayer, insertPlayer, uploadPhoto, games } from '../services/api.js';
 import { marketOf } from '../core/market.js';
 import { ICON, statusIcon } from '../core/icons.js';
 import { avatar } from './components.js';
 import { registerView, show, nav } from '../router.js';
 import { openSetup } from './setup.js';
 
-const ui = { mode: 'login', busy: false, msg: '', editing: null, passwordMode: false, email: '' };
+const ui = { mode: 'login', busy: false, msg: '', editing: null, passwordMode: false, email: '', adding: false };
 
 /* ---------- Login-Ansicht ---------- */
 function loginHtml() {
@@ -52,11 +52,48 @@ function rosterRow(p) {
       '<label class="nf"><span>Start-Marktwert (€)</span><input class="fi" type="number" name="mw" min="0" max="500000000" step="1" value="' + p.mw + '"></label></div>' +
       '<label class="chk"><input type="checkbox" name="exact"' + (p.exact ? ' checked' : '') + '><span>Marktwert exakt übernehmen (nicht „krumm“ machen)</span></label>' +
       '<label class="chk"><input type="checkbox" name="active"' + (p.active !== false ? ' checked' : '') + '><span>In der Spielerauswahl anzeigen</span></label>' +
-      '<div class="duo"><button type="submit" class="btn primary">Speichern</button><button type="button" class="btn" data-adm="close">Abbrechen</button></div></form></li>';
+      photoField('Foto ändern (optional)') +
+      '<div class="duo"><button type="submit" class="btn primary"' + (ui.busy ? ' disabled' : '') + '>' + (ui.busy ? 'Speichere …' : 'Speichern') + '</button><button type="button" class="btn" data-adm="close">Abbrechen</button></div></form></li>';
   }
   return '<li class="kr"><button type="button" class="kr-h" data-adm="edit:' + p.id + '">' + avatar(p.id) +
     '<span><b>' + esc(fullName(p)) + statusIcon(p.id) + '</b><small>' + esc(CL[p.c].n) + ' · ' + POS_NAME[p.pos] + ' · ' + eur(mw.v) + (p.active === false ? ' · ausgeblendet' : '') + '</small></span>' +
     '<i class="kr-e">' + ICON.edit + '</i></button></li>';
+}
+
+const photoField = label => '<label class="nf"><span>' + label + '</span><input class="fi file" type="file" name="photo" accept="image/png,image/jpeg,image/webp"></label>' +
+  '<p class="muted small" style="margin:-4px 0 0">Am besten ein freigestelltes Hochformat-Foto (PNG mit transparentem Hintergrund).</p>';
+
+/* Neuer Stammspieler */
+function newPlayerHtml() {
+  if (!ui.adding) return '<button type="button" class="add-row" data-adm="add"><span class="plus">+</span><span>Spieler hinzufügen<small>erscheint dauerhaft für alle</small></span></button>';
+  const clubs = CLUB_LIST.map(c => '<option value="' + c.id + '">' + esc(c.n) + ' (' + c.lg + ')</option>').join('');
+  return '<form class="card inline-form" id="newPlayerForm"><div class="fl">Neuer Spieler</div>' +
+    '<div class="nf2" style="margin-top:0"><label class="nf"><span>Vorname</span><input class="fi" name="vn" maxlength="30" autocomplete="off"></label>' +
+    '<label class="nf"><span>Nachname</span><input class="fi" name="n" maxlength="40" required autocomplete="off"></label>' +
+    '<label class="nf"><span>Verein</span><select class="fi" name="club">' + clubs + '</select></label>' +
+    '<label class="nf"><span>Position</span><select class="fi" name="pos">' + POS_ORDER.map(k => '<option value="' + k + '"' + (k === 'MIT' ? ' selected' : '') + '>' + POS_NAME[k] + '</option>').join('') + '</select></label></div>' +
+    '<label class="nf"><span>Start-Marktwert (€)</span><input class="fi" type="number" name="mw" min="0" max="500000000" value="3000000"></label>' +
+    photoField('Foto (optional)') +
+    (ui.msg ? '<div class="form-msg bad">' + esc(ui.msg) + '</div>' : '') +
+    '<div class="duo"><button type="submit" class="btn primary"' + (ui.busy ? ' disabled' : '') + '>' + (ui.busy ? 'Speichere …' : 'Anlegen') + '</button><button type="button" class="btn" data-adm="add-cancel">Abbrechen</button></div></form>';
+}
+/* Foto verkleinern (max. 907 px breit wie die vorhandenen Fotos), Transparenz bleibt erhalten */
+async function preparePhoto(file) {
+  if (!file || !file.size) return null;
+  if (file.size > 15e6) throw new Error('Foto ist zu groß (max. 15 MB).');
+  const bmp = await createImageBitmap(file);
+  const scale = Math.min(1, 907 / bmp.width), cv = document.createElement('canvas');
+  cv.width = Math.round(bmp.width * scale); cv.height = Math.round(bmp.height * scale);
+  cv.getContext('2d').drawImage(bmp, 0, 0, cv.width, cv.height);
+  return new Promise(res => cv.toBlob(b => res(b), 'image/png'));
+}
+function makeId(vn, n) {
+  const base = (n + (vn ? vn[0] : '')).replace(/ä/gi, 'ae').replace(/ö/gi, 'oe').replace(/ü/gi, 'ue').replace(/ß/g, 'ss')
+    .normalize('NFD').replace(/[^A-Za-z0-9]/g, '').slice(0, 26) || 'Spieler';
+  const cap = base[0].toUpperCase() + base.slice(1);
+  let id = cap, i = 2;
+  while (PL[id]) id = cap + i++;
+  return id;
 }
 
 function adminHtml() {
@@ -68,6 +105,7 @@ function adminHtml() {
       '<button type="button" class="tile" data-nav="hof">' + ICON.trophy + '<b>Spiele verwalten</b><small>In der Hall of Fame ein Spiel öffnen → Bearbeiten/Löschen</small></button>' +
     '</div>' +
     '<h2>Kader</h2><p class="muted small">Status (Verletzung), Stammposition und Start-Marktwert gelten sofort für alle.</p>' +
+    newPlayerHtml() +
     '<ul class="klist">' + PLAYER_LIST.map(rosterRow).join('') + '</ul>' +
     '<button type="button" class="lnk" data-adm="pw-open">Passwort ändern</button>';
 }
@@ -106,15 +144,31 @@ async function onSubmit(form) {
     try { await updatePassword(pw); ui.passwordMode = false; toast('Passwort gespeichert'); await refreshAdminFlag(); }
     catch (e) { ui.msg = e.message; }
     ui.busy = false; render();
+  } else if (form.id === 'newPlayerForm') {
+    const vn = String(f.get('vn') || '').trim(), n = String(f.get('n') || '').trim();
+    if (!n) { ui.msg = 'Bitte einen Nachnamen eingeben.'; render(); return; }
+    ui.busy = true; ui.msg = ''; render();
+    try {
+      const id = makeId(vn, n), blob = await preparePhoto(f.get('photo'));
+      const foto = blob ? await uploadPhoto(id, blob) : '';
+      const sort = Math.max(0, ...PLAYER_LIST.map(p => p.sort || 0)) + 10;
+      await insertPlayer({ id, vorname: vn, nachname: n, verein: f.get('club'), pos: f.get('pos'), mw_start: Math.max(0, Math.round(+f.get('mw') || 0)), mw_exakt: false, status: 'fit', aktiv: true, sort, foto });
+      ui.adding = false; toast(fullName({ vn, n }) + ' angelegt');
+    } catch (e) { ui.msg = 'Anlegen fehlgeschlagen: ' + e.message; }
+    ui.busy = false; render();
   } else if (form.dataset.player) {
     const id = form.dataset.player;
     const patch = {
       status: f.get('status') || 'fit', status_info: String(f.get('info') || '').trim(), pos: f.get('pos'),
       mw_start: Math.max(0, Math.round(+f.get('mw') || 0)), mw_exakt: f.get('exact') === 'on', aktiv: f.get('active') === 'on'
     };
-    try { await updatePlayer(id, patch); ui.editing = null; toast('Kader gespeichert'); }
-    catch (e) { toast('Speichern fehlgeschlagen: ' + e.message, 'bad'); }
-    render();
+    ui.busy = true; render();
+    try {
+      const blob = await preparePhoto(f.get('photo'));
+      if (blob) patch.foto = await uploadPhoto(id, blob);
+      await updatePlayer(id, patch); ui.editing = null; toast('Kader gespeichert');
+    } catch (e) { toast('Speichern fehlgeschlagen: ' + e.message, 'bad'); }
+    ui.busy = false; render();
   }
 }
 
@@ -139,6 +193,8 @@ export function initAdmin() {
     else if (k === 'pw-open') { ui.passwordMode = true; ui.msg = ''; }
     else if (k === 'pw-cancel') ui.passwordMode = false;
     else if (k === 'close') ui.editing = null;
+    else if (k === 'add') { ui.adding = true; ui.editing = null; ui.msg = ''; }
+    else if (k === 'add-cancel') { ui.adding = false; ui.msg = ''; }
     else if (k.startsWith('edit:')) ui.editing = k.slice(5);
     render();
   });
