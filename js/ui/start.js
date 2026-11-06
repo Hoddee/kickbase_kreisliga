@@ -6,7 +6,10 @@ import { CL, OWN_CLUBS, crestUrl } from '../data/clubs.js';
 import { TEAMS, nextFixture } from '../data/schedule.js';
 import { store, total, score, started, isHome, teamOf, isMulti, allSaved } from '../core/game.js';
 import { games, loadGames } from '../services/api.js';
-import { isAdmin, isLoggedIn, pendingRequests } from '../services/auth.js';
+import { isAdmin, isLoggedIn, pendingRequests, myPlayer } from '../services/auth.js';
+import { standings } from './me.js';
+import { marketOf } from '../core/market.js';
+import { eur, signedEur, trendClass } from '../core/util.js';
 import { avatar, playerRow, nameWithStatus } from './components.js';
 import { registerView, show, nav } from '../router.js';
 import { openSetup } from './setup.js';
@@ -71,8 +74,18 @@ function fixturesStrip() {
   }).join('') + '</div>';
 }
 
+/* Freigeschaltete Spieler: Teaser für „Mein Bereich“ ganz oben */
+function meCard() {
+  const id = myPlayer();
+  if (!id || !PL[id] || !games.list) return '';
+  const t = standings(), r = t.findIndex(x => x.p === id), mw = marketOf(id, games.list);
+  const goal = r > 0 ? 'Noch ' + (t[r - 1].t - t[r].t) + ' Pkt. bis Platz ' + r : r === 0 ? 'Du führst die Tabelle an' : 'Bewerte dein erstes Spiel';
+  return '<button type="button" class="mecard" data-st="me">' + avatar(id) + '<span><small>Mein Bereich' + (r >= 0 ? ' · #' + (r + 1) : '') + '</small><b>' + esc(goal) + '</b>' +
+    '<em>' + eur(mw.v) + (mw.last ? ' <i class="' + trendClass(mw.last) + '">' + (mw.last > 0 ? '▲' : '▼') + ' ' + signedEur(mw.last) + '</i>' : '') + '</em></span>' + CHEVRON + '</button>';
+}
+
 function html() {
-  let h = runningCard() + fixturesStrip() + '<h2>Kader</h2>';
+  let h = meCard() + runningCard() + fixturesStrip() + '<h2>Kader</h2>';
   const active = PLAYER_LIST.filter(p => p.active !== false);
   const clubIds = [...new Set([...OWN_CLUBS, ...active.map(p => p.c)])].filter(id => CL[id]);
   for (const clubId of clubIds) {
@@ -104,5 +117,6 @@ export function initStart() {
     const k = b.dataset.st;
     if (k === 'resume') show(store.S.manual && !store.S.ended ? 'edit' : 'home');
     else if (k === 'new') requestNewGame();
+    else if (k === 'me') show('me');
   });
 }

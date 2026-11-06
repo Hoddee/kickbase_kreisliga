@@ -64,7 +64,7 @@ function playerHtml() {
     (ui.msg ? '<div class="form-msg bad">' + esc(ui.msg) + '</div>' : '') +
     '<div class="duo"><button type="submit" class="btn primary"' + (ui.busy ? ' disabled' : '') + '>Anfrage senden</button>' + (acc && acc.status === 'offen' ? '<button type="button" class="btn" data-adm="change-cancel">Abbrechen</button>' : '') + '</div></form></div>';
   if (mine && PL[mine]) {
-    h += '<button type="button" class="pcard" data-adm="my-profile">' + avatar(mine) + '<span><small>Freigeschaltet als</small><b>' + esc(fullName(PL[mine])) + '</b></span><span class="chev">›</span></button>' +
+    h += '<button type="button" class="pcard" data-adm="my-area">' + avatar(mine) + '<span><small>Mein Bereich</small><b>' + esc(fullName(PL[mine])) + '</b></span><span class="chev">›</span></button>' +
       '<div class="tiles"><button type="button" class="tile" data-adm="my-manual">' + ICON.plus + '<b>Spiel nachtragen</b><small>Mit Datum, Einsatzminuten und Aktionen</small></button>' +
       '<button type="button" class="tile" data-adm="my-profile">' + ICON.trophy + '<b>Mein Profil</b><small>Verlauf, Marktwert – dort jedes Spiel öffnen und bearbeiten</small></button></div>';
   } else if (!acc) h += choose('Spieler auswählen', 'Wähle aus, welcher Spieler du bist. Die Spielleitung bekommt die Anfrage und schaltet dich frei.');
@@ -335,6 +335,7 @@ export function initAdmin() {
     else if (k === 'refresh') { await refreshAdminFlag(); toast(myPlayer() ? 'Du bist freigeschaltet!' : 'Noch nicht freigeschaltet'); }
     else if (k === 'my-manual') { openSetup(null, { manual: true, player: myPlayer() }); return; }
     else if (k === 'my-profile') { openProfile(myPlayer()); return; }
+    else if (k === 'my-area') { show('me'); return; }
     else if (k.startsWith('sp:')) { ui.spTeam = k.slice(3); ui.spEdit = null; }
     else if (k === 'fx-new') { ui.spEdit = 'new'; ui.spDel = null; }
     else if (k === 'fx-cancel') { ui.spEdit = null; ui.spDel = null; }
