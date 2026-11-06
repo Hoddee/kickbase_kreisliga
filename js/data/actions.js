@@ -32,7 +32,7 @@ export const GROUPS = {
       ['corner', 'Ecke herausgeholt', 1],
       ['fouled3', 'Foul gezogen im letzten Drittel', 1],
       ['lball', 'Präziser langer Pass', 1],
-      ['pf3', 'Pass ins letzte Drittel', 1],
+      ['pf3', 'Pass ins letzte Drittel', 2],
       ['poh', 'Pass in die gegnerische Hälfte', 1]
     ]}
   ],
