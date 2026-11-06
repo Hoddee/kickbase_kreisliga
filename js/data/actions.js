@@ -39,6 +39,7 @@ export const GROUPS = {
   def: [
     { t: 'Torwart', only: 'TW', a: [
       ['pgt', 'Elfmeter gehalten', 100],
+      ['pgt2', 'Elfmeter gehalten (Elfmeterschießen)', 50],
       ['sv', 'Parade', 15],
       ['bcs', 'Großchance vereitelt', 15],
       ['bw15', 'Ball weggeschnappt (bedrängt)', 15],
@@ -83,6 +84,7 @@ export const GROUPS = {
       ['yel2', 'Gelb-Rot', -50],
       ['pcon', 'Elfmeter verursacht', -45],
       ['pmiss', 'Elfmeter verschossen', -60],
+      ['pmiss2', 'Elfmeter verschossen (Elfmeterschießen)', -30],
       ['own', 'Eigentor', -60]
     ]},
     { t: 'Schwere Fehler', a: [
