@@ -10,11 +10,11 @@ const I = {
   user: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>'
 };
 const SLIDES = [
-  ['home', 'Willkommen!', 'Die Kreisliga Edition vergibt Kickbase-Punkte für eure Spiele. Auf der Übersicht siehst du die nächsten Spiele und den Kader – tipp einen Spieler an, um sein Profil zu öffnen.'],
-  ['plus', 'Neues Spiel', 'Unten auf „+ Neues Spiel“. Gegner, Heim oder Auswärts kommen automatisch aus dem Spielplan. Mit „Mehrere Spieler“ bewertest du bis zu 5 Spieler gleichzeitig.'],
-  ['tap', 'Punkte vergeben', 'Uhr starten, dann Aktionen antippen. Bei mehreren Spielern wechselst du oben mit einem Tipp (oder Wischen) den Spieler. Tore zählen automatisch für alle auf dem Platz. Vertippt? Unten auf „Rückgängig“.'],
-  ['trophy', 'Speichern & Hall of Fame', 'Nach dem Abpfiff speichern: Punkte, Marktwert, Rekorde und der Saisonverlauf landen in der Hall of Fame.'],
-  ['user', 'Dein Konto', 'Oben rechts kannst du dich registrieren. Nach der Freischaltung trägst du deine Spiele auch selbst nach.']
+  ['home', 'Kreisliga Edition', 'Kickbase-Punkte für eure Spiele. Spieler antippen = Profil.'],
+  ['plus', 'Neues Spiel', 'Gegner kommt aus dem Spielplan. Bis zu 5 Spieler gleichzeitig.'],
+  ['tap', 'Punkte vergeben', 'Uhr starten, Aktionen antippen. Spieler wechseln: oben tippen oder wischen.'],
+  ['trophy', 'Hall of Fame', 'Nach dem Abpfiff speichern – Punkte und Marktwert landen in der Hall of Fame.'],
+  ['user', 'Konto', 'Registrieren, freischalten lassen, eigene Spiele nachtragen.']
 ];
 
 export const introSeen = () => !!readJson(KEYS.intro, false);

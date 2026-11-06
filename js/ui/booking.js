@@ -68,7 +68,7 @@ function liveGameHtml() {
     '<h2>Spielstand</h2>' +
     '<div class="scorebox">' + scoreText(sc, isHome()) + '</div>' +
     '<div class="grid">' + (isHome() ? actBtn('tg') + actBtn('cg') : actBtn('cg') + actBtn('tg')) + '</div>' +
-    (isMulti() ? '<p class="muted small hint">Tore zählen automatisch für alle Spieler, die gerade auf dem Platz stehen.</p>' + lineupHtml(d) +
+    (isMulti() ? '<p class="muted small hint">Tore zählen für alle auf dem Platz.</p>' + lineupHtml(d) +
       '<h2>Einstellungen · ' + esc(names.player) + '</h2><div class="card">' + settingsHtml() + '</div>'
     : '<h2>Einsatz</h2><div class="card">' +
       seg('Start', [['start1', 'Startelf'], ['start0', 'Bank']], S.startelf ? 'start1' : 'start0') +
