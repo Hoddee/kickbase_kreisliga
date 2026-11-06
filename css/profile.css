@@ -42,11 +42,12 @@
 
 /* ---------- Spielerprofil ---------- */
 .pb { padding-bottom: calc(40px + env(safe-area-inset-bottom, 0px)); }
-.phero { position: relative; height: min(132vw, 600px); overflow: hidden;
+.phero { position: relative; height: min(128vw, 580px); overflow: hidden;
   background: radial-gradient(120% 70% at 50% 30%, #2b2d33 0%, #1b1c20 55%, var(--bg) 100%); }
 .pphoto { position: absolute; inset: 0; display: flex; justify-content: center; }
-.pphoto img { position: absolute; top: calc(44px + env(safe-area-inset-top, 0px)); width: min(118%, 640px); max-width: none; height: auto; }
-.phero::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 52%; background: linear-gradient(to bottom, rgba(19, 20, 23, 0), rgba(19, 20, 23, .78) 45%, var(--bg) 92%); pointer-events: none; }
+/* Ausschnitt wie bei Kickbase: Kopf, Schultern und Trikot sichtbar, Foto sitzt weit oben */
+.pphoto img { position: absolute; top: calc(10px + env(safe-area-inset-top, 0px)); width: min(102%, 520px); max-width: none; height: auto; }
+.phero::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 38%; background: linear-gradient(to bottom, rgba(19, 20, 23, 0), rgba(19, 20, 23, .55) 55%, var(--bg) 96%); pointer-events: none; }
 .pback { position: absolute; z-index: 3; top: calc(12px + env(safe-area-inset-top, 0px)); left: 12px; width: 42px; height: 42px; border-radius: 50%; border: 0;
   display: grid; place-items: center; background: rgba(0, 0, 0, .4); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); color: var(--ink); }
 .pback b { font: 400 28px/1 var(--font-body); margin: -3px 2px 0 0; }
