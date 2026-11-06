@@ -36,7 +36,7 @@ function loginHtml() {
       '<button type="button" class="lnk" data-adm="mode-login">Zurück zum Login</button></div>';
   }
   if (ui.mode === 'register') {
-    return '<div class="auth card"><div class="auth-icon">' + ICON.user + '</div><h3>Registrieren</h3><p class="muted">Leg dir ein Konto an und wähle aus, welcher Spieler du bist. Sobald die Spielleitung dich freischaltet, kannst du deine Spiele selbst nachtragen.</p>' +
+    return '<div class="auth card"><div class="auth-icon">' + ICON.user + '</div><h3>Registrieren</h3><p class="muted">Wähle deinen Spieler – nach der Freigabe kannst du loslegen.</p>' +
       '<form id="registerForm" class="form"><label class="nf"><span>E-Mail</span><input class="fi" type="email" name="email" autocomplete="username" required value="' + esc(ui.email) + '"></label>' +
       '<label class="nf"><span>Passwort (mind. 8 Zeichen)</span><input class="fi" type="password" name="pw" autocomplete="new-password" minlength="8" required></label>' +
       '<label class="nf"><span>Passwort wiederholen</span><input class="fi" type="password" name="pw2" autocomplete="new-password" minlength="8" required></label>' +
@@ -45,13 +45,13 @@ function loginHtml() {
       '<button type="submit" class="btn primary full"' + (ui.busy ? ' disabled' : '') + '>' + (ui.busy ? 'Konto wird angelegt …' : 'Konto anlegen') + '</button></form>' +
       '<button type="button" class="lnk" data-adm="mode-login">Schon ein Konto? Anmelden</button></div>';
   }
-  return '<div class="auth card"><div class="auth-icon">' + ICON.shield + '</div><h3>Anmelden</h3><p class="muted">Für Spieler mit Konto und die Spielleitung.</p>' +
+  return '<div class="auth card"><div class="auth-icon">' + ICON.shield + '</div><h3>Anmelden</h3>' +
     '<form id="loginForm" class="form"><label class="nf"><span>E-Mail</span><input class="fi" type="email" name="email" autocomplete="username" required value="' + esc(ui.email) + '"></label>' +
     '<label class="nf"><span>Passwort</span><input class="fi" type="password" name="password" autocomplete="current-password" required></label>' +
     (ui.msg ? '<div class="form-msg bad">' + esc(ui.msg) + '</div>' : '') +
     '<button type="submit" class="btn primary full"' + (ui.busy ? ' disabled' : '') + '>' + (ui.busy ? 'Anmelden …' : 'Anmelden') + '</button></form>' +
     '<button type="button" class="lnk" data-adm="mode-forgot">Passwort vergessen?</button></div>' +
-    '<button type="button" class="add-row" data-adm="mode-register"><span class="plus">+</span><span>Noch kein Konto? Registrieren<small>für Spieler: eigene Spiele nachtragen</small></span></button>';
+    '<button type="button" class="add-row" data-adm="mode-register"><span class="plus">+</span><span>Noch kein Konto? Registrieren</span></button>';
 }
 
 /* ---------- Spielerkonto (angemeldet, kein Admin) ---------- */
@@ -65,15 +65,15 @@ function playerHtml() {
     '<div class="duo"><button type="submit" class="btn primary"' + (ui.busy ? ' disabled' : '') + '>Anfrage senden</button>' + (acc && acc.status === 'offen' ? '<button type="button" class="btn" data-adm="change-cancel">Abbrechen</button>' : '') + '</div></form></div>';
   if (mine && PL[mine]) {
     h += '<button type="button" class="pcard" data-adm="my-area">' + avatar(mine) + '<span><small>Mein Bereich</small><b>' + esc(fullName(PL[mine])) + '</b></span><span class="chev">›</span></button>' +
-      '<div class="tiles"><button type="button" class="tile" data-adm="my-manual">' + ICON.plus + '<b>Spiel nachtragen</b><small>Mit Datum, Einsatzminuten und Aktionen</small></button>' +
-      '<button type="button" class="tile" data-adm="my-profile">' + ICON.trophy + '<b>Mein Profil</b><small>Verlauf, Marktwert – dort jedes Spiel öffnen und bearbeiten</small></button></div>';
-  } else if (!acc) h += choose('Spieler auswählen', 'Wähle aus, welcher Spieler du bist. Die Spielleitung bekommt die Anfrage und schaltet dich frei.');
-  else if (acc.status === 'abgelehnt') h += choose('Anfrage abgelehnt', 'Deine Anfrage wurde nicht freigegeben. Falls du den falschen Spieler gewählt hast, kannst du es hier nochmal versuchen.');
-  else if (ui.changePlayer) h += choose('Anderen Spieler wählen', 'Deine Anfrage bleibt offen, bis die Spielleitung entscheidet.');
+      '<div class="tiles"><button type="button" class="tile" data-adm="my-manual">' + ICON.plus + '<b>Spiel nachtragen</b></button>' +
+      '<button type="button" class="tile" data-adm="my-profile">' + ICON.trophy + '<b>Mein Profil</b></button></div>';
+  } else if (!acc) h += choose('Spieler auswählen', '');
+  else if (acc.status === 'abgelehnt') h += choose('Anfrage abgelehnt', 'Falscher Spieler? Nochmal versuchen.');
+  else if (ui.changePlayer) h += choose('Anderen Spieler wählen', '');
   else {
     const p = PL[acc.spieler_id];
-    h += '<div class="card waitc"><div class="waiti">⏳</div><div><b>Wartet auf Freigabe</b><p class="muted small">Du hast <b>' + esc(p ? fullName(p) : acc.spieler_id) + '</b> gewählt. Sobald die Spielleitung dein Konto freischaltet, kannst du hier deine Spiele nachtragen.</p>' +
-      '<button type="button" class="lnk inline" data-adm="change-player">Falscher Spieler? Ändern</button> · <button type="button" class="lnk inline" data-adm="refresh">Status prüfen</button></div></div>';
+    h += '<div class="card waitc"><div class="waiti">⏳</div><div><b>Wartet auf Freigabe</b><p class="muted small">' + esc(p ? fullName(p) : acc.spieler_id) + '</p>' +
+      '<button type="button" class="lnk inline" data-adm="change-player">Ändern</button> · <button type="button" class="lnk inline" data-adm="refresh">Status prüfen</button></div></div>';
   }
   return h + '<button type="button" class="lnk" data-adm="pw-open">Passwort ändern</button>';
 }
@@ -111,7 +111,7 @@ function scheduleHtml() {
   const team = ui.spTeam, list = allFixtures(team), now = Date.now();
   let h = '<h2>Spielplan</h2><div class="seg full spteams">' + TEAMS.map(t => '<button type="button" data-adm="sp:' + t + '" aria-pressed="' + (t === team) + '">' + esc(CL[t].n.replace('VfR Murrhardt/ Kirchenkirnberg II', 'VfR II').replace('SGM Fornsbach II', 'SGM II')) + '<small>' + CL[t].lg + '</small></button>').join('') + '</div>';
   if (ui.spEdit === 'new') h += fixtureForm(null);
-  else h += '<button type="button" class="add-row" data-adm="fx-new"><span class="plus">+</span><span>Spiel hinzufügen<small>z. B. Nachholspiel oder verlegtes Spiel</small></span></button>';
+  else h += '<button type="button" class="add-row" data-adm="fx-new"><span class="plus">+</span><span>Spiel hinzufügen</span></button>';
   h += '<ul class="fxlist">' + list.map(f => {
     if (ui.spEdit === f.id) return '<li>' + fixtureForm(f) + '</li>';
     const past = f.at.getTime() + 4 * 3600e3 < now;
@@ -154,11 +154,11 @@ function rosterRow(p) {
 }
 
 const photoField = label => '<label class="nf"><span>' + label + '</span><input class="fi file" type="file" name="photo" accept="image/*"></label>' +
-  '<p class="muted small" style="margin:-4px 0 0" id="admPhotoStatus">' + (ui.busy ? 'Foto wird verarbeitet …' : 'Der Hintergrund wird automatisch entfernt. Am besten ein Hochformat-Foto mit Oberkörper.') + '</p>';
+  '<p class="muted small" style="margin:-4px 0 0" id="admPhotoStatus">' + (ui.busy ? 'Foto wird verarbeitet …' : 'Hintergrund wird automatisch entfernt') + '</p>';
 
 /* Neuer Stammspieler */
 function newPlayerHtml() {
-  if (!ui.adding) return '<button type="button" class="add-row" data-adm="add"><span class="plus">+</span><span>Spieler hinzufügen<small>erscheint dauerhaft für alle</small></span></button>';
+  if (!ui.adding) return '<button type="button" class="add-row" data-adm="add"><span class="plus">+</span><span>Spieler hinzufügen</span></button>';
   const clubs = CLUB_LIST.map(c => '<option value="' + c.id + '">' + esc(c.n) + ' (' + c.lg + ')</option>').join('');
   return '<form class="card inline-form" id="newPlayerForm"><div class="fl">Neuer Spieler</div>' +
     '<div class="nf2" style="margin-top:0"><label class="nf"><span>Vorname</span><input class="fi" name="vn" maxlength="30" autocomplete="off"></label>' +
@@ -191,10 +191,11 @@ function adminHtml() {
   return '<div class="card acct"><div>' + ICON.user + '</div><div><b>' + esc(u && u.email ? u.email : 'Angemeldet') + '</b><small>Admin</small></div>' +
       '<button type="button" class="btn" data-adm="logout">Abmelden</button></div>' +
     '<div class="tiles">' +
-      '<button type="button" class="tile" data-adm="manual">' + ICON.plus + '<b>Spiel nachtragen</b><small>Mit Datum, Einsatzminuten und Aktionen</small></button>' +
-      '<button type="button" class="tile" data-nav="hof">' + ICON.trophy + '<b>Spiele verwalten</b><small>In der Hall of Fame ein Spiel öffnen → Bearbeiten/Löschen</small></button>' +
-    '</div>' + accountsHtml() + scheduleHtml() +
-    '<h2>Kader</h2><p class="muted small">Status (Verletzung), Stammposition und Start-Marktwert gelten sofort für alle.</p>' +
+      '<button type="button" class="tile" data-adm="manual">' + ICON.plus + '<b>Spiel nachtragen</b></button>' +
+      '<button type="button" class="tile" data-nav="hof">' + ICON.trophy + '<b>Spiele verwalten</b></button>' +
+    '</div>' + (myPlayer() && PL[myPlayer()] ? '<button type="button" class="pcard" data-adm="my-area">' + avatar(myPlayer()) + '<span><small>Mein Bereich</small><b>' + esc(fullName(PL[myPlayer()])) + '</b></span><span class="chev">›</span></button>' : '') +
+    accountsHtml() + scheduleHtml() +
+    '<h2>Kader</h2>' +
     newPlayerHtml() +
     '<ul class="klist">' + PLAYER_LIST.map(rosterRow).join('') + '</ul>' +
     '<button type="button" class="lnk" data-adm="pw-open">Passwort ändern</button>';

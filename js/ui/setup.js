@@ -101,7 +101,7 @@ function imageField(which, img, label) {
     '<div class="imgprev' + (which === 'oimg' ? ' crest' : '') + '">' + (img ? '<img src="' + esc(img.url) + '" alt="Vorschau">' : '<span>' + (which === 'oimg' ? 'Wappen' : 'Foto') + '</span>') + '</div>' +
     '<div class="imgctl"><label class="btn small-btn"><input type="file" accept="image/*" data-img="' + which + '" hidden' + (forms.busy ? ' disabled' : '') + '>' + (img ? 'Anderes Bild' : label) + '</label>' +
     (img ? '<button type="button" class="lnk inline" data-pick="img-clear:' + which + '">Bild entfernen</button>' : '') +
-    '<p class="muted small" id="imgStatus-' + which + '">' + esc(forms.status && forms.statusFor === which ? forms.status : 'Optional · Hintergrund wird automatisch entfernt') + '</p></div></div>';
+    '<p class="muted small" id="imgStatus-' + which + '">' + esc(forms.status && forms.statusFor === which ? forms.status : 'Optional') + '</p></div></div>';
 }
 
 const dayLabel = d => {
@@ -120,7 +120,7 @@ function fixtureCard(fx) {
     '<div class="fx-m"><div><img src="' + esc(crestUrl(home)) + '" alt=""><span>' + esc(CL[home].n) + '</span></div><i>vs</i>' +
     '<div><img src="' + esc(crestUrl(away)) + '" alt=""><span>' + esc(CL[away].n) + '</span></div></div>' +
     '<div class="fx-f">Kreisliga ' + CL[fx.team].lg + ' · ' + (fx.home ? 'Heimspiel' : 'Auswärtsspiel') + '</div></div>' + pastPicker(fx) +
-    '<button type="button" class="add-row" data-pick="manual-opp"><span class="plus">⇄</span><span>Anderen Gegner wählen<small>z. B. Pokal, Nachholspiel oder andere Liga</small></span></button>';
+    '<button type="button" class="add-row" data-pick="manual-opp"><span class="plus">⇄</span><span>Anderen Gegner wählen</span></button>';
 }
 
 /* Nachtrag: die letzten Spiele laut Spielplan zur Auswahl (Datum wird übernommen) */
@@ -135,7 +135,7 @@ function pastPicker(cur) {
 function oppPicker() {
   let h = '';
   if (sel.fx) h += '<button type="button" class="back" data-pick="plan"><b aria-hidden="true">‹</b>Zurück zum Spielplan</button>';
-  else if (sel.team) h += '<p class="muted small" style="margin:0 0 10px">Für diese Mannschaft gibt es ' + (sel.manual ? 'kein vergangenes' : 'kein anstehendes') + ' Spiel im Spielplan – bitte den Gegner wählen.</p>';
+  else if (sel.team) h += '<p class="muted small" style="margin:0 0 10px">Kein Spiel im Spielplan</p>';
   h += '<div class="seg full lgseg">' + LEAGUES.map(lg => '<button type="button" data-pick="lg:' + lg + '" aria-pressed="' + (sel.lg === lg) + '">Kreisliga ' + lg + '</button>').join('') + '</div>';
   const tiles = CLUB_LIST.filter(c => c.lg === sel.lg && c.id !== sel.team).map(c =>
     '<button type="button" class="otile" data-pick="o:' + c.id + '" aria-pressed="' + (sel.o === c.id) + '"><img src="' + esc(crestUrl(c.id)) + '" alt="" loading="lazy"><span>' + esc(c.n) + '</span></button>');
@@ -163,7 +163,7 @@ function html() {
   else if (store.S.match) h += '<button type="button" class="back" data-pick="back"><b aria-hidden="true">‹</b>Zurück zum Spiel</button>';
   h += '<div class="sh2"><h2>Spieler</h2>' + (sel.manual ? '' : '<button type="button" class="multibtn" data-pick="multi" aria-pressed="' + sel.multi + '">' +
     '<span class="mbi" aria-hidden="true"><i></i><i></i><i></i></span>' + (sel.multi ? 'Mehrere · ' + sel.ps.length + '/' + MAX_SQUAD : 'Mehrere Spieler') + '</button>') + '</div>' +
-    (sel.multi ? '<p class="muted small hint">Tippe bis zu ' + MAX_SQUAD + ' Spieler an. Beim Punkte vergeben wechselst du oben mit einem Tipp zwischen ihnen.</p>' : '');
+    '';
   if (sel.lock) {
     h += '<div class="plist">' + (PL[sel.p] ? playerRow(PL[sel.p]) : '') + '</div>';
     return h + matchHtml();
