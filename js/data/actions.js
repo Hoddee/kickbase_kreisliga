@@ -6,33 +6,33 @@ export const GROUPS = {
     { t: 'Tore & Vorlagen', a: [
       ['goal', 'Tor', { TW: 120, ABW: 100, MIT: 90, ANG: 80, SUB: 80 }],
       ['pen', 'Elfmeter verwandelt', 80],
-      ['long', 'Tor von außerhalb des 16ers (Bonus)', 10],
-      ['ast', 'Vorlage', { TW: 55, ABW: 45, MIT: 35, ANG: 35, SUB: 35 }],
-      ['setup', 'Torvorbereitung', { TW: 45, ABW: 35, MIT: 25, ANG: 25, SUB: 25 }],
-      ['defl', 'Abgefälschte Vorlage', 25],
-      ['reb', 'Abpraller-Vorlage', 15],
-      ['wood', 'Pfosten-/Latten-Vorlage', 15],
+      ['long', 'Fernschusstor (Bonus)', 10],
+      ['ast', 'Torvorlage', { TW: 55, ABW: 45, MIT: 35, ANG: 35, SUB: 35 }],
+      ['setup', 'Tor eingeleitet', { TW: 45, ABW: 35, MIT: 25, ANG: 25, SUB: 25 }],
+      ['defl', 'Abgefälschte Torvorlage', 25],
+      ['reb', 'Abgeprallte Torvorlage', 15],
+      ['wood', 'Aluminium-Torvorlage', 15],
       ['intent', 'Absichtliche Vorlage (Bonus)', 10],
-      ['pwon', 'Elfmeter herausgeholt', 30],
+      ['pwon', 'Elfmeter rausgeholt', 30],
       ['ogf', 'Eigentor erzwungen', 25]
     ]},
     { t: 'Chancen & Schüsse', a: [
       ['bcc', 'Großchance kreiert', 15],
       ['deadly', 'Pass des Todes', 15],
-      ['sast', 'Schussvorlage', 5],
-      ['sot', 'Schuss aufs Tor', 12],
-      ['sjp', 'Schuss knapp vorbei', 10],
-      ['sfar', 'Schuss weit vorbei', 5],
-      ['sblk', 'Schuss geblockt (wäre aufs Tor)', 8],
-      ['post', 'Pfosten', 10],
-      ['bar', 'Latte', 10]
+      ['sast', 'Torschussvorlage', 5],
+      ['sot', 'Torschuss (aufs Tor)', 12],
+      ['sjp', 'Torschuss (knapp vorbei)', 10],
+      ['sfar', 'Torschuss (weit vorbei)', 5],
+      ['sblk', 'Torschuss (geblockt)', 8],
+      ['post', 'Pfostentreffer', 10],
+      ['bar', 'Lattenkracher', 10]
     ]},
     { t: 'Aufbau & Standards', a: [
-      ['cross', 'Flanke angekommen', 3],
-      ['corner', 'Ecke herausgeholt', 1],
-      ['fouled3', 'Foul gezogen im letzten Drittel', 1],
+      ['cross', 'Erfolgreiche Flanke', 3],
+      ['corner', 'Ecke rausgeholt', 1],
+      ['fouled3', 'Gefoult im letzten Drittel', 1],
       ['lball', 'Präziser langer Pass', 1],
-      ['pf3', 'Pass ins letzte Drittel', 1],
+      ['pf3', 'Pass vorderes Drittel', 2],
       ['poh', 'Pass in die gegnerische Hälfte', 1]
     ]}
   ],
@@ -43,7 +43,7 @@ export const GROUPS = {
       ['bcs', 'Großchance vereitelt', 15],
       ['bw15', 'Ball weggeschnappt (bedrängt)', 15],
       ['catch', 'Ball gefangen', 10],
-      ['rush', 'Erfolgreich rausgelaufen', 10],
+      ['rush', 'Erfolgreiches Rauslaufen', 10],
       ['shh', 'Schuss gehalten', 10],
       ['bw5', 'Ball weggeschnappt', 5],
       ['stand', 'Ball im Stand abgewehrt', 5],
@@ -53,51 +53,51 @@ export const GROUPS = {
       ['thr', 'Erfolgreicher Abwurf', 1]
     ]},
     { t: 'Ballgewinn & Zweikampf', a: [
-      ['duel', 'Zweikampf gewonnen', 5],
-      ['contest', 'Gegner ausgespielt', 5],
-      ['icpt', 'Ball erobert', 5],
-      ['aerw', 'Kopfballduell gewonnen', 3],
-      ['pinti', 'Pass abgefangen im eigenen 16er', 3],
-      ['pinto', 'Pass abgefangen außerhalb des 16ers', 1]
+      ['duel', 'Gewonnener Zweikampf', 5],
+      ['contest', 'Gegner ausgedribbelt', 5],
+      ['icpt', 'Ballgewinn', 5],
+      ['aerw', 'Luftzweikampf gewonnen', 3],
+      ['pinti', 'Pass abgefangen (im 16er)', 3],
+      ['pinto', 'Pass abgefangen (außerhalb 16er)', 1]
     ]},
     { t: 'Klären & Blocken', a: [
-      ['tackle', 'Zweikampf als letzter Mann', 15],
+      ['tackle', 'Zweikampf als letzter Mann (Bonus)', 15],
       ['line', 'Auf der Linie geklärt', 15],
-      ['blk6', 'Schuss geblockt im 5er', 15],
-      ['blk16', 'Schuss geblockt im 16er', 10],
-      ['blko', 'Schuss geblockt außerhalb des 16ers', 5],
-      ['clri', 'Geklärt im eigenen 16er', 5],
-      ['clro', 'Geklärt außerhalb des 16ers', 3],
+      ['blk6', 'Schuss geblockt (im 5er)', 15],
+      ['blk16', 'Schuss geblockt (im 16er)', 10],
+      ['blko', 'Schuss geblockt (außerhalb 16er)', 5],
+      ['clri', 'Geklärt (im 16er)', 5],
+      ['clro', 'Geklärt (außerhalb 16er)', 3],
       ['xblk', 'Flanke geblockt', 2],
-      ['xblkp', 'Flanke geblockt, Ball behalten', 1]
+      ['xblkp', 'Ballbesitz nach geblockter Flanke', 1]
     ]}
   ],
   err: [
     { t: 'Torwart-Fehler', only: 'TW', a: [
       ['xmiss', 'Flanke verpasst', -5],
       ['bpf', 'Rückpass-Foul', -5],
-      ['six', '6-Sekunden-Regel', -5]
+      ['six', 'Verstoß gegen 6-Sekunden-Regel', -5]
     ]},
     { t: 'Karten & Strafstöße', a: [
       ['yel', 'Gelbe Karte', -10],
-      ['yel2', 'Gelb-Rot', -50],
-      ['pcon', 'Elfmeter verursacht', -45],
+      ['yel2', 'Gelb-Rote Karte', -50],
+      ['pcon', 'Elfmeter verschuldet', -45],
       ['pmiss', 'Elfmeter verschossen', -60],
       ['own', 'Eigentor', -60]
     ]},
     { t: 'Schwere Fehler', a: [
       ['mgoal', 'Fehler vor Gegentor', -45],
-      ['mshot', 'Fehler vor Gegner-Schuss', -15],
+      ['mshot', 'Fehler vor Torschuss', -15],
       ['bcm', 'Großchance vergeben', -15],
       ['danger', 'Gefährliches Spiel', -5],
       ['throw', 'Falscher Einwurf', -5]
     ]},
     { t: 'Kleinkram', a: [
-      ['lost', 'Zweikampf verloren', -3],
+      ['lost', 'Ausgespielt worden', -3],
       ['off', 'Abseits', -3],
       ['foul', 'Foul', -2],
       ['hand', 'Handspiel', -2],
-      ['aerl', 'Kopfballduell verloren', -1],
+      ['aerl', 'Luftzweikampf verloren', -1],
       ['poss', 'Ballverlust', -1],
       ['far', 'Ball zu weit vorgelegt', -1]
     ]}
