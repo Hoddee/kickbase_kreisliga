@@ -3,7 +3,7 @@
    Bilder (Spielerfotos, Wappen): nur einmal laden, danach immer aus dem Cache – kein erneutes Herunterladen.
    Geänderte Fotos bekommen eine neue Adresse (?v=…), alte Einträge werden beim Versionswechsel aufgeräumt.
    Datenbank-Anfragen (REST/Auth) werden nie zwischengespeichert. */
-const VERSION = 'kl-v3.5.2';
+const VERSION = 'kl-v3.5.3';
 const APP = 'app-' + VERSION;
 const IMG = 'img-v2';
 const SHELL = [
