@@ -18,7 +18,7 @@ export function squadBarHtml() {
 export function renderSquadBar(el) {
   const h = squadBarHtml();
   el.hidden = !h;
-  el.innerHTML = h ? '<div class="wrap sqrow">' + h + '</div>' : '';
+  el.innerHTML = h ? '<div class="wrap sqrow" data-n="' + store.S.squad.length + '">' + h + '</div>' : '';
 }
 
 /* Klicks auf die Leiste und Wischgesten (links/rechts) auf einem Bereich */

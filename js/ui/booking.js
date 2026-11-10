@@ -1,13 +1,14 @@
 /* Punktevergabe: Reiter Spiel / Angriff / Abwehr / Fehler / Verlauf.
    Im Nachtrag-Modus (Admin) ersetzt eine Minuten- und Spielstand-Eingabe die Spieluhr. */
-import { $, esc, fmt, cls, clock, minStamp, setNum, applyTier, buzz } from '../core/util.js';
+import { $, esc, fmt, cls, clock, minStamp, setNum, applyTier, buzz, toast } from '../core/util.js';
 import { GROUPS, QUICK_DEFAULTS } from '../data/actions.js';
 import { POS_NAME, POS_ORDER } from '../data/players.js';
 import {
   store, saveGame, replaceGame, freshGame, names, isHome, scoreText, ACT, val, count, score, elapsed, onField, started,
-  startLine, endLines, total, withMarkers, summaryText, isMulti, withPlayer, eachPlayer, allSaved
+  startLine, endLines, total, withMarkers, summaryText, isMulti, withPlayer, eachPlayer, allSaved,
+  addToSquad, squadIds, teamOf, MAX_SQUAD
 } from '../core/game.js';
-import { PL } from '../data/players.js';
+import { PL, PLAYER_LIST } from '../data/players.js';
 import { halftimeLi, subLi, avatar } from './components.js';
 import { renderSquadBar, bindSquad } from './squad.js';
 import { registerView, show, nav } from '../router.js';
@@ -15,6 +16,8 @@ import { openSetup } from './setup.js';
 
 let tab = 'spiel';
 const confirm = { end: false, reset: false };
+/* Spieler nachträglich dazuholen: Auswahl offen, gewählter Spieler, auch andere Vereine zeigen */
+const add = { open: false, p: null, all: false };
 const main = () => $('editBody');
 
 /* ---------- Bausteine ---------- */
@@ -68,13 +71,13 @@ function liveGameHtml() {
     '<h2>Spielstand</h2>' +
     '<div class="scorebox">' + scoreText(sc, isHome()) + '</div>' +
     '<div class="grid">' + (isHome() ? actBtn('tg') + actBtn('cg') : actBtn('cg') + actBtn('tg')) + '</div>' +
-    (isMulti() ? '<p class="muted small hint">Tore zählen für alle auf dem Platz.</p>' + lineupHtml(d) +
+    (isMulti() ? '<p class="muted small hint">Tore zählen für alle auf dem Platz.</p>' + lineupHtml(d) + addHtml() +
       '<h2>Einstellungen · ' + esc(names.player) + '</h2><div class="card">' + settingsHtml() + '</div>'
     : '<h2>Einsatz</h2><div class="card">' +
       seg('Start', [['start1', 'Startelf'], ['start0', 'Bank']], S.startelf ? 'start1' : 'start0') +
       '<button type="button" class="btn full" style="margin-top:10px" data-do="field"' + d + '>' + (onField() ? 'Auswechseln' : 'Einwechseln') + '</button>' +
       settingsHtml() +
-    '</div>') +
+    '</div>' + addHtml()) +
     '<h2>Automatische Punkte</h2><div class="card" id="autoBox">' + autoHtml() + '</div>' + endHtml();
 }
 
@@ -90,6 +93,26 @@ function lineupHtml(d) {
     return '<li class="lup' + (on ? ' on' : '') + '">' + avatar(S.match.p) + '<span><b>' + esc(p.n) + '</b><small>' + state + '</small></span>' + btns + '</li>';
   });
   return '<h2>Aufstellung</h2><ul class="lups">' + rows.join('') + '</ul>';
+}
+
+/* Spieler dazuholen: erst wählen, dann sagen, seit wann er dabei ist */
+function addHtml() {
+  const S = store.S, ids = squadIds();
+  if (S.manual || ids.length >= MAX_SQUAD) return '';
+  if (!add.open) return '<button type="button" class="add-row" data-do="add"><span class="plus">+</span><span>Spieler dazu<small>Vergessen oder spontan dabei · ' + ids.length + '/' + MAX_SQUAD + '</small></span></button>';
+  const team = teamOf(S.match), free = PLAYER_LIST.filter(p => p.active !== false && !p.guest && !ids.includes(p.id));
+  const mine = free.filter(p => p.c === team), rest = free.filter(p => p.c !== team);
+  const chip = p => '<button type="button" class="apk" data-do="ap:' + esc(p.id) + '" aria-pressed="' + (add.p === p.id) + '">' + avatar(p.id) + '<span>' + esc(p.n) + '</span></button>';
+  let h = '<h2>Spieler dazu</h2><div class="card addc"><div class="apks">' + (mine.length ? mine : rest).map(chip).join('') +
+    (mine.length && add.all ? rest.map(chip).join('') : '') + '</div>' +
+    (mine.length && rest.length && !add.all ? '<button type="button" class="lnk inline" data-do="add-all">Andere Vereine zeigen</button>' : '');
+  if (add.p && PL[add.p]) {
+    const n = esc(PL[add.p].n), modes = !started() ? [['start', 'Hinzufügen']] : S.ended ? [['start', 'War von Anfang an dabei']]
+      : [['start', 'Seit Anpfiff'], ['bench', 'Auf der Bank'], ['in', 'Jetzt rein']];
+    h += '<div class="fl">' + n + (started() ? ' ist dabei …' : '') + '</div><div class="amodes">' + modes.map(([k, t], i) =>
+      '<button type="button" class="btn' + (i === 0 ? ' primary' : '') + '" data-do="am:' + k + '">' + t + '</button>').join('') + '</div>';
+  }
+  return h + '<button type="button" class="btn full ghost" data-do="add-x">Abbrechen</button></div>';
 }
 
 /* ---------- Reiter "Spiel" (Nachtrag) ---------- */
@@ -271,7 +294,16 @@ function doAct(what) {
       break;
     }
     case 'copy': copySummary(); return;
+    case 'add': add.open = true; add.p = null; add.all = false; render(); return;
+    case 'add-x': add.open = false; render(); return;
+    case 'add-all': add.all = true; render(); return;
     default: {
+      if (what.startsWith('ap:')) { add.p = what.slice(3); render(); return; }
+      if (what.startsWith('am:')) {
+        const p = add.p;
+        if (p && addToSquad(p, what.slice(3))) { add.open = false; add.p = null; buzz(10); toast(PL[p].n + ' ist dabei'); }
+        render(); return;
+      }
       /* Aufstellung bei mehreren Spielern: sb1:i / sb0:i (Startelf/Bank), fld:i (rein/raus) */
       const m = /^(sb1|sb0|fld):(\d+)$/.exec(what);
       if (!m) return;
@@ -302,7 +334,7 @@ export function initBooking() {
   registerView('edit', {
     elements: ['edit'],
     guard: () => (store.S.match ? null : 'start'),
-    enter: () => { confirm.end = false; confirm.reset = false; },
+    enter: () => { confirm.end = false; confirm.reset = false; add.open = false; },
     render
   });
   main().addEventListener('click', e => {

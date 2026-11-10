@@ -4,12 +4,12 @@
      Kickbase-Punkte: 300+ +3 · 140–299 +2 · 70–139 +1 · 50–69 0 · 20–49 -1 · 0–19 -2 · unter 0 -3
      Spielzeit:       90 Min. +3 · 60–89 +2 · 30–59 +1 · unter 30 0
      Ergebnis:        Sieg +2 · Unentschieden 0 · Niederlage -2 (nur mit Einsatzminuten)
-     Zu null:         +2 (kein Gegentor und mindestens 45 Minuten gespielt – wie bei den Punkten)
+     Zu null:         +2 (kein Gegentor und mindestens 10 Minuten gespielt – wie bei den Punkten)
    Dazu ein kleines Markt-Rauschen (±0,25 %), damit die Werte nicht glatt wirken.
    Grenzen: mindestens 500.000 €, höchstens 30.000.000 €.
    Alles wird aus den gespeicherten Spielen berechnet – Regeländerungen gelten rückwirkend für alle Spiele. */
 import { PL } from '../data/players.js';
-import { hash01 } from './util.js';
+import { hash01, cleanSheet } from './util.js';
 
 export const MW_MIN = 500000;
 export const MW_MAX = 30000000;
@@ -31,7 +31,7 @@ export function rating(g) {
   const time = m >= 90 ? 3 : m >= 60 ? 2 : m >= 30 ? 1 : 0;
   /* Ohne Einsatzminuten zählt das Ergebnis nicht (nicht eingesetzt = 0) */
   const result = m <= 0 ? 0 : g.us > g.them ? 2 : g.us < g.them ? -2 : 0;
-  const clean = g.them === 0 && m >= 45 ? 2 : 0;
+  const clean = cleanSheet(g) ? 2 : 0;
   return {
     total: kb + time + result + clean,
     parts: [['Kickbase-Punkte', kb], ['Spielzeit', time], ['Ergebnis', result], ['Zu null', clean]]

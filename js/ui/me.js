@@ -1,6 +1,6 @@
 /* „Mein Bereich“ für freigeschaltete Spieler: Stand, Rivalen, nächstes Spiel, Vergleich mit dem Team,
    Erfolge (Bronze/Silber/Gold mit Fortschritt) und persönliche Rekorde. Alles wird aus den gespeicherten Spielen berechnet. */
-import { $, esc, eur, signedEur, trendClass, tierOf, pad2, applyTier } from '../core/util.js';
+import { $, esc, eur, signedEur, trendClass, tierOf, pad2, applyTier, cleanSheet } from '../core/util.js';
 import { PL, PLAYER_LIST, photoUrl, fullName } from '../data/players.js';
 import { CL, crestUrl } from '../data/clubs.js';
 import { nextFixture } from '../data/schedule.js';
@@ -54,7 +54,7 @@ function achievements(l, keeper) {
     ...scorer,
     ['star', 'Punktesammler', sum(l, g => g.points), [500, 1500, 4000]],
     ['flame', 'Sternstunde', l.length ? Math.max(...l.map(g => g.points)) : 0, [150, 250, 400]],
-    ['wall', 'Weiße Weste', l.filter(g => g.them === 0 && g.minutes >= 45).length, [1, 3, 8]],
+    ['wall', 'Weiße Weste', l.filter(cleanSheet).length, [1, 3, 8]],
     ['cup', 'Siegertyp', l.filter(g => g.us > g.them && g.minutes > 0).length, [1, 5, 12]],
     ['clock', 'Dauerbrenner', l.filter(g => g.minutes >= 90).length, [1, 5, 12]],
     ['trend', 'Formstark', bestStreak(l), [2, 4, 6]]
