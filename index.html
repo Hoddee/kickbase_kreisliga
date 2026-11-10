@@ -23,6 +23,7 @@
 <link rel="stylesheet" href="css/theme.css">
 <link rel="stylesheet" href="css/admin.css">
 <link rel="stylesheet" href="css/profile.css">
+<link rel="stylesheet" href="css/sheet.css">
 <script type="module" src="js/main.js"></script>
 </head>
 <body>
@@ -68,9 +69,23 @@
   <div class="go"><div class="wrap"><button type="button" class="newgame" data-st="new"><span aria-hidden="true">+</span>Neues Spiel</button></div></div>
 </section>
 
-<!-- Spielerprofil -->
-<section id="profile" hidden>
-  <main id="profileBody" class="pb"></main>
+<!-- Spielerprofil (Blatt von unten) -->
+<section id="profile" class="bsheet" hidden>
+  <div class="sh-panel">
+    <div class="sh-grab" aria-hidden="true"><i></i></div>
+    <div class="sh-mini" id="profileMini"></div>
+    <div class="sh-scroll" id="profileScroll"><main id="profileBody" class="pb"></main></div>
+    <nav class="sh-tabs" id="profileTabs" aria-label="Profil"></nav>
+  </div>
+</section>
+
+<!-- Spiel-Detail (Blatt über dem Profil) -->
+<section id="match" class="bsheet" hidden>
+  <div class="sh-panel">
+    <div class="sh-grab" aria-hidden="true"><i></i></div>
+    <div class="sh-mini mm" id="matchMini"></div>
+    <div class="sh-scroll" id="matchScroll"><main id="matchBody" class="pb"></main></div>
+  </div>
 </section>
 
 <!-- Mein Bereich (freigeschaltete Spieler) -->

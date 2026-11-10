@@ -3,10 +3,12 @@
      so entstehen keine Endlosschleifen (z. B. Profil ↔ Hall of Fame).
    - „Zurück“ (Knopf in der App, Zurück-Taste/Wischgeste am Handy) geht genau einen Schritt zurück,
      ganz unten liegt immer die Übersicht ("start").
-   Ansichten registrieren sich mit render() und optional enter()/leave()/back() (back = interner Schritt zurück). */
+   Ansichten registrieren sich mit render() und optional enter()/leave()/back() (back = interner Schritt zurück).
+   overlay: true = Blatt, das von unten über die vorige Ansicht fährt (Spielerprofil, Spiel-Detail). */
 const views = new Map();
 export const nav = { current: null, previous: null, stack: [] };
 const ROOT = 'start';
+let wasOverlay = false;
 
 export function registerView(name, def) { views.set(name, def); }
 
@@ -22,12 +24,17 @@ export function show(name, opts = {}) {
   if (i >= 0) st.length = i + 1; else st.push(name);
   nav.previous = st.length > 1 ? st[st.length - 2] : null;
   nav.current = name;
+  /* Blätter (overlay) liegen über der Ansicht darunter: die bleibt sichtbar */
+  const visible = new Set([name]);
+  for (let i = st.length - 1; i > 0 && views.get(st[i]) && views.get(st[i]).overlay; i--) visible.add(st[i - 1]);
   for (const [n, v] of views) {
-    for (const id of v.elements) document.getElementById(id).hidden = n !== name;
+    for (const id of v.elements) document.getElementById(id).hidden = !visible.has(n);
   }
+  document.body.classList.toggle('sheet-open', !!def.overlay);
   if (def.enter) def.enter(opts);
   def.render();
-  if (!opts.keepScroll) window.scrollTo(0, 0);
+  if (!opts.keepScroll && !def.overlay && !wasOverlay) window.scrollTo(0, 0);
+  wasOverlay = !!def.overlay;
   armHistory();
 }
 

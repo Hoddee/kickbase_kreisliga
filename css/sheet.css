@@ -1,0 +1,131 @@
+/* Blätter von unten (Spielerprofil, Spiel-Detail) und Kickbase-Kacheln im Profil */
+body.sheet-open { overflow: hidden; }
+.bsheet { position: fixed; inset: 0; z-index: 60; display: flex; justify-content: center; align-items: flex-end;
+  background: rgba(0, 0, 0, .55); animation: bs-fade .2s ease-out; }
+.sh-panel { position: relative; width: 100%; max-width: 560px; height: calc(100% - 10px - env(safe-area-inset-top, 0px));
+  display: flex; flex-direction: column; overflow: hidden; border-radius: 18px 18px 0 0; background: var(--bg);
+  transition: transform .2s ease-out; animation: bs-up .26s cubic-bezier(.2, .8, .2, 1); will-change: transform; }
+@keyframes bs-up { from { transform: translateY(100%); } to { transform: none; } }
+@keyframes bs-fade { from { background: rgba(0, 0, 0, 0); } }
+.sh-grab { position: absolute; z-index: 6; top: 0; left: 0; right: 0; height: 22px; display: flex; justify-content: center; padding-top: 8px; touch-action: none; }
+.sh-grab i { width: 38px; height: 5px; border-radius: 3px; background: rgba(222, 228, 236, .55); }
+.sh-scroll { flex: 1; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+.sh-scroll .pb { padding-left: 16px; padding-right: 16px; }
+.sh-scroll .phero, .sh-scroll .mhero { margin: 0 -16px; }
+.bsheet .pphoto img { top: 22px; }
+
+/* Kompakter Kopf, erscheint beim Scrollen */
+.sh-mini { position: absolute; z-index: 5; top: 0; left: 0; right: 0; padding: 20px 16px 10px; background: rgba(19, 20, 23, .97);
+  border-bottom: 1px solid var(--line); transform: translateY(-100%); visibility: hidden; transition: transform .18s ease-out, visibility 0s .18s; }
+.sh-mini.on { transform: none; visibility: visible; transition: transform .18s ease-out; }
+.pmini { display: flex; align-items: center; gap: 12px; min-height: 40px; }
+.pmini b { font: 800 22px/1 var(--font-display); text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pplay.sm { height: 38px; padding: 0 12px; font-size: 12.5px; }
+.pbody .pmini { margin: 26px 0 0; }
+
+/* Reiter unten */
+.sh-tabs { flex: none; display: flex; justify-content: center; gap: 6px; padding: 8px 12px calc(8px + env(safe-area-inset-bottom, 0px));
+  background: #0e0f12; border-top: 1px solid var(--line); }
+.sh-tabs button { display: inline-flex; align-items: center; gap: 8px; height: 44px; padding: 0 16px; border: 0; border-radius: 22px; background: none; color: var(--muted2); }
+.sh-tabs svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.sh-tabs span { display: none; font: 600 14px var(--font-body); }
+.sh-tabs button[aria-pressed="true"] { background: var(--raised); color: var(--ink); }
+.sh-tabs button[aria-pressed="true"] span { display: inline; }
+
+/* ---------- Übersicht: Kacheln ---------- */
+.kbx { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 10px; margin-top: 18px; }
+.kb-box, .kb3 > div, .kbst, .kb2 > div, .kbmd .md { border-radius: 14px; background: var(--surface); }
+.kb-box { position: relative; padding: 14px; }
+.kb-g { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 10px; }
+.kb-g.one { grid-template-columns: 1fr; margin-top: 18px; }
+.kb-g b, .kb3 b, .kb2 b { display: block; font: 800 19px/1.1 var(--font-display); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.kb-g span, .kb3 span, .kb2 span { display: block; margin-top: 3px; font-size: 12px; color: var(--muted); }
+.kb-g em { font-style: normal; }
+.fdash { display: flex; gap: 4px; margin-bottom: 14px; }
+.fdash i { flex: 1; height: 5px; border-radius: 3px; background: rgba(222, 228, 236, .12); }
+.fdash i[data-tier="red"] { background: #B3202A; }
+.fdash i[data-tier="orange"] { background: #ED8928; }
+.fdash i[data-tier="lime"] { background: #9CE04A; }
+.fdash i[data-tier="emerald"] { background: #28DE86; }
+.fdash i[data-tier="gold"] { background: #E1BE38; }
+.kb-arr { position: absolute; top: 10px; left: 14px; font: 700 20px/1 var(--font-body); font-style: normal; }
+.bsheet .up { color: var(--hi); } .bsheet .down { color: var(--neg); } .bsheet .flat { color: var(--muted); }
+
+.kb3, .kb2 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 10px; }
+.kb2 { grid-template-columns: 1fr 1fr; margin-top: 14px; }
+.kb3 > div, .kb2 > div { padding: 12px 14px; }
+.kb3 small { font: 600 13px var(--font-body); color: var(--muted); }
+
+.kbmd { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 10px; }
+.kbmd .md { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 12px 6px; border: 0; color: var(--ink); text-align: center; }
+.kbmd .md:disabled { opacity: 1; cursor: default; }
+.kbmd .md > span:first-child { font-size: 12px; color: var(--muted); }
+.md-c { display: flex; gap: 6px; }
+.md-c img { width: 30px; height: 30px; object-fit: contain; }
+.kbmd .md b { font: 700 13.5px var(--font-body); font-variant-numeric: tabular-nums; }
+.kbmd .md:disabled b { font-weight: 500; color: var(--muted); font-size: 12px; }
+
+.kbst { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 10px; padding: 12px 14px; }
+.kbst > div:first-child { display: flex; align-items: center; gap: 10px; min-width: 0; flex-wrap: wrap; }
+.kbst small { color: var(--muted); font-size: 12.5px; }
+.kb-ok { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font: 800 14px/1 var(--font-body); font-style: normal; background: var(--hi); color: #03170C; }
+.kb-ok.hit { background: #ED8928; color: #1A1000; }
+.kb-ok.inj { background: #E0343F; color: #fff; }
+.kb-cards { display: flex; gap: 12px; flex: none; font: 600 14px var(--font-body); }
+.kb-cards span { display: inline-flex; align-items: center; gap: 5px; }
+.kb-cards i { width: 12px; height: 16px; border-radius: 2px; }
+.kb-cards .cy { background: #F5C518; }
+.kb-cards .cr { background: #E0343F; }
+
+/* ---------- Marktwert ---------- */
+.mwh { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin: 22px 0 10px; }
+.mwh b { display: block; font: 800 30px/1.05 var(--font-display); font-variant-numeric: tabular-nums; }
+.mwd { display: inline-flex; align-items: center; gap: 4px; margin-top: 6px; font: 700 15px var(--font-body); }
+.mwd i { font-style: normal; }
+.mwh small { display: block; margin-top: 2px; font-size: 12.5px; color: var(--muted); }
+.mwr { flex: none; }
+.bsheet .mwc { display: block; width: 100%; height: 260px; margin: 6px 0; padding: 0; border: 0; border-radius: 0; background: none; cursor: crosshair; }
+
+/* ---------- Spiel-Detail ---------- */
+.mhero { position: relative; height: min(110vw, 500px); overflow: hidden; background: radial-gradient(120% 70% at 50% 30%, #2b2d33 0%, #1b1c20 55%, var(--bg) 100%); }
+.mhero::after { content: ""; position: absolute; left: 0; right: 0; bottom: -2px; height: 55%; background: linear-gradient(to bottom, rgba(19, 20, 23, 0), rgba(19, 20, 23, .7) 45%, var(--bg) 85%); pointer-events: none; }
+.mh-t { position: absolute; z-index: 2; left: 16px; right: 16px; bottom: 14px; text-align: center; }
+.mh-t > span { display: block; font: 800 clamp(30px, 11vw, 52px)/1 var(--font-display); text-transform: uppercase; overflow-wrap: anywhere; }
+.mh-t > b { display: block; margin-top: 2px; font: 800 clamp(64px, 24vw, 110px)/1 var(--font-display); letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.mh-s { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 8px; }
+.mh-s img { width: 42px; height: 42px; object-fit: contain; }
+.mh-s strong { display: block; font: 800 24px/1 var(--font-display); font-variant-numeric: tabular-nums; }
+.mh-s small { display: block; margin-top: 3px; font: 600 10.5px var(--font-body); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.sh-mini.mm { display: flex; align-items: center; gap: 12px; }
+.sh-mini.mm > span { flex: 1; min-width: 0; font: 800 20px/1 var(--font-display); text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sh-mini.mm > b { font: 800 22px/1 var(--font-display); }
+.mh-s.sm { gap: 8px; margin: 0; }
+.mh-s.sm img { width: 26px; height: 26px; }
+.mh-s.sm strong { font-size: 16px; }
+
+.mrows { list-style: none; margin: 8px 0 0; padding: 0; }
+.mr { display: grid; grid-template-columns: 58px minmax(0, 1fr) auto; align-items: center; gap: 12px; min-height: 48px; border-bottom: 1px solid var(--line); }
+.mr > b { font: 800 19px var(--font-display); font-variant-numeric: tabular-nums; }
+.mr > b.pos { color: var(--lime); } .mr > b.hi { color: var(--hi); } .mr > b.neg { color: var(--neg); } .mr > b.zero { color: var(--muted); }
+.mr > span { font: 500 14.5px var(--font-body); }
+.mr > em { font: 600 13.5px var(--font-body); font-style: normal; color: var(--muted); font-variant-numeric: tabular-nums; }
+.mk { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 13px; }
+.mk svg { width: 24px; height: 24px; fill: currentColor; }
+.mk.sub svg { fill: none; stroke: currentColor; stroke-width: 2; }
+
+/* ---------- Erfolge als Schild-Abzeichen ---------- */
+.shbs { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 14px 8px; }
+.shb { display: flex; flex-direction: column; align-items: center; text-align: center; --c: #5b6068; --f: #1c1f24; }
+.shb svg { width: 66px; height: 74px; }
+.shb .sh-o { fill: var(--c); }
+.shb .sh-i { fill: var(--f); }
+.shb g { fill: none; stroke: var(--c); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.shb b { margin-top: 6px; font: 600 12.5px/1.2 var(--font-body); }
+.shb small { margin-top: 2px; font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.shb.lv0 svg { opacity: .55; }
+.shb.lv1 { --c: #cd7f32; --f: #2a1d12; }
+.shb.lv2 { --c: #c8d0dc; --f: #23272e; }
+.shb.lv3 { --c: #e1be38; --f: #2a2410; }
+.shb.sp.lv3 { --c: #a770ff; --f: #1f1730; }
+.shb.lv3 svg { filter: drop-shadow(0 0 8px rgba(225, 190, 56, .35)); }
+.shb.sp.lv3 svg { filter: drop-shadow(0 0 8px rgba(167, 112, 255, .4)); }

@@ -39,6 +39,7 @@ export async function loadGames(force = false) {
     const r = await rest('spiele?select=' + LIST_FIELDS + '&order=played_at.desc&limit=2000');
     const d = await r.json();
     games.list = (Array.isArray(d) ? d : []).filter(g => PL[g.player] && CL[g.opp]);
+    playerEventCache.clear();
     for (const g of games.list.slice().reverse()) applyMedia(g.player, g.opp, g.player_foto, g.opp_foto);
   } catch (e) { games.error = true; games.failedAt = Date.now(); }
   games.busy = false;
@@ -76,7 +77,7 @@ export async function loadEvents(uid) {
   return ev;
 }
 export const cachedEvents = uid => eventCache.get(uid);
-export const forgetEvents = uid => (uid ? eventCache.delete(uid) : eventCache.clear());
+export const forgetEvents = uid => { playerEventCache.clear(); return uid ? eventCache.delete(uid) : eventCache.clear(); };
 
 /* ---------- Kader ---------- */
 function applyRoster(rows) {
@@ -194,3 +195,16 @@ export async function deleteFixture(id) {
   planRows = (planRows || []).filter(x => x.id !== id);
   storePlan();
 }
+
+/* Aktionen aller Spiele eines Spielers (für Startelf-, Karten- und Elfmeter-Zähler im Profil) */
+const playerEventCache = new Map();
+export async function loadPlayerEvents(id) {
+  if (playerEventCache.has(id)) return playerEventCache.get(id);
+  const r = await rest('spiele?select=uid,events&player=eq.' + encodeURIComponent(id));
+  const d = await r.json();
+  const map = new Map((Array.isArray(d) ? d : []).map(x => [x.uid, Array.isArray(x.events) ? x.events : []]));
+  for (const [uid, ev] of map) eventCache.set(uid, ev);
+  playerEventCache.set(id, map);
+  return map;
+}
+export const forgetPlayerEvents = () => playerEventCache.clear();
