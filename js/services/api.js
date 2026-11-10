@@ -77,6 +77,7 @@ export async function loadEvents(uid) {
   return ev;
 }
 export const cachedEvents = uid => eventCache.get(uid);
+export const rememberEvents = (uid, ev) => { forgetEvents(uid); eventCache.set(uid, ev); };
 export const forgetEvents = uid => { playerEventCache.clear(); return uid ? eventCache.delete(uid) : eventCache.clear(); };
 
 /* ---------- Kader ---------- */

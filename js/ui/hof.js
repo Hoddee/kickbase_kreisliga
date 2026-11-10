@@ -125,7 +125,7 @@ function gameHtml() {
   if (!ev) return head + (ui.eventsError ? '<p class="hmsg">Keine Verbindung.</p><button type="button" class="btn full" data-hof="g:' + esc(g.uid) + '">Nochmal versuchen</button>' : '<p class="hmsg">Lädt …</p>');
   const sums = new Map();
   for (const x of ev) {
-    if (x.k === 'ht' || x.k === 'sub') continue;
+    if (x.k === 'ht' || x.k === 'sub' || x.x) continue;
     const c = x.k === 'auto' ? 'Einsatz & Team' : (CAT[x.k] || 'Sonstiges');
     sums.set(c, (sums.get(c) || 0) + x.p);
   }
