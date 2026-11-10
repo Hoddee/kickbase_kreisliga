@@ -4,7 +4,7 @@ import { KEYS } from '../config.js';
 import { GROUPS, CLEAN_SHEET, GOAL_KEYS, ASSIST_KEYS } from '../data/actions.js';
 import { PL, POS_NAME } from '../data/players.js';
 import { CL } from '../data/clubs.js';
-import { minStamp } from './util.js';
+import { minStamp, randomId } from './util.js';
 
 /* ---------- Zustand ---------- */
 export function freshGame(keep = {}) {
@@ -39,7 +39,7 @@ export function saveGame() {
    Aktionen, Wechsel, Halbzeit-Marke, eigene Spiel-ID und ob er schon gespeichert ist.
    Der gerade gewählte Spieler liegt wie bisher direkt in store.S, die anderen in store.S.squad. */
 const SLOT_KEYS = ['pos', 'startelf', 'stints', 'events', 'subs', 'nextId', 'h2Id', 'uid', 'saved'];
-export const MAX_SQUAD = 5;
+export const MAX_SQUAD = 7;
 export const isMulti = () => !!(store.S.squad && store.S.squad.length > 1);
 function extract(S) {
   const o = { p: S.match.p, pf: S.match.pf || null };
@@ -55,6 +55,36 @@ function load(S, o) {
 export function newSlot(p, pos, uid) {
   return { p, pf: PL[p] && PL[p].guest && PL[p].foto ? PL[p].foto : null, pos, startelf: true, stints: [{ from: 0, to: null }], events: [], subs: [], nextId: 1, h2Id: null, uid, saved: false };
 }
+/* Spieler nachträglich ins laufende Spiel holen (vergessen oder spontan dabei).
+   mode: 'start' = seit Anpfiff auf dem Platz, 'bench' = auf der Bank, 'in' = jetzt eingewechselt.
+   Bisherige Tore werden übernommen, damit der Spielstand stimmt – Punkte dafür nur, wenn er da auf dem Platz stand. */
+export function addToSquad(p, mode = 'start') {
+  const S = store.S;
+  if (!PL[p] || S.manual || squadIds().includes(p) || squadIds().length >= MAX_SQUAD) return false;
+  if (!isMulti()) {
+    /* Bisher allein: Tore als gemeinsame Einträge markieren, damit „Rückgängig“ sie bei allen entfernt */
+    for (const e of S.events) if ((e.key === 'tg' || e.key === 'cg') && !e.grp) e.grp = 'g' + (e.ts || e.id);
+    S.squad = [extract(S)]; S.cur = 0;
+  }
+  const slot = newSlot(p, PL[p].pos || 'MIT', randomId()), el = elapsed(), run = started();
+  if (run) {
+    const on = mode === 'start';
+    slot.startelf = on;
+    slot.stints = on ? [{ from: 0, to: S.ended ? el : null }] : mode === 'in' && !S.ended ? [{ from: el, to: null }] : [];
+    for (const e of S.events) {
+      if (e.key !== 'tg' && e.key !== 'cg') continue;
+      if (S.h2 && S.h2Id != null && slot.h2Id == null && e.id >= S.h2Id) slot.h2Id = slot.nextId;
+      slot.events.push({ id: slot.nextId++, key: e.key, label: e.label, pts: on ? (e.key === 'tg' ? 5 : -5) : 0, t: e.t, ts: e.ts, grp: e.grp });
+    }
+    if (S.h2 && slot.h2Id == null) slot.h2Id = slot.nextId;
+    if (mode === 'in' && !S.ended) slot.subs.push({ o: 'in', at: slot.nextId, t: Math.floor(el) });
+  }
+  S.squad.push(slot);
+  saveGame();
+  return true;
+}
+export const squadIds = () => (isMulti() ? eachPlayer(() => store.S.match.p) : store.S.match ? [store.S.match.p] : []);
+
 /* fn für Spieler i ausführen (Spieler wird kurz „eingewechselt“ und danach zurückgetauscht) */
 export function withPlayer(i, fn) {
   const S = store.S;
@@ -153,16 +183,17 @@ export function startLine() {
   return S.startelf ? { l: 'Startelf', p: 5, r: '1’' } : { l: 'Eingewechselt', p: 2, r: minStamp(Math.floor(S.stints[0].from)) };
 }
 /* Minutenbonus, Zu null und Sieg/Niederlage kommen erst nach Spielende dazu.
-   Zu null: nur wenn das eigene Team im ganzen Spiel kein Gegentor bekommt (auch nicht nach einer Auswechslung)
-   und der Spieler mindestens eine Halbzeit gespielt hat. */
+   Zu null: nur wenn das eigene Team im ganzen Spiel kein Gegentor bekommt (auch nicht nach einer Auswechslung).
+   Er wächst wie der Minutenbonus mit der Spielzeit (je 10 Minuten), nur mal dem Wert der Position. */
 export function endLines() {
   const S = store.S, out = [], m = minPlayed(), sc = score(), r = Math.ceil(playedSec() / 60) + '’';
   if (!S.ended || !S.stints.length) return out;
-  if (sc.them === 0 && m >= 45) {
+  const mb = Math.floor(m / 10) + (m >= 90 ? 1 : 0);
+  if (sc.them === 0 && mb > 0) {
     const v = CLEAN_SHEET[S.pos] || 2;
-    out.push({ l: 'Zu null', h: '+' + v + ' je 10 Minuten, +' + v + ' bei voller Spielzeit', p: Math.floor(m / 10) * v + (m >= 90 ? v : 0), r });
+    out.push({ l: 'Zu null', h: '+' + v + ' je 10 Minuten, +' + v + ' bei voller Spielzeit', p: mb * v, r });
   }
-  out.push({ l: 'Minutenbonus', h: '+1 je 10 Minuten, +1 bei voller Spielzeit', p: Math.floor(m / 10) + (m >= 90 ? 1 : 0), r });
+  out.push({ l: 'Minutenbonus', h: '+1 je 10 Minuten, +1 bei voller Spielzeit', p: mb, r });
   if (sc.us > sc.them) out.push({ l: 'Spiel gewonnen', p: 15, r });
   else if (sc.us < sc.them) out.push({ l: 'Spiel verloren', p: -15, r });
   return out;

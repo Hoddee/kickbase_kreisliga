@@ -2,7 +2,7 @@
    Übersicht: Foto, Name, Formkurve, Zahlenraster, Einsätze, nächste Spieltage, Status.
    Leistung: Balken je Spiel (gespielt + kommend), Antippen öffnet das Spiel-Detail.
    Marktwert: große Kurve (3M/1J), Antippen zeigt den Wert an einem Tag. */
-import { $, esc, eur, trendClass, applyTier, tierOf, pad2 } from '../core/util.js';
+import { $, esc, eur, cleanSheet, trendClass, applyTier, tierOf, pad2 } from '../core/util.js';
 import { PL, POS_NAME, POS_SHORT, STATUS_NAME, photoUrl } from '../data/players.js';
 import { CL, crestUrl } from '../data/clubs.js';
 import { upcomingFixtures, pastFixtures } from '../data/schedule.js';
@@ -57,7 +57,7 @@ function overview(p, id, played, mw) {
   const form = played.slice(-5);
   const dashes = '<div class="fdash">' + [0, 1, 2, 3, 4].map(i => { const g = form[form.length - 5 + i]; return '<i' + (g ? ' data-tier="' + tierOf(g.points) + '"' : '') + '></i>'; }).join('') + '</div>';
   const goals = played.reduce((s, g) => s + (g.goals || 0), 0), ast = played.reduce((s, g) => s + (g.assists || 0), 0);
-  const clean = played.filter(g => g.them === 0 && g.minutes >= 45).length;
+  const clean = played.filter(cleanSheet).length;
   const cell = (v, l) => '<div><b>' + v + '</b><span>' + l + '</span></div>';
   let h = '<div class="kbx"><div class="kb-box">' + dashes + '<div class="kb-g">' +
     cell(st.sum.toLocaleString('de-DE'), 'Punkte') + cell('×' + (keeper ? clean : goals), keeper ? 'Zu Null' : 'Tore') +

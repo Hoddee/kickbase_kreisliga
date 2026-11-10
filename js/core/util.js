@@ -34,6 +34,9 @@ export function hash01(str) {
   return ((h >>> 0) % 100000) / 100000;
 }
 
+/* Zu null wie bei den Punkten: kein Gegentor und mindestens 10 Minuten (erster Minutenbonus) */
+export const cleanSheet = g => g.them === 0 && (g.minutes || 0) >= 10;
+
 export function randomId(len = 20) {
   const a = 'abcdefghijklmnopqrstuvwxyz0123456789';
   const buf = new Uint8Array(len);

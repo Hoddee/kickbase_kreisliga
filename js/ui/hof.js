@@ -1,6 +1,6 @@
 /* Hall of Fame: Top-Spiele, Tabelle, Neueste, Rekorde, Spielerprofil und Spielansicht.
    Admins können Spiele hier bearbeiten und löschen. */
-import { $, esc, eur, signedEur, trendClass, tierOf, dateShort, applyTier, toast } from '../core/util.js';
+import { $, esc, eur, signedEur, trendClass, tierOf, dateShort, applyTier, toast, cleanSheet } from '../core/util.js';
 import { PL, PLAYER_LIST, POS_NAME, POS_SHORT, POS_ORDER, photoUrl } from '../data/players.js';
 import { CL, CLUB_LIST, LEAGUES, crestUrl } from '../data/clubs.js';
 import { TEAMS } from '../data/schedule.js';
@@ -59,7 +59,7 @@ function records(list) {
   for (const g of list) {
     const a = per.get(g.player) || { n: 0, sum: 0, goals: 0, assists: 0, clean: 0 };
     a.n++; a.sum += g.points; a.goals += g.goals || 0; a.assists += g.assists || 0;
-    if (g.them === 0 && g.minutes >= 45) a.clean++;
+    if (cleanSheet(g)) a.clean++;
     per.set(g.player, a);
   }
   /* Bester Spieler nach Kennzahl; "eligible" filtert (z. B. mindestens 2 Spiele) */

@@ -129,3 +129,67 @@ body.sheet-open { overflow: hidden; }
 .shb.sp.lv3 { --c: #a770ff; --f: #1f1730; }
 .shb.lv3 svg { filter: drop-shadow(0 0 8px rgba(225, 190, 56, .35)); }
 .shb.sp.lv3 svg { filter: drop-shadow(0 0 8px rgba(167, 112, 255, .4)); }
+
+/* ---------- Ruhiger, minimalistischer (wie Kickbase) ---------- */
+/* Keine sichtbaren Scrollbalken – gescrollt wird trotzdem */
+* { scrollbar-width: none; }
+*::-webkit-scrollbar { display: none; width: 0; height: 0; }
+
+.bsheet { --tile: #1b1e23; }
+.sh-grab i { width: 36px; height: 4px; background: rgba(222, 228, 236, .3); }
+.sh-mini { border-bottom: 0; background: var(--bg); box-shadow: 0 8px 16px -12px rgba(0, 0, 0, .8); }
+.sh-tabs { background: var(--bg); border-top: 0; padding-top: 6px; }
+.sh-tabs button { height: 40px; }
+.sh-tabs button[aria-pressed="true"] { background: var(--tile); }
+
+.bsheet .pplay { height: 38px; padding: 0 14px; border-width: 1px; border-color: rgba(222, 228, 236, .35); border-radius: 10px; font-size: 12.5px; letter-spacing: .06em; }
+.bsheet .pplay span { font-size: 19px; }
+.bsheet .pclub > img { width: 46px; height: 46px; }
+.bsheet .pchip { min-height: 26px; padding: 0 10px; border-radius: 6px; font-size: 13px; background: rgba(222, 228, 236, .1); }
+
+.kbx { gap: 8px; margin-top: 20px; }
+.kb3, .kbmd, .kbst { gap: 8px; margin-top: 8px; }
+.kb-box, .kb3 > div, .kbst, .kb2 > div, .kbmd .md { border-radius: 12px; background: var(--tile); }
+.kb-g b, .kb3 b, .kb2 b { font-weight: 700; font-size: 18px; }
+.kb-g span, .kb3 span, .kb2 span, .kbmd .md > span:first-child { font-size: 11.5px; color: var(--muted2); }
+.fdash i { height: 4px; }
+.kb-ok { width: 22px; height: 22px; font-size: 12px; }
+
+/* Leistung */
+.bsheet .pseason { margin: 22px 0 12px; font-size: 13px; color: var(--muted); letter-spacing: .08em; }
+.bsheet .kchart .trk2 { background: rgba(222, 228, 236, .045); }
+.bsheet .pstats { gap: 8px; margin-top: 14px; }
+.bsheet .pstats div { border: 0; border-radius: 12px; background: var(--tile); text-align: left; padding: 12px 14px; }
+.bsheet .pstats b { font: 700 18px/1.1 var(--font-display); }
+.bsheet .pstats span { margin-top: 3px; font-size: 11.5px; color: var(--muted2); }
+
+/* Marktwert: Zeitraum als schlichter Umschalter */
+.bsheet .mwr { border: 0; border-radius: 10px; background: var(--tile); padding: 3px; gap: 2px; }
+.bsheet .mwr button { min-height: 30px; padding: 0 12px; border-radius: 8px; background: none; color: var(--muted); font-size: 12.5px; }
+.bsheet .mwr button[aria-pressed="true"] { background: rgba(222, 228, 236, .14); color: var(--ink); }
+.mwh b { font-size: 26px; font-weight: 700; }
+
+/* Spiel-Detail: Zeilen ohne harte Linien */
+.mr, .mk { border-bottom-color: rgba(222, 228, 236, .06); }
+.mr > b { font-weight: 700; font-size: 17px; }
+.mk svg { width: 20px; height: 20px; opacity: .7; }
+
+/* ---------- Spieler dazuholen (Punktevergabe) ---------- */
+.addc { display: grid; gap: 12px; }
+.apks { display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 8px; }
+.apk { display: grid; justify-items: center; gap: 4px; padding: 8px 4px; border: 1px solid transparent; border-radius: 12px; background: var(--raised); color: var(--ink); min-width: 0; }
+.apk .hav { width: 40px; height: 40px; }
+.apk span { max-width: 100%; font: 600 12px var(--font-body); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); }
+.apk[aria-pressed="true"] { border-color: var(--kb-red); background: rgba(var(--kb-red-rgb), .14); }
+.apk[aria-pressed="true"] span { color: var(--ink); }
+.amodes { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 8px; }
+.amodes .btn { min-height: 48px; padding: 0 8px; font-size: 13.5px; }
+.addc .fl { margin: 0; }
+.addc .ghost { min-height: 40px; border: 0; background: none; color: var(--muted); }
+
+/* Bis zu 7 Spieler: Leiste wird schmaler, damit alle nebeneinander passen */
+.sqrow[data-n="6"], .sqrow[data-n="7"] { gap: 4px; }
+.sqrow[data-n="6"] .sqb, .sqrow[data-n="7"] .sqb { flex: 1 1 0; padding: 5px 1px 4px; border-radius: 12px; }
+.sqrow[data-n="6"] .sqa, .sqrow[data-n="7"] .sqa { width: 32px; height: 32px; }
+.sqrow[data-n="7"] .sqn { font-size: 10.5px; }
+.sqrow[data-n="7"] .sqv { font-size: 13.5px; }
