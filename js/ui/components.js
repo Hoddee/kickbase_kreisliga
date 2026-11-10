@@ -17,20 +17,24 @@ export const whistleLi = () => '<li class="whistle" aria-label="Anpfiff">' + ICO
 export function rowLi(r) {
   if (r.ht) return halftimeLi();
   if (r.sub) return subLi(r.sub);
-  return '<li class="row' + (r.fresh ? ' fresh' : '') + '"><span class="rp ' + cls(r.p) + '">' + fmt(r.p) + '</span><span class="rl">' + esc(r.label) +
-    '</span><span class="rt">' + esc(r.r || '') + '</span></li>';
+  /* off = per Korrektur entfernt (ausgegraut, zählt nicht), add = nachgetragen */
+  const ci = r.i != null ? ' data-ci="' + r.i + '"' : '';
+  return '<li class="row' + (r.fresh ? ' fresh' : '') + (r.off ? ' off' : '') + (r.add ? ' added' : '') + '"' + ci + '><span class="rp ' + (r.off ? 'zero' : cls(r.p)) + '">' + fmt(r.p) + '</span><span class="rl">' + esc(r.label) +
+    (r.add ? '<small class="rtag">Korrektur</small>' : '') + '</span><span class="rt">' + (r.off ? ICON.removed : esc(r.r || '')) + '</span></li>';
 }
 
 /* Gespeicherte Ereignisliste (Hall of Fame) in Anzeigezeilen umwandeln: Automatik oben, Startelf unten */
 export function rowsFromRecord(ev) {
   const ends = [], mids = [];
   let start = null;
-  for (const x of ev) {
-    if (x.k === 'auto') { if (x.a === 's') start = x; else ends.push(x); } else mids.push(x);
-  }
-  const rows = ends.map(x => ({ p: x.p, label: x.l }));
-  for (const x of mids.slice().reverse()) rows.push(x.k === 'ht' ? { ht: 1 } : x.k === 'sub' ? { sub: x } : { p: x.p, label: x.l, r: minStamp(x.t) });
-  if (start) rows.push({ p: start.p, label: start.l });
+  ev.forEach((x, i) => {
+    const y = Object.assign({ _i: i }, x);
+    if (x.k === 'auto') { if (x.a === 's') start = y; else ends.push(y); } else mids.push(y);
+  });
+  const fl = x => ({ i: x._i, off: !!x.x, add: !!x.c });
+  const rows = ends.map(x => ({ p: x.p, label: x.l, ...fl(x) }));
+  for (const x of mids.slice().reverse()) rows.push(x.k === 'ht' ? { ht: 1 } : x.k === 'sub' ? { sub: x } : { p: x.p, label: x.l, r: minStamp(x.t), ...fl(x) });
+  if (start) rows.push({ p: start.p, label: start.l, ...fl(start) });
   return rows;
 }
 

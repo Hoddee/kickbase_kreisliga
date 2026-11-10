@@ -34,7 +34,7 @@ export function openProfile(id, tab = 'ov') {
   loadPlayerEvents(id).then(m => { if (state.id === id) { state.ev = m; if (nav.current === 'profile') render(); } }).catch(() => {});
 }
 
-const count = (evs, keys) => { let n = 0; for (const ev of evs) for (const e of ev) if (keys.includes(e.k) || (e.k === 'auto' && keys.includes(e.a))) n++; return n; };
+const count = (evs, keys) => { let n = 0; for (const ev of evs) for (const e of ev) if (!e.x && (keys.includes(e.k) || (e.k === 'auto' && keys.includes(e.a)))) n++; return n; };
 /* Kurzform wie bei Kickbase: +41K, -1,2M */
 export const shortEur = n => { const a = Math.abs(n), s = n > 0 ? '+' : n < 0 ? '−' : '±';
   return s + (a >= 1e6 ? (a / 1e6).toFixed(1).replace('.', ',') + 'M' : a >= 1e3 ? Math.round(a / 1e3) + 'K' : a); };

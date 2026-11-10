@@ -19,7 +19,9 @@ export const ICON = {
   plus: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
   injured: '<svg viewBox="0 0 20 20" aria-hidden="true"><rect width="20" height="20" rx="5" fill="#E5262D"/><path d="M8 4.5h4v3.5h3.5v4H12v3.5H8V12H4.5V8H8z" fill="#fff"/></svg>',
   knock: '<svg viewBox="0 0 20 20" aria-hidden="true"><g transform="rotate(-45 10 10)"><rect x="1" y="6" width="18" height="8" rx="4" fill="#F2A33A"/><rect x="7" y="6" width="6" height="8" fill="#F7C987"/><circle cx="8.8" cy="8.6" r=".7" fill="#B9701C"/><circle cx="11.2" cy="8.6" r=".7" fill="#B9701C"/><circle cx="8.8" cy="11.4" r=".7" fill="#B9701C"/><circle cx="11.2" cy="11.4" r=".7" fill="#B9701C"/></g></svg>',
-  brand: '<svg viewBox="0 0 30 30" aria-hidden="true"><rect width="30" height="30" rx="8" fill="#ff4600"/><circle cx="15" cy="15" r="7.2" fill="none" stroke="#fff" stroke-width="2.2"/><path d="M15 3v24M3 15h4.8M22.2 15H27" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg>'
+  brand: '<svg viewBox="0 0 30 30" aria-hidden="true"><rect width="30" height="30" rx="8" fill="#ff4600"/><circle cx="15" cy="15" r="7.2" fill="none" stroke="#fff" stroke-width="2.2"/><path d="M15 3v24M3 15h4.8M22.2 15H27" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg>',
+  /* Uhr mit Kreuz: per Korrektur entfernte Aktion */
+  removed: '<svg viewBox="0 0 24 24" class="ic-rm" aria-label="entfernt" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v3.5h-3.5"/><path d="M9.5 9.5l5 5M14.5 9.5l-5 5"/></svg>',
 };
 
 /* Verletzungs-Symbol wie bei Kickbase: rotes Kreuz = verletzt, Pflaster = angeschlagen */
