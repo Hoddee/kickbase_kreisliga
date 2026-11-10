@@ -10,6 +10,7 @@ import { initStart } from './ui/start.js';
 import { initProfile, openProfile } from './ui/profile.js';
 import { showIntro, introSeen } from './ui/intro.js';
 import { initMe } from './ui/me.js';
+import { initMatch, openMatch } from './ui/match.js';
 import { myPlayer, isAdmin as adminRole } from './services/auth.js';
 import { initAdmin, startPasswordFlow } from './ui/admin.js';
 import { loadRoster, loadSchedule } from './services/api.js';
@@ -23,6 +24,7 @@ initHof();
 initStart();
 initProfile();
 initMe();
+initMatch();
 initAdmin();
 
 /* Navigation über data-nav="…" (back = zur vorherigen Ansicht) */
@@ -42,7 +44,12 @@ document.addEventListener('click', e => {
   if (!o) return;
   const v = o.getAttribute('data-open');
   if (v.startsWith('p:')) openProfile(v.slice(2));
-  else if (v.startsWith('g:')) openHofGame(v.slice(2));
+  else if (v.startsWith('g:')) openMatch(v.slice(2));
+});
+/* Balken im Profil / Spieltags-Kacheln: Spiel-Detail als Blatt */
+document.addEventListener('click', e => {
+  const m = e.target.closest('[data-match]');
+  if (m) openMatch(m.getAttribute('data-match'));
 });
 
 /* Admin-Symbol oben rechts in der Auswahl leuchtet, wenn angemeldet */

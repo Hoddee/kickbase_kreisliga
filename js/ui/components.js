@@ -51,12 +51,12 @@ function barHeight(t) {
   }
   return 100;
 }
-export const toChartEntry = g => ({ tm: g.team, u: g.uid, t: g.points, m: g.minutes, us: g.us, them: g.them, g: g.goals, a: g.assists, p: g.player, o: g.opp, h: g.home ? 1 : 0 });
+export const toChartEntry = g => ({ pos: g.pos, tm: g.team, u: g.uid, t: g.points, m: g.minutes, us: g.us, them: g.them, g: g.goals, a: g.assists, p: g.player, o: g.opp, h: g.home ? 1 : 0 });
 
 /* Senkrechte Balken je Spiel wie im Kickbase-Spielerprofil */
 export function seasonChart(list, title, { clickable = false, button = '' } = {}) {
   return '<div class="lh"><div><b>' + esc(title) + '</b><span>' + SEASON + '</span></div>' + button + '</div><div class="chart">' + list.map((x, i) => {
-    const icons = ICON.ball.repeat(x.g || 0) + ICON.boot.repeat(x.a || 0) + (x.them === 0 && x.m >= 45 ? ICON.zero : '');
+    const icons = ICON.ball.repeat(x.g || 0) + ICON.boot.repeat(x.a || 0) + (x.pos === 'TW' && x.them === 0 && x.m >= 45 ? ICON.zero : '');
     const mine = x.tm && CL[x.tm] ? x.tm : PL[x.p].c, left = x.h ? mine : x.o, right = x.h ? x.o : mine;
     return '<div class="col' + (i === list.length - 1 ? ' cur' : '') + '" data-tier="' + tierOf(x.t) + '"' + (clickable && x.u ? ' data-hof="g:' + esc(x.u) + '" role="button"' : '') + '>' +
       '<div class="ci">' + (i === 0 ? '#' : '') + (i + 1) + '</div>' +
@@ -119,8 +119,8 @@ const dayMonth = d => pad2(d.getDate()) + '. ' + MONTHS[d.getMonth()];
 export function profileChart(played, upcoming) {
   const cols = played.map((g, i) => {
     const mine = recordTeam(g), l = g.home ? mine : g.opp, r = g.home ? g.opp : mine;
-    const icons = ICON.ball.repeat(g.goals || 0) + ICON.boot.repeat(g.assists || 0) + (g.them === 0 && g.minutes >= 45 ? ICON.zero : '');
-    return '<button type="button" class="col played" data-tier="' + tierOf(g.points) + '" data-open="g:' + esc(g.uid) + '" aria-label="Spiel ' + (i + 1) + ': ' + g.points + ' Punkte">' +
+    const icons = ICON.ball.repeat(g.goals || 0) + ICON.boot.repeat(g.assists || 0) + (g.pos === 'TW' && g.them === 0 && g.minutes >= 45 ? ICON.zero : '');
+    return '<button type="button" class="col played" data-tier="' + tierOf(g.points) + '" data-match="' + esc(g.uid) + '" aria-label="Spiel ' + (i + 1) + ': ' + g.points + ' Punkte">' +
       '<div class="ci">' + (i + 1) + '</div><div class="cc"><img src="' + esc(crestUrl(l)) + '" alt=""><img src="' + esc(crestUrl(r)) + '" alt=""></div>' +
       '<div class="cd">' + dayMonth(new Date(g.played_at)) + '</div>' +
       '<div class="trk2"><div class="fill" style="height:' + barHeight(g.points).toFixed(1) + '%"><div class="ico">' + icons + '</div></div></div>' +

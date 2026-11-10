@@ -32,34 +32,52 @@ function bestStreak(l) {
 
 /* Erfolge: [Symbol, Name, Wert, Stufen Bronze/Silber/Gold] – eine einzelne Stufe ist ein Special.
    Torhüter bekommen statt Torjäger/Vorbereiter den Special „Torwart-Scorer“. */
+/* Linien-Symbole für die Abzeichen */
+const AI = {
+  boot: '<path d="M6 8h6l1 5 6 2a2 2 0 0 1 1 2v1H6z"/><path d="M6 18v1M10 18v1M14 18v1"/>',
+  ball: '<circle cx="12" cy="12" r="7.5"/><path d="M12 8.5l3 2.2-1.1 3.6h-3.8L9 10.7z"/>',
+  assist: '<path d="M4 17c4-8 10-10 16-10"/><path d="M16 4l4 3-4 3"/>',
+  star: '<path d="M12 4l2.4 5 5.4.6-4 3.7 1.1 5.3L12 16l-4.9 2.6 1.1-5.3-4-3.7 5.4-.6z"/>',
+  flame: '<path d="M12 21c-4 0-6-2.6-6-6 0-4 4-6 4-10 3 2 4 4 4 6 1-1 1.5-2 1.5-3 2.5 2 4.5 4.5 4.5 7 0 3.4-3 6-8 6z"/>',
+  wall: '<path d="M4 7h16v12H4zM4 11h16M4 15h16M9 7v4M15 7v4M12 11v4M8 15v4M16 15v4"/>',
+  cup: '<path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8.5 20h7M10 17h4"/>',
+  clock: '<circle cx="12" cy="13" r="7"/><path d="M12 9v4l2.5 2M10 3h4"/>',
+  trend: '<path d="M4 17l5-5 3 3 7-7M14 8h5v5"/>',
+  glove: '<path d="M8 21v-5L5 12a1.5 1.5 0 0 1 2.3-2L9 12V5a1.3 1.3 0 0 1 2.6 0v5-6a1.3 1.3 0 0 1 2.6 0v6-5a1.3 1.3 0 0 1 2.6 0v8l-1 4v4z"/>'
+};
 function achievements(l, keeper) {
   const scorer = keeper
-    ? [['🧤', 'Torwart-Scorer', sum(l, g => (g.goals || 0) + (g.assists || 0)), [1]]]
-    : [['⚽', 'Torjäger', sum(l, g => g.goals || 0), [1, 5, 15]], ['🎯', 'Vorbereiter', sum(l, g => g.assists || 0), [1, 5, 10]]];
+    ? [['glove', 'Torwart-Scorer', sum(l, g => (g.goals || 0) + (g.assists || 0)), [1]]]
+    : [['ball', 'Torjäger', sum(l, g => g.goals || 0), [1, 5, 15]], ['assist', 'Vorbereiter', sum(l, g => g.assists || 0), [1, 5, 10]]];
   return [
-    ['👟', 'Stammkraft', l.length, [3, 10, 20]],
+    ['boot', 'Stammkraft', l.length, [3, 10, 20]],
     ...scorer,
-    ['⭐', 'Punktesammler', sum(l, g => g.points), [500, 1500, 4000]],
-    ['🔥', 'Sternstunde', l.length ? Math.max(...l.map(g => g.points)) : 0, [150, 250, 400]],
-    ['🛡️', 'Weiße Weste', l.filter(g => g.them === 0 && g.minutes >= 45).length, [1, 3, 8]],
-    ['🏆', 'Siegertyp', l.filter(g => g.us > g.them && g.minutes > 0).length, [1, 5, 12]],
-    ['⏱️', 'Dauerbrenner', l.filter(g => g.minutes >= 90).length, [1, 5, 12]],
-    ['📈', 'Formstark', bestStreak(l), [2, 4, 6]]
+    ['star', 'Punktesammler', sum(l, g => g.points), [500, 1500, 4000]],
+    ['flame', 'Sternstunde', l.length ? Math.max(...l.map(g => g.points)) : 0, [150, 250, 400]],
+    ['wall', 'Weiße Weste', l.filter(g => g.them === 0 && g.minutes >= 45).length, [1, 3, 8]],
+    ['cup', 'Siegertyp', l.filter(g => g.us > g.them && g.minutes > 0).length, [1, 5, 12]],
+    ['clock', 'Dauerbrenner', l.filter(g => g.minutes >= 90).length, [1, 5, 12]],
+    ['trend', 'Formstark', bestStreak(l), [2, 4, 6]]
   ];
 }
 const TIER = ['Bronze', 'Silber', 'Gold'];
-/* Kurze Erklärung nur als Tooltip, damit die Liste ruhig bleibt */
 const HOW = { Stammkraft: 'Spiele', 'Torwart-Scorer': 'Tor oder Vorlage als Torwart', Torjäger: 'Tore', Vorbereiter: 'Vorlagen', Punktesammler: 'Gesamtpunkte', Sternstunde: 'Punkte in einem Spiel', 'Weiße Weste': 'Spiele zu null', Siegertyp: 'Siege', Dauerbrenner: 'Spiele über 90 Min.', Formstark: 'Spiele in Folge mit 100+' };
-
+/* Schild-Formen: Bronze unten rund, Silber spitz, Gold spitz mit Zacken oben */
+const SHIELD = [
+  'M32 4l24 8v24c0 15-10 26-24 32C18 62 8 51 8 36V12z',
+  'M32 4l24 8v26c0 12-11 22-24 30C19 60 8 50 8 38V12z',
+  'M32 4l24 8v24c0 15-10 26-24 32C18 62 8 51 8 36V12z',
+  'M8 10l8-4 8 4 8-6 8 6 8-4 8 4v26c0 15-10 26-24 32C18 62 8 51 8 36z'
+];
 function achHtml(a) {
   const [icon, name, v, steps] = a, special = steps.length === 1;
   const level = steps.filter(s => v >= s).length, next = steps[level];
-  const from = level ? steps[level - 1] : 0;
-  const pct = next ? Math.min(100, Math.round(((v - from) / (next - from)) * 100)) : 100;
   const cls = special ? (level ? 'lv3 sp' : 'lv0 sp') : 'lv' + level;
-  const tag = special ? (level ? 'Special' : '') : level ? TIER[level - 1] : '';
-  return '<li class="ach ' + cls + '" title="' + esc(HOW[name] || '') + '"><span class="ach-i" aria-hidden="true">' + icon + '</span><div><b>' + esc(name) + (tag ? ' <i class="ach-t">' + tag + '</i>' : '') + '</b>' +
-    '<small>' + (next ? v + ' / ' + next : '✓') + '</small><span class="ach-bar"><i style="width:' + pct + '%"></i></span></div></li>';
+  const tag = special ? 'Special' : level ? TIER[level - 1] : 'Gesperrt';
+  return '<li class="shb ' + cls + '" title="' + esc((HOW[name] || '') + (next ? ': ' + v + ' / ' + next : '')) + '">' +
+    '<svg viewBox="0 0 64 72" aria-hidden="true"><path class="sh-o" d="' + SHIELD[special && level ? 3 : level] + '"/><path class="sh-i" d="' + SHIELD[special && level ? 3 : level] + '" transform="translate(32 36) scale(.8) translate(-32 -36)"/>' +
+    '<g transform="translate(18 21) scale(1.17)">' + AI[icon] + '</g></svg>' +
+    '<b>' + esc(name) + '</b><small>' + (next ? v + ' / ' + next : tag) + '</small></li>';
 }
 
 const daysUntil = d => { const a = new Date(); a.setHours(0, 0, 0, 0); const b = new Date(d); b.setHours(0, 0, 0, 0); return Math.round((b - a) / 864e5); };
@@ -119,14 +137,14 @@ function html() {
 
   /* Erfolge */
   const ach = achievements(l, p.pos === 'TW'), done = ach.reduce((s, a) => s + a[3].filter(x => a[2] >= x).length, 0), all = ach.reduce((s, a) => s + a[3].length, 0);
-  h += '<h2>Erfolge <i class="nb">' + done + '/' + all + '</i></h2><ul class="achs">' + ach.map(achHtml).join('') + '</ul>';
+  h += '<h2>Erfolge <i class="nb">' + done + '/' + all + '</i></h2><ul class="shbs">' + ach.map(achHtml).join('') + '</ul>';
 
   /* Rekorde */
   if (l.length) {
     const best = l.reduce((a, g) => (g.points > a.points ? g : a)), goals = l.reduce((a, g) => ((g.goals || 0) > (a.goals || 0) ? g : a));
     const peak = mw.series.reduce((a, x) => (x.v > a.v ? x : a));
     const opp = g => (CL[g.opp] ? 'vs ' + CL[g.opp].n : '');
-    const rec = (t, v, sub, link) => '<button type="button" class="mrec"' + (link ? ' data-open="g:' + esc(link) + '"' : ' disabled') + '><span>' + t + '</span><b>' + v + '</b><small>' + esc(sub) + '</small></button>';
+    const rec = (t, v, sub, link) => '<button type="button" class="mrec"' + (link ? ' data-match="' + esc(link) + '"' : ' disabled') + '><span>' + t + '</span><b>' + v + '</b><small>' + esc(sub) + '</small></button>';
     h += '<h2>Persönliche Rekorde</h2><div class="mrecs">' +
       rec('Bestes Spiel', best.points + ' Pkt.', opp(best), best.uid) +
       rec('Meiste Tore', String(goals.goals || 0), goals.goals ? opp(goals) : '–', goals.goals ? goals.uid : null) +
