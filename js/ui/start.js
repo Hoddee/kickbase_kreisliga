@@ -12,6 +12,7 @@ import { eur, signedEur, trendClass } from '../core/util.js';
 import { avatar, playerRow, nameWithStatus } from './components.js';
 import { registerView, show, nav } from '../router.js';
 import { openSetup } from './setup.js';
+import { liveTilesHtml } from './watch.js';
 
 const CHEVRON = '<span class="chev" aria-hidden="true">›</span>';
 
@@ -83,7 +84,7 @@ function meCard() {
 }
 
 function html() {
-  let h = meCard() + runningCard() + fixturesStrip() + '<h2>Kader</h2>';
+  let h = liveTilesHtml() + meCard() + runningCard() + fixturesStrip() + '<h2>Kader</h2>';
   const active = PLAYER_LIST.filter(p => p.active !== false);
   const clubIds = [...new Set([...OWN_CLUBS, ...active.map(p => p.c)])].filter(id => CL[id]);
   for (const clubId of clubIds) {

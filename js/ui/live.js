@@ -12,6 +12,7 @@ import { rowLi, whistleLi, areaBars, seasonChart, toChartEntry, scrollChartsToEn
 import { preloadShare, shareCard } from './share.js';
 import { SEASON } from '../config.js';
 import { registerView, nav } from '../router.js';
+import { publishNow } from '../services/live.js';
 
 let seenId = -1, signature = '';
 const save = { busy: false, error: '', confirm: false };
@@ -84,6 +85,7 @@ async function saveToCloud() {
       withPlayer(r.i, () => { store.S.saved = true; });
       saveGame();
     }
+    publishNow();
     await loadGames(true);
   } catch (e) {
     save.error = e.status === 401 || e.status === 403 ? 'Keine Berechtigung (Nachträge nur als Admin).' : 'Speichern hat nicht geklappt. Netz prüfen und nochmal tippen.';
