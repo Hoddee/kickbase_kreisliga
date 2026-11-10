@@ -87,8 +87,9 @@ body.sheet-open { overflow: hidden; }
 .bsheet .mwc { display: block; width: 100%; height: 260px; margin: 6px 0; padding: 0; border: 0; border-radius: 0; background: none; cursor: crosshair; }
 
 /* ---------- Spiel-Detail ---------- */
-.mhero { position: relative; height: min(110vw, 500px); overflow: hidden; background: radial-gradient(120% 70% at 50% 30%, #2b2d33 0%, #1b1c20 55%, var(--bg) 100%); }
-.mhero::after { content: ""; position: absolute; left: 0; right: 0; bottom: -2px; height: 55%; background: linear-gradient(to bottom, rgba(19, 20, 23, 0), rgba(19, 20, 23, .7) 45%, var(--bg) 85%); pointer-events: none; }
+/* Foto sitzt wie im Profil, Name und Punkte darunter auf Brusthöhe – das Gesicht bleibt frei */
+.mhero { position: relative; height: calc(min(128vw, 580px) + 170px); overflow: hidden; background: radial-gradient(120% 70% at 50% 30%, #2b2d33 0%, #1b1c20 55%, var(--bg) 100%); }
+.mhero::after { content: ""; position: absolute; left: 0; right: 0; bottom: -2px; height: 48%; background: linear-gradient(to bottom, rgba(19, 20, 23, 0), rgba(19, 20, 23, .7) 45%, var(--bg) 85%); pointer-events: none; }
 .mh-t { position: absolute; z-index: 2; left: 16px; right: 16px; bottom: 14px; text-align: center; }
 .mh-t > span { display: block; font: 800 clamp(30px, 11vw, 52px)/1 var(--font-display); text-transform: uppercase; overflow-wrap: anywhere; }
 .mh-t > b { display: block; margin-top: 2px; font: 800 clamp(64px, 24vw, 110px)/1 var(--font-display); letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
@@ -103,7 +104,7 @@ body.sheet-open { overflow: hidden; }
 .mh-s.sm img { width: 26px; height: 26px; }
 .mh-s.sm strong { font-size: 16px; }
 
-.mrows { list-style: none; margin: 8px 0 0; padding: 0; }
+.mrows { margin: 6px 0 0; }
 .mr { display: grid; grid-template-columns: 58px minmax(0, 1fr) auto; align-items: center; gap: 12px; min-height: 48px; border-bottom: 1px solid var(--line); }
 .mr > b { font: 800 19px var(--font-display); font-variant-numeric: tabular-nums; }
 .mr > b.pos { color: var(--lime); } .mr > b.hi { color: var(--hi); } .mr > b.neg { color: var(--neg); } .mr > b.zero { color: var(--muted); }
@@ -193,3 +194,5 @@ body.sheet-open { overflow: hidden; }
 .sqrow[data-n="6"] .sqa, .sqrow[data-n="7"] .sqa { width: 32px; height: 32px; }
 .sqrow[data-n="7"] .sqn { font-size: 10.5px; }
 .sqrow[data-n="7"] .sqv { font-size: 13.5px; }
+/* Foto unten weich auslaufen lassen, damit keine harte Kante unter dem Namen bleibt */
+.mhero .pphoto img { -webkit-mask-image: linear-gradient(to bottom, #000 62%, transparent 96%); mask-image: linear-gradient(to bottom, #000 62%, transparent 96%); }
