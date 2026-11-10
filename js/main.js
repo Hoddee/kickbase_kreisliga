@@ -11,6 +11,8 @@ import { initProfile, openProfile } from './ui/profile.js';
 import { showIntro, introSeen } from './ui/intro.js';
 import { initMe } from './ui/me.js';
 import { initMatch, openMatch } from './ui/match.js';
+import { initWatch, tickLive } from './ui/watch.js';
+import { startPublisher, startViewer } from './services/live.js';
 import { myPlayer, isAdmin as adminRole } from './services/auth.js';
 import { initAdmin, startPasswordFlow } from './ui/admin.js';
 import { loadRoster, loadSchedule } from './services/api.js';
@@ -25,6 +27,7 @@ initStart();
 initProfile();
 initMe();
 initMatch();
+initWatch();
 initAdmin();
 
 /* Navigation über data-nav="…" (back = zur vorherigen Ansicht) */
@@ -74,8 +77,13 @@ loadRoster().then(ok => { if (ok) rerender(); });
 loadSchedule().then(ok => { if (ok && (nav.current === 'start' || nav.current === 'profile')) rerender(); });
 if (isLoggedIn()) refreshAdminFlag();
 
+/* Live: eigenes Spiel senden, Spiele der anderen empfangen */
+startPublisher();
+startViewer();
+
 /* Sekundentakt für Uhr und Live-Status */
 setInterval(() => {
+  tickLive();
   if (nav.current === 'home') liveTick();
   else if (nav.current === 'edit') bookingTick();
 }, 1000);
