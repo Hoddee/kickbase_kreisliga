@@ -273,3 +273,14 @@ body.sheet-open { overflow: hidden; }
 .lv-gone { margin: 30vh 0 0; text-align: center; }
 .lv-gone b { display: block; font: 800 30px var(--font-display); text-transform: uppercase; }
 .lv-gone p { margin: 6px 0 20px; color: var(--muted); }
+
+/* Ergebnis korrigieren */
+.fixscore { display: grid; gap: 12px; margin: 10px 0; }
+.scrow { display: flex; align-items: center; justify-content: center; gap: 10px; }
+.scrow > img { width: 34px; height: 34px; object-fit: contain; }
+.scrow > i { font: 800 22px var(--font-display); font-style: normal; color: var(--muted); }
+.scst { display: inline-flex; align-items: center; gap: 4px; }
+.scst b { min-width: 30px; text-align: center; font: 800 28px/1 var(--font-display); font-variant-numeric: tabular-nums; }
+.scst button { width: 38px; height: 38px; border: 1px solid var(--line); border-radius: 50%; background: none; color: var(--ink); font-size: 20px; line-height: 1; }
+.scst button:disabled { opacity: .3; }
+.fixscore p { margin: 0; text-align: center; }

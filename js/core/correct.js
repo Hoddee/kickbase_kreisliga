@@ -2,7 +2,7 @@
    - Entfernte Aktionen bleiben im Verlauf stehen, ausgegraut und ohne Punkte (Feld x: 1).
    - Nachgetragene Aktionen oder freie Punkte bekommen c: 1.
    Punkte, Tore und Vorlagen des Spiels werden danach aus den Aktionen neu gezählt. */
-import { GROUPS, GOAL_KEYS, ASSIST_KEYS } from '../data/actions.js';
+import { GROUPS, GOAL_KEYS, ASSIST_KEYS, CLEAN_SHEET } from '../data/actions.js';
 
 const MARK = { ht: 1, sub: 1 };
 const TEAM = { t: 'Team', a: [['tg', 'Team-Tor', 5], ['cg', 'Gegentor', -5]] };
@@ -48,3 +48,52 @@ export function corrections(ev) {
   return out;
 }
 export const hasCorrections = ev => ev.some(e => e.x || e.c);
+
+/* ---------- Ergebnis korrigieren ----------
+   Der Spielstand hängt an den Aktionen Team-Tor / Gegentor. Ändert sich daran etwas, werden die Boni,
+   die vom Ergebnis abhängen (Zu null, Sieg/Niederlage), automatisch nachgezogen:
+   ax = automatisch entfernt, ac = automatisch dazugebucht. Beides wird bei jeder Änderung neu berechnet. */
+const isGoal = (e, k) => e.k === k && !e.x;
+export const goalCount = (ev, k) => ev.filter(e => isGoal(e, k)).length;
+/* Abweichung zwischen gespeichertem Ergebnis und den Tor-Aktionen (bei alten Spielen möglich) */
+export const scoreBase = (g, ev) => ({ us: g.us - goalCount(ev, 'tg'), them: g.them - goalCount(ev, 'cg') });
+
+/* Stand der Spieler zur Sekunde t auf dem Platz? (Startelf + Wechsel aus dem Verlauf) */
+export function onField(ev, t) {
+  let on = ev.some(e => e.k === 'auto' && e.a === 's' && !e.x);
+  for (const e of ev) if (e.k === 'sub' && (t < 0 || e.t == null || e.t <= t)) on = e.o === 'in';
+  return on;
+}
+
+const END = { clean: ['Zu null'], result: ['Spiel gewonnen', 'Spiel verloren'] };
+/* Ergebnis, wie es ursprünglich gebucht wurde (ohne nachgetragene, mit später entfernten Toren) */
+export function scoreOrig(base, ev) {
+  const n = k => ev.filter(e => e.k === k && !e.c).length;
+  return { us: base.us + n('tg'), them: base.them + n('cg') };
+}
+export function settle(evIn, g, base, orig) {
+  /* 1. frühere automatische Folgebuchungen zurücknehmen */
+  let ev = evIn.filter(e => !e.ac).map(e => { if (!e.ax) return e; const y = Object.assign({}, e); delete y.ax; delete y.x; return y; });
+  const us = Math.max(0, base.us + goalCount(ev, 'tg')), them = Math.max(0, base.them + goalCount(ev, 'cg'));
+  /* Ergebnis wie ursprünglich gebucht: Schluss-Boni bleiben, wie sie damals gespeichert wurden */
+  if (us === orig.us && them === orig.them) return { ev, us, them };
+  /* Nur wer gespielt hat, bekommt Schluss-Boni (dann gibt es immer die Zeile „Minutenbonus“) */
+  const mbLine = ev.find(e => e.k === 'auto' && e.a === 'e' && e.l === 'Minutenbonus');
+  if (!mbLine) return { ev, us, them };
+  const mb = mbLine.p || 0;
+  const want = {
+    clean: them === 0 && mb > 0 ? { l: 'Zu null', p: mb * (CLEAN_SHEET[g.pos] || 2) } : null,
+    result: us > them ? { l: 'Spiel gewonnen', p: 15 } : us < them ? { l: 'Spiel verloren', p: -15 } : null
+  };
+  for (const kind of ['clean', 'result']) {
+    const w = want[kind];
+    let have = false;
+    ev = ev.map(e => {
+      if (e.k !== 'auto' || e.a !== 'e' || !END[kind].includes(e.l)) return e;
+      if (w && e.l === w.l) { have = true; return e; }       // passt schon (oder vom Admin bewusst entfernt)
+      return e.x ? e : Object.assign({}, e, { x: 1, ax: 1 });  // passt nicht mehr zum Ergebnis
+    });
+    if (w && !have) ev.push({ k: 'auto', a: 'e', l: w.l, p: w.p, t: -1, c: 1, ac: 1 });
+  }
+  return { ev, us, them };
+}

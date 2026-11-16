@@ -6,7 +6,7 @@ import { PL, photoUrl } from '../data/players.js';
 import { crestUrl } from '../data/clubs.js';
 import { ICON } from '../core/icons.js';
 import { recordTeam, scoreText } from '../core/game.js';
-import { pickerGroups, pointsFor, wasSubbedIn, insertAction, recount, corrections, hasCorrections } from '../core/correct.js';
+import { pickerGroups, pointsFor, wasSubbedIn, insertAction, recount, corrections, hasCorrections, settle, scoreBase, scoreOrig, onField } from '../core/correct.js';
 import { games, loadEvents, cachedEvents, updateGame, rememberEvents } from '../services/api.js';
 import { canManage, isAdmin } from '../services/auth.js';
 import { registerView, show, back, nav } from '../router.js';
@@ -16,7 +16,9 @@ import { openHofGame } from './hof.js';
 
 const state = { uid: null, open: false };
 /* Korrektur-Modus: Entwurf der Aktionen, Auswahl zum Nachtragen */
-const fix = { on: false, ev: null, pick: false, grp: 0, min: '', busy: false };
+const fix = { on: false, ev: null, pick: false, grp: 0, min: '', busy: false, base: null, orig: null, us: 0, them: 0 };
+/* Nach jeder Änderung: Ergebnis aus den Tor-Aktionen zählen und abhängige Boni nachziehen */
+function resettle() { const r = settle(fix.ev, rec(), fix.base, fix.orig); fix.ev = r.ev; fix.us = r.us; fix.them = r.them; }
 const rec = () => (games.list || []).find(g => g.uid === state.uid);
 
 export function openMatch(uid) {
@@ -46,10 +48,13 @@ function fixHtml(g) {
   const now = recount(fix.ev), diff = now.points - g.points;
   let h = '<div class="fixbar"><div><b>' + now.points + '</b><span>' + (diff ? '<em class="' + cls(diff) + '">' + fmt(diff) + '</em> ' : '') + 'Aktion antippen = entfernen</span></div>' +
     '<button type="button" class="btn primary" data-mt="fsave"' + (fix.busy ? ' disabled' : '') + '>' + (fix.busy ? 'Speichert …' : 'Speichern') + '</button></div>';
+  const mine = recordTeam(g), step = (k, n) => '<span class="scst"><button type="button" data-mt="sc:' + k + ':-" aria-label="Tor weniger"' + (n ? '' : ' disabled') + '>−</button><b>' + n + '</b><button type="button" data-mt="sc:' + k + ':+" aria-label="Tor mehr">+</button></span>';
+  h += '<div class="card fixscore"><div class="scrow"><img src="' + esc(crestUrl(mine)) + '" alt="">' + step('tg', fix.us) + '<i>:</i>' + step('cg', fix.them) + '<img src="' + esc(crestUrl(g.opp)) + '" alt=""></div>' +
+    '<label class="nf"><span>Minute für Nachträge</span><input class="fi" id="fixMin" type="number" inputmode="numeric" min="1" max="130" placeholder="leer = Spielende" value="' + esc(fix.min) + '"></label>' +
+    '<p class="muted small">Zu null und Sieg/Niederlage passen sich dem Ergebnis an.</p></div>';
   if (!fix.pick) return h + '<button type="button" class="add-row" data-mt="fpick"><span class="plus">+</span><span>Aktion nachtragen<small>Vergessen oder falsch gebucht</small></span></button>';
   const groups = pickerGroups(g.pos), gr = groups[fix.grp] || groups[0], sub = wasSubbedIn(fix.ev);
-  h += '<div class="card fixpick"><label class="nf"><span>Minute</span><input class="fi" id="fixMin" type="number" inputmode="numeric" min="1" max="130" placeholder="z. B. 63" value="' + esc(fix.min) + '"></label>' +
-    '<div class="fxg">' + groups.map((x, i) => '<button type="button" data-mt="fg:' + i + '" aria-pressed="' + (x === gr) + '">' + esc(x.t) + '</button>').join('') + '</div>' +
+  h += '<div class="card fixpick"><div class="fxg">' + groups.map((x, i) => '<button type="button" data-mt="fg:' + i + '" aria-pressed="' + (x === gr) + '">' + esc(x.t) + '</button>').join('') + '</div>' +
     '<div class="fxa">' + gr.a.map(([k, l, v]) => { const p = pointsFor(v, g.pos, sub);
       return '<button type="button" data-mt="fa:' + esc(k) + '"><span>' + esc(l) + '</span><b class="' + cls(p) + '">' + fmt(p) + '</b></button>'; }).join('') + '</div>' +
     '<div class="fl">Freie Korrektur</div><div class="fxf"><input class="fi" id="fixLbl" type="text" maxlength="40" placeholder="Grund"><input class="fi" id="fixPts" type="number" inputmode="numeric" placeholder="±"><button type="button" class="btn" data-mt="ffree">Dazu</button></div>' +
@@ -61,7 +66,8 @@ function html() {
   const g = rec();
   if (!g || !PL[g.player]) return '<p class="hmsg">Spiel nicht gefunden.</p>';
   const p = PL[g.player], mine = recordTeam(g), l = g.home ? mine : g.opp, r = g.home ? g.opp : mine;
-  const score = scoreText(g, g.home), ev = fix.on ? fix.ev : cachedEvents(g.uid);
+  const gs = fix.on ? Object.assign({}, g, { us: fix.us, them: fix.them }) : g;
+  const score = scoreText(gs, g.home), ev = fix.on ? fix.ev : cachedEvents(g.uid);
   const pts = fix.on ? recount(fix.ev).points : g.points;
   let tools = '';
   if (ev && !fix.on && (isAdmin() || canManage(g.player)))
@@ -76,17 +82,20 @@ function html() {
 export function render(keep) {
   const g = rec(), sc = $('matchScroll'), top = sc.scrollTop;
   $('matchBody').innerHTML = html();
-  $('matchMini').innerHTML = g && PL[g.player] ? '<span>' + esc(PL[g.player].n) + '</span><b>' + (fix.on ? recount(fix.ev).points : g.points) + '</b><div class="mh-s sm"><img src="' + esc(crestUrl(g.home ? recordTeam(g) : g.opp)) + '" alt=""><strong>' + scoreText(g, g.home) + '</strong><img src="' + esc(crestUrl(g.home ? g.opp : recordTeam(g))) + '" alt=""></div>' : '';
+  $('matchMini').innerHTML = g && PL[g.player] ? '<span>' + esc(PL[g.player].n) + '</span><b>' + (fix.on ? recount(fix.ev).points : g.points) + '</b><div class="mh-s sm"><img src="' + esc(crestUrl(g.home ? recordTeam(g) : g.opp)) + '" alt=""><strong>' + scoreText(fix.on ? Object.assign({}, g, { us: fix.us, them: fix.them }) : g, g.home) + '</strong><img src="' + esc(crestUrl(g.home ? g.opp : recordTeam(g))) + '" alt=""></div>' : '';
   if (keep === true) { sc.scrollTop = top; return; }
   sc.scrollTop = 0;
   $('matchMini').classList.remove('on');
 }
 
+const fixTime = () => { const m = parseInt(fix.min, 10); return m > 0 ? (m - 1) * 60 : (rec().minutes > 0 ? (rec().minutes - 1) * 60 : 0); };
 function addAction(item) {
-  const m = parseInt(fix.min, 10);
-  item.t = m > 0 ? (m - 1) * 60 : (rec().minutes > 0 ? (rec().minutes - 1) * 60 : 0);
+  item.t = fixTime();
   item.c = 1;
+  /* Tore zählen nur mit Punkten, wenn der Spieler da auf dem Platz stand */
+  if (item.k === 'tg' || item.k === 'cg') item.p = onField(fix.ev, item.t) ? (item.k === 'tg' ? 5 : -5) : 0;
   fix.ev = insertAction(fix.ev, item);
+  resettle();
   buzz(8); toast(fmt(item.p) + ' ' + item.l + ' nachgetragen');
 }
 
@@ -94,8 +103,8 @@ async function saveFix() {
   const g = rec(), ev = fix.ev, n = recount(ev);
   fix.busy = true; render(true);
   try {
-    const row = await updateGame(g.uid, { events: ev, points: n.points, goals: n.goals, assists: n.assists });
-    for (const f of ['points', 'goals', 'assists', 'updated_at']) if (row[f] != null) g[f] = row[f];
+    const row = await updateGame(g.uid, { events: ev, points: n.points, goals: n.goals, assists: n.assists, us: fix.us, them: fix.them });
+    for (const f of ['points', 'goals', 'assists', 'us', 'them', 'updated_at']) if (row[f] != null) g[f] = row[f];
     rememberEvents(g.uid, ev);
     fix.on = false; fix.ev = null; fix.pick = false;
     toast(hasCorrections(ev) ? 'Korrektur gespeichert' : 'Gespeichert');
@@ -116,17 +125,30 @@ export function initMatch() {
     const row = fix.on && e.target.closest('.fixing [data-ci]');
     if (row) {
       const i = +row.dataset.ci, x = fix.ev[i];
+      if (x.ac || x.ax) { toast('Hängt am Ergebnis – oben das Ergebnis ändern'); return; }
       fix.ev = fix.ev.slice();
       if (x.c) fix.ev.splice(i, 1);
       else { const y = Object.assign({}, x); if (y.x) delete y.x; else y.x = 1; fix.ev[i] = y; }
-      buzz(6); render(true); return;
+      resettle(); buzz(6); render(true); return;
     }
     const b = e.target.closest('[data-mt]');
     if (!b) return;
     const k = b.dataset.mt, g = rec();
     if (k === 'edit') { openHofGame(state.uid); return; }
     if (k === 'corr') { state.open = !state.open; render(true); return; }
-    if (k === 'fix') { fix.on = true; fix.ev = (cachedEvents(state.uid) || []).slice(); fix.pick = false; fix.min = ''; render(true); return; }
+    if (k === 'fix') { fix.on = true; fix.ev = (cachedEvents(state.uid) || []).slice(); fix.base = scoreBase(g, fix.ev); fix.orig = scoreOrig(fix.base, fix.ev); fix.pick = false; fix.min = ''; resettle(); render(true); return; }
+    /* Ergebnis: + bucht ein Tor nach, − nimmt das letzte Tor dieser Seite heraus */
+    if (k.startsWith('sc:')) {
+      const [, key, dir] = k.split(':');
+      if (dir === '+') addAction({ k: key, l: key === 'tg' ? 'Team-Tor' : 'Gegentor', p: 0 });
+      else {
+        let i = -1; fix.ev.forEach((e, j) => { if (e.k === key && !e.x) i = j; });
+        if (i < 0) { fix.base[key === 'tg' ? 'us' : 'them']--; }
+        else { fix.ev = fix.ev.slice(); if (fix.ev[i].c) fix.ev.splice(i, 1); else fix.ev[i] = Object.assign({}, fix.ev[i], { x: 1 }); }
+        resettle(); buzz(6);
+      }
+      render(true); return;
+    }
     if (k === 'fpick') { fix.pick = true; render(true); return; }
     if (k === 'fpick-x') { fix.pick = false; render(true); return; }
     if (k === 'fsave') { if (!fix.busy) saveFix(); return; }
