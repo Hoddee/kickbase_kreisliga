@@ -5,7 +5,7 @@ import { GROUPS, QUICK_DEFAULTS } from '../data/actions.js';
 import { POS_NAME, POS_ORDER } from '../data/players.js';
 import {
   store, saveGame, replaceGame, freshGame, names, isHome, scoreText, ACT, val, count, score, elapsed, onField, started,
-  startLine, endLines, total, withMarkers, summaryText, isMulti, withPlayer, eachPlayer, allSaved,
+  startLine, endLines, total, withMarkers, silentGoal, summaryText, isMulti, withPlayer, eachPlayer, allSaved,
   addToSquad, squadIds, teamOf, MAX_SQUAD
 } from '../core/game.js';
 import { PL, PLAYER_LIST } from '../data/players.js';
@@ -71,6 +71,7 @@ function liveGameHtml() {
     '<h2>Spielstand</h2>' +
     '<div class="scorebox">' + scoreText(sc, isHome()) + '</div>' +
     '<div class="grid">' + (isHome() ? actBtn('tg') + actBtn('cg') : actBtn('cg') + actBtn('tg')) + '</div>' +
+    '<div class="grid ungoal">' + (isHome() ? unBtn('tg', sc.us) + unBtn('cg', sc.them) : unBtn('cg', sc.them) + unBtn('tg', sc.us)) + '</div>' +
     (isMulti() ? '<p class="muted small hint">Tore zählen für alle auf dem Platz.</p>' + lineupHtml(d) + addHtml() +
       '<h2>Einstellungen · ' + esc(names.player) + '</h2><div class="card">' + settingsHtml() + '</div>'
     : '<h2>Einsatz</h2><div class="card">' +
@@ -93,6 +94,20 @@ function lineupHtml(d) {
     return '<li class="lup' + (on ? ' on' : '') + '">' + avatar(S.match.p) + '<span><b>' + esc(p.n) + '</b><small>' + state + '</small></span>' + btns + '</li>';
   });
   return '<h2>Aufstellung</h2><ul class="lups">' + rows.join('') + '</ul>';
+}
+
+/* Falsch gebuchtes Tor zurücknehmen – bei mehreren Spielern für alle auf einmal */
+const unBtn = (key, n) => '<button type="button" class="unb" data-do="ungoal:' + key + '"' + (n && !store.S.ended ? '' : ' disabled') + '>− Tor zurück</button>';
+function removeGoal(key) {
+  let last = null;
+  for (const e of store.S.events) if (e.key === key && (!last || e.id > last.id)) last = e;
+  if (!last) return;
+  dropEvent(last);
+}
+/* Ein Tor gehört allen: mit dem Eintrag verschwindet es bei jedem Spieler */
+function dropEvent(ev) {
+  if (ev.grp && isMulti()) eachPlayer(() => { store.S.events = store.S.events.filter(e => e.grp !== ev.grp); });
+  else store.S.events = store.S.events.filter(e => e !== ev);
 }
 
 /* Spieler dazuholen: erst wählen, dann sagen, seit wann er dabei ist */
@@ -163,10 +178,11 @@ function logHtml() {
     if (it.ht) return halftimeLi();
     if (it.sub) return subLi(it.sub);
     const e = it.e;
+    if (silentGoal(e)) return '';
     return '<li><span class="mn">' + minStamp(e.t) + '</span><span>' + esc(e.label) + '</span><span class="p ' + cls(e.pts) + '">' + fmt(e.pts) + '</span>' +
       '<button type="button" class="x" data-del="' + e.id + '" aria-label="' + esc(e.label) + ' löschen">×</button></li>';
   }).join('');
-  return '<h2>Alle Aktionen (' + S.events.length + ')</h2>' +
+  return '<h2>Alle Aktionen (' + S.events.filter(e => !silentGoal(e)).length + ')</h2>' +
     (items ? '<ul class="log">' + items + '</ul>' : '<ul class="log"><li><span class="none">Noch nichts gebucht.</span></li></ul>') +
     '<h2>Zusammenfassung</h2><textarea id="sum" readonly aria-label="Zusammenfassung">' + esc(summaryText()) + '</textarea>' +
     '<div class="row2"><button type="button" class="btn primary" data-do="copy" id="copyBtn">Kopieren</button></div>';
@@ -298,6 +314,7 @@ function doAct(what) {
     case 'add-x': add.open = false; render(); return;
     case 'add-all': add.all = true; render(); return;
     default: {
+      if (what.startsWith('ungoal:')) { removeGoal(what.slice(7)); buzz(10); break; }
       if (what.startsWith('ap:')) { add.p = what.slice(3); render(); return; }
       if (what.startsWith('am:')) {
         const p = add.p;
@@ -342,7 +359,7 @@ export function initBooking() {
     if (!b) return;
     if (b.hasAttribute('data-k')) addEvent(b.getAttribute('data-k'));
     else if (b.hasAttribute('data-do')) doAct(b.getAttribute('data-do'));
-    else { const id = +b.getAttribute('data-del'); store.S.events = store.S.events.filter(x => x.id !== id); saveGame(); render(); }
+    else { const id = +b.getAttribute('data-del'), ev = store.S.events.find(x => x.id === id); if (ev) dropEvent(ev); saveGame(); render(); }
   });
   /* Nachtrag: Eingabefelder */
   main().addEventListener('change', e => {

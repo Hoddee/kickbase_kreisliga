@@ -43,7 +43,7 @@ export function corrections(ev) {
   const out = [];
   for (const e of ev) {
     if (e.x && e.p) out.push({ p: -e.p, label: e.l, t: e.t });
-    else if (e.c) out.push({ p: e.p, label: e.l, t: e.t });
+    else if (e.c && !((e.k === 'tg' || e.k === 'cg') && !e.p)) out.push({ p: e.p, label: e.l, t: e.t });
   }
   return out;
 }

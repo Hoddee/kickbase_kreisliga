@@ -1,6 +1,6 @@
 /* Spielerkarte (Live-Ansicht) mit Punkteliste; nach Spielende zusätzlich die Endübersicht */
 import { $, esc, setNum, setSrc, applyTier, signedEur, eur, trendClass } from '../core/util.js';
-import { store, saveGame, names, teamOf, isHome, scoreText, score, total, started, elapsed, startLine, endLines, withMarkers, breakdown, matchEntry, gameRecord, isMulti, eachPlayer, withPlayer, allSaved } from '../core/game.js';
+import { store, silentGoal, saveGame, names, teamOf, isHome, scoreText, score, total, started, elapsed, startLine, endLines, withMarkers, breakdown, matchEntry, gameRecord, isMulti, eachPlayer, withPlayer, allSaved } from '../core/game.js';
 import { renderSquadBar, bindSquad } from './squad.js';
 import { buzz } from '../core/util.js';
 import { PL, photoUrl } from '../data/players.js';
@@ -32,6 +32,7 @@ export function updateLiveState() {
 function rowsData() {
   const out = endLines().map(l => ({ p: l.p, label: l.l, r: l.r }));
   for (const it of withMarkers(store.S.events.slice().reverse())) {
+    if (it.e && silentGoal(it.e)) continue;
     out.push(it.ht ? { ht: 1 } : it.sub ? { sub: it.sub } : { p: it.e.pts, label: it.e.label, r: it.e.t >= 0 ? (Math.floor(it.e.t / 60) + 1) + '’' : '', fresh: seenId >= 0 && it.e.id > seenId });
   }
   const s = startLine(); if (s) out.push({ p: s.p, label: s.l, r: s.r });

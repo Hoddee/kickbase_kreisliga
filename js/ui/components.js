@@ -28,6 +28,8 @@ export function rowsFromRecord(ev) {
   const ends = [], mids = [];
   let start = null;
   ev.forEach((x, i) => {
+    /* Tor ohne Punkte (Spieler nicht auf dem Platz): zählt fürs Ergebnis, wird aber nicht gezeigt */
+    if ((x.k === 'tg' || x.k === 'cg') && !x.p) return;
     const y = Object.assign({ _i: i }, x);
     if (x.k === 'auto') { if (x.a === 's') start = y; else ends.push(y); } else mids.push(y);
   });
