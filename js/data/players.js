@@ -62,7 +62,7 @@ const SILHOUETTE = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(
 
 /* Fotos des Stammkaders liegen verkleinert im Repo (assets/img/p, Vorschaubilder in p/s) und kommen von GitHub Pages –
    das kostet kein Supabase-Datenvolumen. Später in der App hochgeladene Fotos kommen aus dem Supabase-Bucket. */
-const LOCAL_PHOTOS = new Set(["Barbano", "Doez", "Heckmann", "Kugler", "Pace", "Sipala", "Buehler", "Fechter", "Filenberg", "Klenk", "Knoedler", "Krauss", "Reule", "Schauss", "Schoenenberg", "Schwer", "Collin", "Collin2"]);
+const LOCAL_PHOTOS = new Set(["Barbano", "Doez", "Heckmann", "Kugler", "Pace", "Sipala", "Buehler", "Fechter", "Filenberg", "Klenk", "Knoedler", "Krauss", "Reule", "Schauss", "Schoenenberg", "Schwer", "Collin", "Collin2", "BuehlerM"]);
 export function photoUrl(id, small = false) {
   const p = PL[id];
   if (!p || p.foto === '') return SILHOUETTE;
