@@ -284,3 +284,7 @@ body.sheet-open { overflow: hidden; }
 .scst button { width: 38px; height: 38px; border: 1px solid var(--line); border-radius: 50%; background: none; color: var(--ink); font-size: 20px; line-height: 1; }
 .scst button:disabled { opacity: .3; }
 .fixscore p { margin: 0; text-align: center; }
+
+/* Spiel-Detail: Foto und Name führen ins Profil */
+.mhero [data-mt="prof"] { cursor: pointer; }
+.mh-go { margin-left: 6px; font-style: normal; font-size: .6em; opacity: .5; vertical-align: .12em; }

@@ -11,6 +11,7 @@ import { isAdmin, canManage } from '../services/auth.js';
 import { ICON } from '../core/icons.js';
 import { avatar, nameWithStatus, rowLi, rowsFromRecord, whistleLi, areaBars, gameRow } from './components.js';
 import { registerView, show, back as goBack, nav } from '../router.js';
+import { openMatch } from './match.js';
 
 const ui = { tab: 'best', league: 'ALL', returnTo: null, player: null, game: null, eventsError: false, edit: false, confirmDelete: false, busy: false };
 
@@ -214,7 +215,8 @@ export function initHof() {
     if (!b) return;
     const k = b.getAttribute('data-hof'), v = k.slice(2);
     if (k === 'reload') { reload(); return; }
-    if (k.startsWith('g:')) { openGame(v); return; }
+    /* Leistung antippen: immer das neue Spiel-Detail (Blatt) */
+    if (k.startsWith('g:')) { openMatch(v); return; }
     if (k === 'gback') { goBack(); return; }
     else if (k === 'edit') ui.edit = true;
     else if (k === 'edit-cancel') ui.edit = false;
