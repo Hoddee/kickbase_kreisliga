@@ -6,7 +6,7 @@ import { PL, photoUrl } from '../data/players.js';
 import { crestUrl } from '../data/clubs.js';
 import { ICON } from '../core/icons.js';
 import { recordTeam, scoreText } from '../core/game.js';
-import { pickerGroups, pointsFor, wasSubbedIn, insertAction, recount, corrections, hasCorrections, settle, scoreBase, scoreOrig, onField } from '../core/correct.js';
+import { pickerGroups, pointsFor, wasSubbedIn, insertAction, recount, corrections, hasCorrections, settle, scoreBase, scoreOrig, onField, didPlay } from '../core/correct.js';
 import { games, loadEvents, cachedEvents, updateGame, rememberEvents } from '../services/api.js';
 import { canManage, isAdmin } from '../services/auth.js';
 import { registerView, show, back, nav } from '../router.js';
@@ -50,7 +50,7 @@ function fixHtml(g) {
     '<button type="button" class="btn primary" data-mt="fsave"' + (fix.busy ? ' disabled' : '') + '>' + (fix.busy ? 'Speichert …' : 'Speichern') + '</button></div>';
   const mine = recordTeam(g), step = (k, n) => '<span class="scst"><button type="button" data-mt="sc:' + k + ':-" aria-label="Tor weniger"' + (n ? '' : ' disabled') + '>−</button><b>' + n + '</b><button type="button" data-mt="sc:' + k + ':+" aria-label="Tor mehr">+</button></span>';
   h += '<div class="card fixscore"><div class="scrow"><img src="' + esc(crestUrl(mine)) + '" alt="">' + step('tg', fix.us) + '<i>:</i>' + step('cg', fix.them) + '<img src="' + esc(crestUrl(g.opp)) + '" alt=""></div>' +
-    '<label class="nf"><span>Minute für Nachträge</span><input class="fi" id="fixMin" type="number" inputmode="numeric" min="1" max="130" placeholder="leer = Spielende" value="' + esc(fix.min) + '"></label>' +
+    '<label class="nf"><span>Minute für Nachträge</span><input class="fi" id="fixMin" type="number" inputmode="numeric" min="1" max="130" placeholder="leer = ohne Minute" value="' + esc(fix.min) + '"></label>' +
     '<p class="muted small">Zu null und Sieg/Niederlage passen sich dem Ergebnis an.</p></div>';
   if (!fix.pick) return h + '<button type="button" class="add-row" data-mt="fpick"><span class="plus">+</span><span>Aktion nachtragen<small>Vergessen oder falsch gebucht</small></span></button>';
   const groups = pickerGroups(g.pos), gr = groups[fix.grp] || groups[0], sub = wasSubbedIn(fix.ev);
@@ -88,15 +88,23 @@ export function render(keep) {
   $('matchMini').classList.remove('on');
 }
 
-const fixTime = () => { const m = parseInt(fix.min, 10); return m > 0 ? (m - 1) * 60 : (rec().minutes > 0 ? (rec().minutes - 1) * 60 : 0); };
+/* Ohne Minute: -1 (die Zeile zeigt dann keine Minute und steht als neueste Aktion oben) */
+const fixTime = () => { const m = parseInt(fix.min, 10); return m > 0 ? (m - 1) * 60 : -1; };
 function addAction(item) {
   item.t = fixTime();
   item.c = 1;
-  /* Tore zählen nur mit Punkten, wenn der Spieler da auf dem Platz stand */
-  if (item.k === 'tg' || item.k === 'cg') item.p = onField(fix.ev, item.t) ? (item.k === 'tg' ? 5 : -5) : 0;
+  /* Team-Tor und Gegentor zählen nur für den, der auf dem Platz stand.
+     Ohne Minute reicht es, dass er im Spiel war – mit Minute wird genau geprüft. */
+  let bench = false;
+  if (item.k === 'tg' || item.k === 'cg') {
+    const on = item.t < 0 ? didPlay(fix.ev) : onField(fix.ev, item.t);
+    bench = !on;
+    item.p = on ? (item.k === 'tg' ? 5 : -5) : 0;
+  }
   fix.ev = insertAction(fix.ev, item);
   resettle();
-  buzz(8); toast(fmt(item.p) + ' ' + item.l + ' nachgetragen');
+  buzz(8);
+  toast(bench ? item.l + ' zählt fürs Ergebnis – ohne Punkte, er war nicht auf dem Platz' : fmt(item.p) + ' ' + item.l + ' nachgetragen');
 }
 
 async function saveFix() {
