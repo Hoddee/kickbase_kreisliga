@@ -171,6 +171,12 @@ function newPlayerHtml() {
     '<div class="duo"><button type="submit" class="btn primary"' + (ui.busy ? ' disabled' : '') + '>' + (ui.busy ? 'Speichere …' : 'Anlegen') + '</button><button type="button" class="btn" data-adm="add-cancel">Abbrechen</button></div></form>';
 }
 /* Foto freistellen (Hintergrund entfernen) und ins Kickbase-Format bringen */
+/* Verständliche Meldung statt der Datenbank-Rohmeldung */
+function fehlertext(e) {
+  if (/row-level security/i.test(e.message)) return 'keine Berechtigung. Bitte abmelden und neu anmelden.';
+  if (e.status === 409 || /duplicate key/i.test(e.message)) return 'den Spieler gibt es schon.';
+  return e.message;
+}
 async function preparePhoto(file) {
   if (!file || !file.size) return null;
   const res = await cutout(file, 'player', t => { const el = document.getElementById('admPhotoStatus'); if (el) el.textContent = t; });
@@ -272,11 +278,16 @@ async function onSubmit(form) {
     ui.busy = true; ui.msg = ''; render();
     try {
       const id = makeId(vn, n), blob = await preparePhoto(f.get('photo'));
-      const foto = blob ? await uploadPhoto(id, blob) : '';
       const sort = Math.max(0, ...PLAYER_LIST.map(p => p.sort || 0)) + 10;
-      await insertPlayer({ id, vorname: vn, nachname: n, verein: f.get('club'), pos: f.get('pos'), mw_start: Math.max(0, Math.round(+f.get('mw') || 0)), mw_exakt: false, status: 'fit', aktiv: true, sort, foto });
-      ui.adding = false; toast(fullName({ vn, n }) + ' angelegt');
-    } catch (e) { ui.msg = 'Anlegen fehlgeschlagen: ' + e.message; }
+      /* Erst der Spieler, dann das Foto – so geht der Eintrag nicht verloren, wenn der Upload klemmt */
+      await insertPlayer({ id, vorname: vn, nachname: n, verein: f.get('club'), pos: f.get('pos'), mw_start: Math.max(0, Math.round(+f.get('mw') || 0)), mw_exakt: false, status: 'fit', aktiv: true, sort, foto: '' });
+      ui.adding = false;
+      if (!blob) { toast(fullName({ vn, n }) + ' angelegt'); }
+      else {
+        try { await updatePlayer(id, { foto: await uploadPhoto(id, blob) }); toast(fullName({ vn, n }) + ' angelegt'); }
+        catch (e) { toast(fullName({ vn, n }) + ' angelegt, aber das Foto hat nicht geklappt: ' + e.message, 'bad'); }
+      }
+    } catch (e) { ui.msg = 'Anlegen fehlgeschlagen: ' + fehlertext(e); }
     ui.busy = false; render();
   } else if (form.dataset.player) {
     const id = form.dataset.player;

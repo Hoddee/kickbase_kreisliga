@@ -130,9 +130,12 @@ async function upload(path, blob, upsert) {
   } finally { clearTimeout(timer); }
 }
 /* Spielerfoto in den Bucket laden (nur Admin); liefert den Pfad im Bucket */
+/* Jedes Foto bekommt einen eigenen Namen und wird neu angelegt.
+   „Überschreiben“ (x-upsert) verlangt im Storage zusätzliche Rechte und schlug deshalb fehl. */
 export async function uploadPhoto(id, blob) {
-  if (!(await accessToken())) throw new Error('Nicht angemeldet.');
-  return upload('spieler/' + id + ext(blob), blob, true);
+  if (!(await accessToken())) throw new Error('Nicht angemeldet. Bitte neu anmelden.');
+  const stamp = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  return upload('spieler/' + id + '-' + stamp + ext(blob), blob, false);
 }
 /* Bild für Gastspieler / eigenen Gegner (darf jeder hochladen, nur neue Dateien) */
 export function uploadGuestImage(blob) {
