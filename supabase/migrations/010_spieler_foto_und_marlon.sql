@@ -10,13 +10,7 @@ drop policy if exists "admin spielerfoto loeschen" on storage.objects;
 create policy "admin spielerfoto loeschen" on storage.objects for delete to authenticated
   using (bucket_id = 'kickbase' and (storage.foldername(name))[1] in ('spieler', 'gast') and public.is_admin());
 
--- 2) Gastbilder aufräumen, die zu keinem Spiel mehr gehören (inkl. Testdateien)
-delete from storage.objects o
-where o.bucket_id = 'kickbase'
-  and (storage.foldername(o.name))[1] = 'gast'
-  and not exists (select 1 from public.spiele s where s.player_foto = o.name or s.opp_foto = o.name);
-
--- 3) Marlon Bühler (VfR Murrhardt/ Kirchenkirnberg II, Mittelfeld)
+-- 2) Marlon Bühler (VfR Murrhardt/ Kirchenkirnberg II, Mittelfeld)
 --    foto bleibt leer: das Bild liegt im Repo unter assets/img/p/BuehlerM.webp
 insert into public.kader (id, vorname, nachname, verein, pos, mw_start, mw_exakt, status, aktiv, sort)
 values ('BuehlerM', 'Marlon', 'Bühler', 'vfrk', 'MIT', 5852911, true, 'fit', true, 190)
