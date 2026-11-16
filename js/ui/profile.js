@@ -141,11 +141,13 @@ export function render() {
   body.innerHTML = html();
   $('profileTabs').innerHTML = TABS.map(([k, l]) => '<button type="button" data-pf="t:' + k + '" aria-pressed="' + (state.tab === k) + '">' + TAB_ICON[k] + '<span>' + l + '</span></button>').join('');
   $('profileMini').innerHTML = PL[state.id] ? miniHead(PL[state.id]) : '';
+  $('profileBack').hidden = nav.previous !== 'match';
   if (state.tab === 'perf') scrollToCurrent(body);
   applyTier(0);
 }
 
 export function initProfile() {
+  $('profileBack').addEventListener('click', () => back());
   registerView('profile', { elements: ['profile'], render, overlay: true });
   const scroller = $('profileScroll');
   bindSheet($('profile'), scroller, () => back());

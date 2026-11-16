@@ -7,7 +7,7 @@ import { SUPABASE_URL, SUPABASE_KEY } from '../config.js';
 import { rest } from './api.js';
 import { PL } from '../data/players.js';
 import {
-  store, eachPlayer, isMulti, started, elapsed, total, score, isHome, teamOf, endLines, startLine, withMarkers
+  store, silentGoal, eachPlayer, isMulti, started, elapsed, total, score, isHome, teamOf, endLines, startLine, withMarkers
 } from '../core/game.js';
 
 const KEY_LS = 'kl-live-key', PUB_LS = 'kl-live-pub';
@@ -37,6 +37,7 @@ export const ownLive = uid => uid in readPub();
 function rows() {
   const out = endLines().map(l => ({ p: l.p, l: l.l, r: l.r, id: 'e' + l.l }));
   for (const it of withMarkers(store.S.events.slice().reverse())) {
+    if (it.e && silentGoal(it.e)) continue;
     if (it.ht) out.push({ ht: 1 });
     else if (it.sub) out.push({ sub: { o: it.sub.o, t: it.sub.t } });
     else out.push({ p: it.e.pts, l: it.e.label, r: it.e.t >= 0 ? (Math.floor(it.e.t / 60) + 1) + '’' : '', id: it.e.id });

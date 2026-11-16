@@ -39,6 +39,8 @@ export function saveGame() {
    Aktionen, Wechsel, Halbzeit-Marke, eigene Spiel-ID und ob er schon gespeichert ist.
    Der gerade gewählte Spieler liegt wie bisher direkt in store.S, die anderen in store.S.squad. */
 const SLOT_KEYS = ['pos', 'startelf', 'stints', 'events', 'subs', 'nextId', 'h2Id', 'uid', 'saved'];
+/* Team-Tor/Gegentor ohne Punkte (Spieler nicht auf dem Platz): zählt fürs Ergebnis, erscheint aber nirgends */
+export const silentGoal = e => (e.key === 'tg' || e.key === 'cg') && !e.pts;
 export const MAX_SQUAD = 7;
 export const isMulti = () => !!(store.S.squad && store.S.squad.length > 1);
 function extract(S) {

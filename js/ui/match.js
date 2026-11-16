@@ -77,7 +77,7 @@ function html() {
   /* Foto und Name führen ins Profil (nicht im Korrektur-Modus) */
   const go = fix.on ? '' : ' data-mt="prof" role="link" tabindex="0" aria-label="Profil von ' + esc(p.n) + '"';
   return '<section class="mhero"><div class="pphoto"' + go + '><img src="' + esc(photoUrl(g.player)) + '" alt=""></div>' +
-    '<div class="mh-t"><span' + go + '>' + esc(p.n) + (fix.on ? '' : '<i class="mh-go" aria-hidden="true">›</i>') + '</span><b>' + pts + '</b><div class="mh-s"><img src="' + esc(crestUrl(l)) + '" alt=""><div><strong>' + score + '</strong><small>Endstand</small></div><img src="' + esc(crestUrl(r)) + '" alt=""></div></div></section>' +
+    '<div class="mh-t"><span' + go + '>' + esc(p.n) + '</span><b>' + pts + '</b><div class="mh-s"><img src="' + esc(crestUrl(l)) + '" alt=""><div><strong>' + score + '</strong><small>Endstand</small></div><img src="' + esc(crestUrl(r)) + '" alt=""></div></div></section>' +
     '<div class="pbody">' + (fix.on ? fixHtml(g) : '') +
     '<ul class="rows mrows' + (fix.on ? ' fixing' : '') + '">' + (ev ? (fix.on ? '' : corrHtml(ev)) + rowsHtml(ev, g) : '<li class="empty">Lädt …</li>') + '</ul>' + tools + '</div>';
 }
@@ -146,8 +146,8 @@ export function initMatch() {
     if (!b) return;
     const k = b.dataset.mt, g = rec();
     if (k === 'edit') { openHofGame(state.uid); return; }
-    /* Erst das Spiel-Blatt schließen, dann das Profil öffnen – sonst läge das Profil darunter */
-    if (k === 'prof') { const id = g && g.player; back(); if (id) openProfile(id); return; }
+    /* Profil legt sich über das Spiel-Blatt; „Zurück“ dort führt wieder hierher */
+    if (k === 'prof') { if (g) openProfile(g.player); return; }
     if (k === 'corr') { state.open = !state.open; render(true); return; }
     if (k === 'fix') { fix.on = true; fix.ev = (cachedEvents(state.uid) || []).slice(); fix.base = scoreBase(g, fix.ev); fix.orig = scoreOrig(fix.base, fix.ev); fix.pick = false; fix.min = ''; resettle(); render(true); return; }
     /* Ergebnis: + bucht ein Tor nach, − nimmt das letzte Tor dieser Seite heraus */

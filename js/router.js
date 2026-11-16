@@ -30,6 +30,8 @@ export function show(name, opts = {}) {
   for (const [n, v] of views) {
     for (const id of v.elements) document.getElementById(id).hidden = !visible.has(n);
   }
+  /* Später geöffnete Blätter liegen oben (z. B. Profil über dem Spiel-Detail) */
+  st.forEach((n, i) => { const v = views.get(n); if (v && v.overlay) for (const id of v.elements) document.getElementById(id).style.zIndex = 60 + i; });
   document.body.classList.toggle('sheet-open', !!def.overlay);
   if (def.enter) def.enter(opts);
   def.render();
