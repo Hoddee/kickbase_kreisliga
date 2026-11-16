@@ -38,7 +38,8 @@ export async function loadGames(force = false) {
   try {
     const r = await rest('spiele?select=' + LIST_FIELDS + '&order=played_at.desc&limit=2000');
     const d = await r.json();
-    games.list = (Array.isArray(d) ? d : []).filter(g => PL[g.player] && CL[g.opp]);
+    /* Spiele ohne Einsatzminuten (nur auf der Bank) zählen nirgends mit */
+    games.list = (Array.isArray(d) ? d : []).filter(g => PL[g.player] && CL[g.opp] && g.minutes > 0);
     playerEventCache.clear();
     for (const g of games.list.slice().reverse()) applyMedia(g.player, g.opp, g.player_foto, g.opp_foto);
   } catch (e) { games.error = true; games.failedAt = Date.now(); }

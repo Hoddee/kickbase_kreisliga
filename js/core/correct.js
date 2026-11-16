@@ -20,7 +20,7 @@ export const wasSubbedIn = ev => ev.some(e => e.k === 'sub' && e.o === 'in') && 
 /* Neue Aktion an der richtigen Stelle einsortieren (nach Minute, vor den Schluss-Boni) */
 export function insertAction(ev, item) {
   const out = ev.slice();
-  let i = out.findIndex(e => e.k === 'auto' || (e.k === 'ht' && item.t < 2700) || (!MARK[e.k] && e.t != null && e.t > item.t));
+  let i = out.findIndex(e => e.k === 'auto' || (item.t >= 0 && ((e.k === 'ht' && item.t < 2700) || (!MARK[e.k] && e.t != null && e.t > item.t))));
   if (i < 0) i = out.length;
   out.splice(i, 0, item);
   return out;
@@ -58,10 +58,14 @@ export const goalCount = (ev, k) => ev.filter(e => isGoal(e, k)).length;
 /* Abweichung zwischen gespeichertem Ergebnis und den Tor-Aktionen (bei alten Spielen möglich) */
 export const scoreBase = (g, ev) => ({ us: g.us - goalCount(ev, 'tg'), them: g.them - goalCount(ev, 'cg') });
 
-/* Stand der Spieler zur Sekunde t auf dem Platz? (Startelf + Wechsel aus dem Verlauf) */
+/* War der Spieler überhaupt im Einsatz? (ohne Minutenbonus-Zeile saß er nur auf der Bank) */
+export const didPlay = ev => ev.some(e => e.l === 'Minutenbonus');
+/* Stand er zur Sekunde t auf dem Platz? Startelf ab Anpfiff, Eingewechselte erst ab ihrem Wechsel. */
 export function onField(ev, t) {
-  let on = ev.some(e => e.k === 'auto' && e.a === 's' && !e.x);
-  for (const e of ev) if (e.k === 'sub' && (t < 0 || e.t == null || e.t <= t)) on = e.o === 'in';
+  if (!didPlay(ev)) return false;
+  const subs = ev.filter(e => e.k === 'sub');
+  let on = !(subs.length && subs[0].o === 'in');
+  for (const e of subs) { if (e.t != null && e.t > t) break; on = e.o === 'in'; }
   return on;
 }
 
@@ -78,9 +82,9 @@ export function settle(evIn, g, base, orig) {
   /* Ergebnis wie ursprünglich gebucht: Schluss-Boni bleiben, wie sie damals gespeichert wurden */
   if (us === orig.us && them === orig.them) return { ev, us, them };
   /* Nur wer gespielt hat, bekommt Schluss-Boni (dann gibt es immer die Zeile „Minutenbonus“) */
-  const mbLine = ev.find(e => e.k === 'auto' && e.a === 'e' && e.l === 'Minutenbonus');
-  if (!mbLine) return { ev, us, them };
-  const mb = mbLine.p || 0;
+  if (!didPlay(ev)) return { ev, us, them };
+  /* Minutenbonus zählt so, wie er gerade steht (eine Korrektur daran wirkt sich auf „Zu null“ aus) */
+  const mb = ev.reduce((s, e) => (!e.x && e.l === 'Minutenbonus' ? s + (e.p || 0) : s), 0);
   const want = {
     clean: them === 0 && mb > 0 ? { l: 'Zu null', p: mb * (CLEAN_SHEET[g.pos] || 2) } : null,
     result: us > them ? { l: 'Spiel gewonnen', p: 15 } : us < them ? { l: 'Spiel verloren', p: -15 } : null

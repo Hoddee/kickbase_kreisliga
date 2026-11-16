@@ -58,12 +58,15 @@ function marketHtml() {
 function saveHtml() {
   const S = store.S;
   let b;
-  const multi = isMulti(), open = multi ? eachPlayer(() => !store.S.saved).filter(Boolean).length : 0;
+  const multi = isMulti(), open = multi ? eachPlayer(() => !store.S.saved && matchEntry().m > 0).filter(Boolean).length : 0;
+  /* Wer nur auf der Bank saß, wird nicht gespeichert (sonst verfälscht er Schnitt und Marktwert) */
+  const bench = multi ? eachPlayer(() => (!store.S.saved && matchEntry().m <= 0 ? (PL[store.S.match.p] || {}).n || store.S.match.p : null)).filter(Boolean) : [];
   if (multi ? allSaved() : S.saved) b = '<div class="ok">✓ ' + (multi ? 'Alle Spieler in der Hall of Fame gespeichert' : 'In der Hall of Fame gespeichert') + '</div><button type="button" class="btn full" style="margin-top:10px" data-nav="hof">Hall of Fame ansehen</button>';
   else if (save.busy) b = '<button type="button" class="btn primary" disabled>Speichere …</button>';
   else if (save.confirm) b = '<p>' + (multi ? open + ' Spieler für alle sichtbar speichern?' : 'Für alle sichtbar speichern?') + '</p><div class="duo" style="margin-top:0"><button type="button" class="btn primary" data-sv="yes">Ja, speichern</button><button type="button" class="btn" data-sv="no">Abbrechen</button></div>';
   else b = '<button type="button" class="btn primary" data-sv="ask">' + (S.manual ? 'Nachtrag speichern' : multi ? (open === S.squad.length ? 'Alle ' + open + ' Spieler speichern' : open + ' Spieler speichern') : 'In Hall of Fame speichern') + '</button>';
-  return '<div class="svc">' + b + (save.error ? '<div class="err">' + esc(save.error) + '</div>' : '') + '</div>';
+  const note = bench.length && !allSaved() ? '<p class="muted small" style="margin:8px 0 0">Ohne Einsatz, wird nicht gespeichert: ' + esc(bench.join(', ')) + '</p>' : '';
+  return '<div class="svc">' + b + note + (save.error ? '<div class="err">' + esc(save.error) + '</div>' : '') + '</div>';
 }
 function summaryHtml() {
   return chartHtml() + marketHtml() + saveHtml() + '<h2 class="sec">Punkte nach Bereich</h2>' + areaBars(breakdown());
@@ -79,9 +82,10 @@ async function saveToCloud() {
   save.busy = true; save.error = ''; save.confirm = false; render();
   try {
     /* Bei mehreren Spielern: jeden noch nicht gespeicherten einzeln speichern */
-    const recs = eachPlayer(i => (store.S.saved ? null : { i, row: gameRecord(SEASON) })).filter(Boolean);
+    const recs = eachPlayer(i => (store.S.saved ? null : { i, row: gameRecord(SEASON), m: matchEntry().m })).filter(Boolean);
     for (const r of recs) {
-      await insertGame(r.row);
+      /* Ohne Einsatzminuten gibt es kein Spiel – nur abhaken, damit die Anzeige stimmt */
+      if (r.m > 0) await insertGame(r.row);
       withPlayer(r.i, () => { store.S.saved = true; });
       saveGame();
     }
