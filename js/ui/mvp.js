@@ -159,7 +159,8 @@ async function shareTop() {
   for (let yy = 30; yy < 700; yy += 54) for (let xx = 27; xx < W; xx += 54) { x.fillStyle = 'rgba(255,255,255,' + (0.16 * (1 - yy / 700)).toFixed(3) + ')'; x.beginPath(); x.arc(xx, yy, 3, 0, 6.2832); x.fill(); }
   x.textAlign = 'center'; x.fillStyle = '#a8adb4'; x.font = '600 30px "Inter Tight", Arial, sans-serif'; x.fillText(md.title.toUpperCase() + ' · ' + md.label, W / 2, 96);
   x.fillStyle = '#f4f6f9'; x.font = '800 120px "KL Pitch", Arial, sans-serif'; narrow(x, true); x.fillText('MVP', W / 2, 220); narrow(x, false);
-  const slot = [[1, W / 2, 1, 470], [0, W / 2 - 330, 2, 340], [2, W / 2 + 330, 3, 260]];
+  /* [Index in top, Mitte x, Platz, Höhe] – Platz 1 zuletzt, damit sein Foto vorne liegt */
+  const slot = [[1, W / 2 - 330, 2, 340], [2, W / 2 + 330, 3, 260], [0, W / 2, 1, 470]];
   for (const [i, cx, r, bh] of slot) {
     const g = top[i]; if (!g) continue;
     const col = TIER_COLOR[tierOf(g.points)], base = H - 120, w = r === 1 ? 330 : 290, ph = photos[i];
