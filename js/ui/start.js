@@ -14,7 +14,8 @@ import { avatar, playerRow, nameWithStatus, gameRow, skeleton } from './componen
 import { registerView, show, nav } from '../router.js';
 import { openSetup } from './setup.js';
 import { liveTilesHtml } from './watch.js';
-import { potw, resetHof } from './hof.js';
+import { resetHof } from './hof.js';
+import { spieltagCardHtml, maybeLaunch } from './mvp.js';
 import { byDate } from '../core/market.js';
 
 const CHEVRON = '<span class="chev" aria-hidden="true">›</span>';
@@ -90,18 +91,17 @@ function meCard() {
 const newGameBtn = () => (store.S.match && !(store.S.ended && allSaved()) ? '' :
   '<button type="button" class="newgame kb-new" data-st="new"><span aria-hidden="true">+</span>Neues Spiel</button>');
 
-/* Liga-Ereignisse: Spieler der Woche und die letzten gespeicherten Spiele */
+/* Die letzten gespeicherten Spiele (Top 3 der Woche stehen in der Spieltag-Karte) */
 function latest() {
   if (!games.list) return games.busy ? '<h2>Letzte Spiele</h2>' + skeleton(3) : '';
   const list = byDate(games.list.filter(g => PL[g.player])).reverse();
   if (!list.length) return '';
-  const top = potw(list, true);
-  return (top ? '<h2>Spieler der Woche</h2>' + top : '') + '<h2 class="lh2">Letzte Spiele<button type="button" class="lnk inline" data-st="hof">Alle</button></h2>' +
+  return '<h2 class="lh2">Letzte Spiele<button type="button" class="lnk inline" data-st="hof">Alle</button></h2>' +
     '<ul class="glist">' + list.slice(0, 5).map(g => gameRow(g, 0)).join('') + '</ul>';
 }
 
 function html() {
-  return liveTilesHtml() + runningCard() + newGameBtn() + meCard() + fixturesStrip() + latest();
+  return liveTilesHtml() + runningCard() + newGameBtn() + meCard() + spieltagCardHtml() + fixturesStrip() + latest();
 }
 
 /* Kader: alle aktiven Spieler, nach Mannschaft */
@@ -121,6 +121,8 @@ function kaderHtml() {
 export function render() {
   if (!games.list && !games.busy) loadGames().then(() => { if (nav.current === 'start') render(); });
   $('startBody').innerHTML = html();
+  /* Sonntag ab 19 Uhr: MVP-Stage einmal von selbst */
+  setTimeout(maybeLaunch, 600);
   $('startSeason').textContent = 'Saison ' + SEASON.replace(/^20(\d\d)\/20(\d\d)$/, '$1/$2');
   applyTier(0);
 }

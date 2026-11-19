@@ -6,12 +6,12 @@ import { PL, photoUrl } from '../data/players.js';
 import { CL, crestUrl } from '../data/clubs.js';
 import { tierOf, dateLong } from '../core/util.js';
 
-const TIER_COLOR = { red: '#E0343F', orange: '#ED8928', lime: '#9CE04A', emerald: '#28DE86', gold: '#E1BE38' };
+export const TIER_COLOR = { red: '#E0343F', orange: '#ED8928', lime: '#9CE04A', emerald: '#28DE86', gold: '#E1BE38' };
 const imgCache = new Map();
 
 /* Namen schmal wie die Überschriften (KB-Pitch-Nachbau); ältere Browser zeichnen normal breit */
-const narrow = (x, on) => { if ('fontStretch' in x) x.fontStretch = on ? 'semi-condensed' : 'normal'; };
-function loadImg(url) {
+export const narrow = (x, on) => { if ('fontStretch' in x) x.fontStretch = on ? 'semi-condensed' : 'normal'; };
+export function loadImg(url) {
   if (!imgCache.has(url)) {
     imgCache.set(url, new Promise(res => {
       const i = new Image();
@@ -22,7 +22,7 @@ function loadImg(url) {
   }
   return imgCache.get(url);
 }
-function fontsReady() {
+export function fontsReady() {
   try { return Promise.all([document.fonts.load('800 100px "KL Pitch"'), document.fonts.load('500 40px "Inter Tight"'), document.fonts.load('800 60px "KL Pitch"')]).catch(() => {}); }
   catch (e) { return Promise.resolve(); }
 }
@@ -33,7 +33,7 @@ function urls() {
 /* Bilder vorab laden, damit "Teilen" sofort reagiert (Teilen-Dialog braucht eine direkte Nutzeraktion) */
 export function preloadShare() { if (store.S.match) { urls().forEach(loadImg); fontsReady(); } }
 
-function fit(x, img, cx, cy, box) {
+export function fit(x, img, cx, cy, box) {
   if (!img) return;
   const k = Math.min(box / img.width, box / img.height), w = img.width * k, h = img.height * k;
   x.drawImage(img, cx - w / 2, cy - h / 2, w, h);
@@ -75,7 +75,7 @@ export async function shareCard() {
 
   shareCanvas(cv, names.player.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + t + '.png', names.player + ' – ' + t + ' Punkte');
 }
-function shareCanvas(cv, name, title) {
+export function shareCanvas(cv, name, title) {
   cv.toBlob(blob => {
     if (!blob) return;
     let file = null;
@@ -136,7 +136,7 @@ export async function shareTeamCard() {
   x.fillText('Kickbase KL · Kreisliga ' + (CL[teamOf(S.match)].lg || ''), W / 2, H - 30);
   shareCanvas(cv, 'spiel-' + sc.us + '-' + sc.them + '.png', 'Endstand ' + (home ? sc.us + ':' + sc.them : sc.them + ':' + sc.us));
 }
-function roundRect(x, l, t, w, h, r) {
+export function roundRect(x, l, t, w, h, r) {
   x.beginPath(); x.moveTo(l + r, t); x.arcTo(l + w, t, l + w, t + h, r); x.arcTo(l + w, t + h, l, t + h, r); x.arcTo(l, t + h, l, t, r); x.arcTo(l, t, l + w, t, r); x.closePath();
 }
 function download(blob, name) {

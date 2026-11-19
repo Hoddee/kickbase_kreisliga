@@ -16,6 +16,7 @@ import { startPublisher, startViewer } from './services/live.js';
 import { initAdmin, startPasswordFlow } from './ui/admin.js';
 import { initFeel } from './ui/feel.js';
 import { initTabbar } from './ui/tabbar.js';
+import { initMvp } from './ui/mvp.js';
 import { loadRoster, loadSchedule } from './services/api.js';
 import { consumeRedirect, isLoggedIn, refreshAdminFlag, onAuthChange } from './services/auth.js';
 
@@ -31,6 +32,7 @@ initMatch();
 initWatch();
 initAdmin();
 initTabbar();
+initMvp();
 
 /* Navigation über data-nav="…" (back = zur vorherigen Ansicht) */
 document.addEventListener('click', e => {

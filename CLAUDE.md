@@ -55,6 +55,10 @@ Erklärzeilen unter Optionen). Beschriftungen knapp halten; Erklärungen gehöre
   „Punkte vergeben“). Je einmal pro Gerät; neue Fassung = neuer Schlüssel. Bilder: Screenshots als WebP in `assets/img/tut/`
   (600×676, Fenster 390×440 aufgenommen). Ändert sich die Oberfläche stark, die Bilder neu aufnehmen.
 - Spiel-Detail: „Korrekturen (n)“ öffnet ein eigenes Blatt (Ansicht `corr`, Overlay über `match`).
+- Spieltag / MVP-Stage (`js/ui/mvp.js`, Ansicht `mvp`): Spieltag = Woche Mo–So (Gerätezeit), bestes Spiel je Spieler zählt.
+  Sonntag 19:00 wird er „gelauncht“: Stage mit Top 3 öffnet sich einmal von selbst (`KEYS.mvpSeen` = Spieltag-ID),
+  davor zeigt die Liga den vorigen Spieltag plus Countdown. Spieltag-Nummer über `ANCHOR` (09.11.2026 = 13.) + Wochen mit
+  Spielen im Spielplan – zum Saisonwechsel anpassen. Klassen der Stage immer mit `mvp-` (`.go` gab es schon → Kollision).
 - Punktevergabe: Leiste „Zuletzt gebucht“ unten (letzte 3, antippen = löschen / anderem Spieler geben), Halbzeit über
   `S.ht` (Halbzeitpfiff → „2. Halbzeit anpfeifen“, Hinweisleiste in allen Reitern ab 45’/90’).
 - Live-Link: `?live=<Spiel-ID>` (= uid des ersten Spielers) öffnet den Live-Ticker, nach dem Abpfiff das gespeicherte Spiel.
