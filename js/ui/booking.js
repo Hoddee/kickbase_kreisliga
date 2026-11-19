@@ -13,6 +13,8 @@ import { halftimeLi, subLi, avatar } from './components.js';
 import { renderSquadBar, bindSquad } from './squad.js';
 import { registerView, show, nav } from '../router.js';
 import { openSetup } from './setup.js';
+import { openGoal, closeGoal, initGoal } from './goal.js';
+import { shareLiveGame } from './watch.js';
 
 let tab = 'spiel';
 const confirm = { end: false, reset: false };
@@ -63,11 +65,18 @@ function endHtml() {
 /* ---------- Reiter "Spiel" (live) ---------- */
 function liveGameHtml() {
   const S = store.S, running = !!S.clock.startedAt, sc = score(), d = S.ended ? ' disabled' : '';
+  /* Halbzeit: „Halbzeitpfiff“ hält die Uhr an, danach ist der große Knopf „2. Halbzeit anpfeifen“ (Uhr springt auf 45:00) */
+  const big = S.ht ? '2. Halbzeit anpfeifen' : running ? 'Pause' : (!S.h2 && elapsed() > 2700 ? '2. Halbzeit anpfeifen' : started() ? 'Weiter' : 'Anpfiff');
+  const third = S.ht ? '<button type="button" class="btn" data-do="ht-x"' + d + '>Doch weiter</button>'
+    : S.h2 ? '<button type="button" class="btn" data-do="endq"' + d + '>Abpfiff</button>'
+    : '<button type="button" class="btn" data-do="ht"' + (d || (!started() ? ' disabled' : '')) + '>Halbzeitpfiff</button>';
   return '<h2>Spieluhr</h2>' +
     '<div class="card"><div class="big-clk"><span id="clk">' + clock(elapsed()) + '</span></div>' +
-      '<button type="button" class="btn primary big" data-do="clock"' + d + '>' + (running ? 'Pause' : (!S.h2 && elapsed() > 2700 ? '2. Halbzeit starten' : 'Start')) + '</button>' +
+      (S.ht ? '<div class="htlabel">Halbzeit</div>' : '') +
+      '<button type="button" class="btn primary big" data-do="' + (S.ht ? 'half2' : 'clock') + '"' + d + '>' + big + '</button>' +
       '<div class="trio"><button type="button" class="btn" data-do="m-1"' + d + '>-1 Min</button><button type="button" class="btn" data-do="m+1"' + d + '>+1 Min</button>' +
-      '<button type="button" class="btn" data-do="half2"' + d + '>2. HZ ab 45:00</button></div></div>' +
+      third + '</div></div>' +
+    (S.ended ? '' : '<button type="button" class="btn full lvshare" data-do="lshare">Live-Link teilen</button>') +
     '<h2>Spielstand</h2>' +
     '<div class="scorebox">' + scoreText(sc, isHome()) + '</div>' +
     '<div class="grid">' + (isHome() ? actBtn('tg') + actBtn('cg') : actBtn('cg') + actBtn('tg')) + '</div>' +
@@ -106,7 +115,9 @@ function removeGoal(key) {
 }
 /* Ein Tor gehört allen: mit dem Eintrag verschwindet es bei jedem Spieler */
 function dropEvent(ev) {
-  if (ev.grp && isMulti()) eachPlayer(() => { store.S.events = store.S.events.filter(e => e.grp !== ev.grp); });
+  const g = ev.grp;
+  /* mit dem Tor gehen auch Torschütze, Vorlage usw. aus dem Tor-Assistenten (gg = Tor-Gruppe) */
+  if (g) eachPlayer(() => { store.S.events = store.S.events.filter(e => e.grp !== g && e.gg !== g); });
   else store.S.events = store.S.events.filter(e => e !== ev);
 }
 
@@ -209,15 +220,51 @@ function refresh() {
   updateQuick();
   applyTier(t);
   setNum($('eTot'), t);
-  const lu = lastUndo();
-  $('undo').hidden = !lu;
-  if (lu) {
-    const last = lu.e, who = isMulti() ? (lu.grp ? 'Alle · ' : PL[lu.p].n + ' · ') : '';
-    $('undoTx').innerHTML = esc(who + (minStamp(last.t) ? minStamp(last.t) + ' ' : '') + last.label) + '<b class="' + cls(last.pts) + '">' + fmt(last.pts) + '</b>';
+  const rec = recentBookings();
+  $('undo').hidden = !rec.length;
+  if (rb.sel && !rec.some(x => x.k === rb.sel)) rb.sel = null;
+  $('undoTx').innerHTML = rec.map(x => '<button type="button" class="rbc' + (rb.sel === x.k ? ' on' : '') + '" data-rb="' + x.k + '">' +
+    (isMulti() ? '<i>' + esc(x.grp ? 'Alle' : PL[x.p].n) + '</i>' : '') + '<span>' + esc(x.e.label) + '</span><b class="' + cls(x.e.pts) + '">' + fmt(x.e.pts) + '</b></button>').join('');
+  const sel = rec.find(x => x.k === rb.sel), menu = $('rbMenu');
+  menu.hidden = !sel;
+  if (sel) {
+    const others = isMulti() && !sel.grp ? eachPlayer(i => (i === sel.i ? null : { i, p: store.S.match.p })).filter(Boolean) : [];
+    menu.innerHTML = '<div class="wrap"><div class="rbm-t">' + esc((minStamp(sel.e.t) ? minStamp(sel.e.t) + ' · ' : '') + sel.e.label + (isMulti() ? ' · ' + (sel.grp ? 'alle Spieler' : PL[sel.p].n) : '')) + '</div>' +
+      (others.length ? '<div class="rbm-l">Gehört zu</div><div class="rbm-ps">' + others.map(o => '<button type="button" class="rbm-p" data-rb-to="' + o.i + '">' + avatar(o.p) + '<span>' + esc(PL[o.p].n) + '</span></button>').join('') + '</div>' : '') +
+      '<div class="rbm-a"><button type="button" class="btn danger" data-rb-del>Löschen</button><button type="button" class="btn" data-rb-x>Schließen</button></div></div>';
   }
   document.body.classList.toggle('multi', isMulti());
   renderSquadBar($('squadE'));
   if (isMulti()) document.body.style.setProperty('--sqh', $('squadE').offsetHeight + 'px');
+}
+/* Die letzten Buchungen über alle Spieler (Tore einmal für alle) – für die Leiste unten */
+const rb = { sel: null };
+function recentBookings(n = 3) {
+  const S = store.S, all = [], seen = new Set();
+  eachPlayer(i => { for (const e of store.S.events) all.push({ e, i, p: store.S.match.p }); });
+  all.sort((a, b) => (b.e.ts || 0) - (a.e.ts || 0) || b.e.id - a.e.id);
+  const out = [];
+  for (const x of all) {
+    if (S.manual && (x.e.key === 'tg' || x.e.key === 'cg')) continue;
+    if (x.e.grp) { if (seen.has(x.e.grp)) continue; seen.add(x.e.grp); x.grp = x.e.grp; }
+    else if (silentGoal(x.e)) continue;
+    x.k = x.i + ':' + x.e.id; out.push(x);
+    if (out.length >= n) break;
+  }
+  return out;
+}
+function rbAction(kind, to) {
+  const x = recentBookings().find(r => r.k === rb.sel);
+  rb.sel = null;
+  if (!x) return;
+  if (kind === 'del') { if (x.grp) dropEvent(x.e); else withPlayer(x.i, () => { store.S.events = store.S.events.filter(e => e.id !== x.e.id); }); }
+  else if (kind === 'to' && !x.grp) {
+    /* Aktion einem anderen Spieler geben: Punkte nach dessen Position neu */
+    withPlayer(x.i, () => { store.S.events = store.S.events.filter(e => e.id !== x.e.id); });
+    withPlayer(to, () => { const P = store.S, a = ACT[x.e.key]; P.events.push(Object.assign({}, x.e, { id: P.nextId++, pts: a ? val(a) : x.e.pts, ga: undefined })); });
+    toast(x.e.label + ' → ' + withPlayer(to, () => PL[store.S.match.p].n));
+  }
+  saveGame(); buzz(10); render();
 }
 /* Letzte rückgängig machbare Aktion (bei mehreren Spielern: die jüngste über alle Spieler) */
 function lastUndo() {
@@ -234,7 +281,7 @@ export function render() {
   const m = main();
   if (tab === 'spiel') m.innerHTML = S.manual ? manualGameHtml() : liveGameHtml();
   else if (tab === 'log') m.innerHTML = logHtml();
-  else m.innerHTML = groupsHtml(tab);
+  else m.innerHTML = '<div id="htBar">' + htBarHtml() + '</div>' + groupsHtml(tab);
   document.querySelectorAll('[data-tab]').forEach(b => b.setAttribute('aria-selected', String(b.getAttribute('data-tab') === tab)));
   refresh();
 }
@@ -244,16 +291,34 @@ function addEvent(key) {
   const S = store.S, a = ACT[key];
   if (!a) return;
   const live = !S.manual && (S.clock.startedAt !== null || S.clock.offset > 0), t = live ? Math.floor(elapsed()) : -1, ts = Date.now();
-  if (isMulti() && (key === 'tg' || key === 'cg')) {
+  /* „Tor“/„Elfmeter verwandelt“ beim Spieler: über den Tor-Assistenten, damit auch der Spielstand stimmt.
+     Ein eben gebuchtes Team-Tor ohne Torschützen (letzte 3 Min.) wird übernommen statt ein zweites zu buchen. */
+  if (!S.manual && (key === 'goal' || key === 'pen')) {
+    const cur = isMulti() ? S.cur : 0, recent = [...S.events].reverse().find(e => e.key === 'tg' && !e.sc && ts - (e.ts || 0) < 180000);
+    let grp = recent && recent.grp, gt = recent ? recent.t : t;
+    if (recent && !grp) { grp = recent.grp = 'g' + (recent.ts || ts); }
+    if (!grp) { grp = bookGoal('tg', t, ts); }
+    buzz(12);
+    openGoal('us', grp, gt, { scorer: cur, kind: key });
+    return;
+  }
+  if (key === 'tg' || key === 'cg') {
     /* Tore betreffen alle: jeder Spieler bekommt den Eintrag, Punkte nur wer auf dem Platz steht */
-    const grp = 'g' + ts;
-    eachPlayer(() => { const P = store.S; P.events.push({ id: P.nextId++, key, label: a.s || a.l, pts: val(a), t, ts, grp }); });
+    const grp = bookGoal(key, t, ts);
+    if (!S.manual) { buzz(12); render(); openGoal(key === 'tg' ? 'us' : 'them', grp, t); return; }
   } else S.events.push({ id: S.nextId++, key, label: a.s || a.l, pts: val(a), t, ts });
   saveGame(); buzz(12);
   if (tab === 'spiel') { render(); return; }
   main().querySelectorAll('[data-k="' + key + '"]').forEach(el => { el.outerHTML = actBtn(key); });
   main().querySelectorAll('[data-k="' + key + '"]').forEach(el => el.classList.add('hit'));
   refresh();
+}
+/* Team-Tor/Gegentor für alle Spieler buchen; gibt die Gruppen-ID zurück */
+function bookGoal(key, t, ts) {
+  const a = ACT[key], grp = 'g' + ts;
+  eachPlayer(() => { const P = store.S; P.events.push({ id: P.nextId++, key, label: a.s || a.l, pts: val(a), t, ts, grp }); });
+  saveGame();
+  return grp;
 }
 function setField(on) {
   const S = store.S, el = elapsed(), l = S.stints[S.stints.length - 1];
@@ -276,16 +341,36 @@ function startHalf2() {
     if (el > 2700 && l && l.to === null) { l.to = el; P.stints.push({ from: 2700, to: null }); }
     if (first) P.h2Id = P.nextId;
   });
-  S.h2 = true;
+  S.h2 = true; S.ht = false;
   setClock(2700, true);
+}
+/* Hinweis oben in Angriff/Abwehr/Fehler, wenn die Halbzeit bzw. das Spielende ansteht */
+function htState() {
+  const S = store.S, el = elapsed(), run = !!S.clock.startedAt;
+  if (S.manual || S.ended) return '';
+  if (S.ht) return 'ht';
+  if (run && !S.h2 && el >= 2700) return 'h1end';
+  if (run && S.h2 && el >= 5400) return 'h2end';
+  return '';
+}
+let htShown = '';
+function htBarHtml() {
+  const s = htShown = htState();
+  if (s === 'ht') return '<div class="htbar"><span><b>Halbzeit</b></span><button type="button" class="btn primary" data-do="half2">2. HZ anpfeifen</button></div>';
+  if (s === 'h1end') return '<div class="htbar"><span><b>45’+</b> 1. Halbzeit</span><button type="button" class="btn" data-do="ht">Halbzeitpfiff</button></div>';
+  if (s === 'h2end') return '<div class="htbar"><span><b>90’+</b> 2. Halbzeit</span><button type="button" class="btn" data-do="endq">Abpfiff</button></div>';
+  return '';
 }
 function doAct(what) {
   const S = store.S, el = elapsed(), running = !!S.clock.startedAt;
   switch (what) {
-    case 'clock': if (S.ended) return; if (!running && !S.h2 && el > 2700) startHalf2(); else setClock(el, !running); break;
+    case 'clock': if (S.ended) return; if (S.ht || (!running && !S.h2 && el > 2700)) startHalf2(); else setClock(el, !running); break;
     case 'm-1': setClock(el - 60, running); break;
     case 'm+1': setClock(el + 60, running); break;
-    case 'half2': if (S.ended) return; startHalf2(); break;
+    case 'half2': if (S.ended) return; startHalf2(); buzz(15); break;
+    case 'ht': if (S.ended || S.h2) return; setClock(el, false); S.ht = true; buzz(15); break;
+    case 'ht-x': S.ht = false; setClock(el, true); break;
+    case 'endq': tab = 'spiel'; confirm.end = true; render(); { const b = main().querySelector('[data-do="end-yes"]'); if (b) b.scrollIntoView({ block: 'center' }); } return;
     case 'start1': S.startelf = true; if (S.manual) applyManual(); else if (!started()) S.stints = [{ from: 0, to: null }]; break;
     case 'start0': S.startelf = false; if (S.manual) applyManual(); else if (!started()) S.stints = []; break;
     case 'field': toggleField(S, el); break;
@@ -305,11 +390,13 @@ function doAct(what) {
     case 'undo': {
       const lu = lastUndo();
       if (!lu) break;
-      if (lu.grp) eachPlayer(() => { store.S.events = store.S.events.filter(e => e.grp !== lu.grp); });
+      const g = lu.grp || lu.e.grp;
+      if (g) eachPlayer(() => { store.S.events = store.S.events.filter(e => e.grp !== g && e.gg !== g); });
       else withPlayer(lu.i, () => { store.S.events = store.S.events.filter(e => e !== lu.e); });
       break;
     }
     case 'copy': copySummary(); return;
+    case 'lshare': shareLiveGame(isMulti() ? S.squad[0].uid : S.uid, { nm: isMulti() ? S.squad.length + ' Spieler' : names.player, team: teamOf(S.match), home: isHome(), us: score().us, them: score().them, opp: S.match.o }); return;
     case 'add': add.open = true; add.p = null; add.all = false; render(); return;
     case 'add-x': add.open = false; render(); return;
     case 'add-all': add.all = true; render(); return;
@@ -343,6 +430,7 @@ function copySummary() {
 /* Sekundentakt: Uhr und Automatik-Punkte aktualisieren */
 export function tick() {
   const c = $('clk'); if (c) c.textContent = clock(elapsed());
+  const hb = $('htBar'); if (hb && htState() !== htShown) hb.innerHTML = htBarHtml();
   const ab = $('autoBox'); if (ab) ab.innerHTML = autoHtml();
   setNum($('eTot'), total());
 }
@@ -352,8 +440,10 @@ export function initBooking() {
     elements: ['edit'],
     guard: () => (store.S.match ? null : 'start'),
     enter: () => { confirm.end = false; confirm.reset = false; add.open = false; },
+    leave: () => closeGoal(),
     render
   });
+  initGoal(() => { if (nav.current === 'edit') render(); });
   main().addEventListener('click', e => {
     const b = e.target.closest('[data-k],[data-do],[data-del]');
     if (!b) return;
@@ -373,7 +463,15 @@ export function initBooking() {
   $('quick').addEventListener('click', e => { const b = e.target.closest('[data-k]'); if (b) addEvent(b.getAttribute('data-k')); });
   /* Spielerleiste: Tipp wechselt den Spieler, Wischen über die Aktionen springt zum nächsten */
   bindSquad($('squadE'), main(), () => { buzz(8); render(); });
-  $('undo').addEventListener('click', e => { if (e.target.closest('[data-do="undo"]')) doAct('undo'); });
+  $('undo').addEventListener('click', e => {
+    if (e.target.closest('[data-do="undo"]')) { rb.sel = null; doAct('undo'); return; }
+    const c = e.target.closest('[data-rb]');
+    if (c) { const k = c.getAttribute('data-rb'); rb.sel = rb.sel === k ? null : k; refresh(); return; }
+    if (e.target.closest('[data-rb-x]')) { rb.sel = null; refresh(); return; }
+    if (e.target.closest('[data-rb-del]')) { rbAction('del'); return; }
+    const t = e.target.closest('[data-rb-to]');
+    if (t) rbAction('to', +t.getAttribute('data-rb-to'));
+  });
   document.querySelector('.tabs').addEventListener('click', e => {
     const b = e.target.closest('[data-tab]');
     if (!b) return;

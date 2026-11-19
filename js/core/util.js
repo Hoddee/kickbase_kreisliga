@@ -87,3 +87,11 @@ export function toast(msg, kind = '') {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => { el.className = 'toast ' + kind; }, 2600);
 }
+
+/* Link teilen (Teilen-Menü des Handys), sonst in die Zwischenablage */
+export function shareLink(url, title, text) {
+  try {
+    if (navigator.share) { navigator.share({ title, text, url }).catch(() => {}); return; }
+  } catch (e) {}
+  try { navigator.clipboard.writeText(url).then(() => toast('Link kopiert'), () => toast(url)); } catch (e) { toast(url); }
+}

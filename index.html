@@ -52,6 +52,7 @@ html, body { background: #131417; }
 <link rel="modulepreload" href="js/services/live.js">
 <link rel="modulepreload" href="js/ui/admin.js">
 <link rel="modulepreload" href="js/ui/booking.js">
+<link rel="modulepreload" href="js/ui/goal.js">
 <link rel="modulepreload" href="js/ui/feel.js">
 <link rel="modulepreload" href="js/ui/hof.js">
 <link rel="modulepreload" href="js/ui/intro.js">
@@ -210,9 +211,10 @@ html, body { background: #131417; }
   <div class="quick" id="quick" hidden><div class="qrow" id="qrow"></div></div>
   <main class="wrap eb" id="editBody"></main>
   <div class="undo" id="undo" hidden>
+    <div class="rbm" id="rbMenu" hidden></div>
     <div class="wrap">
-      <div class="tx" id="undoTx"></div>
-      <button type="button" data-do="undo">Rückgängig</button>
+      <div class="rbs" id="undoTx"></div>
+      <button type="button" class="rbu" data-do="undo" aria-label="Letzte Buchung rückgängig"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button>
     </div>
   </div>
   <nav class="tabs" aria-label="Bereiche">
