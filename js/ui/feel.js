@@ -20,7 +20,8 @@ function initEdgeSwipe() {
   const move = v => els.forEach(el => { el.style.transform = v ? 'translateX(' + v + 'px)' : ''; });
   document.addEventListener('touchstart', e => {
     x0 = null;
-    if (e.touches.length !== 1 || nav.current === 'start' || nav.current === 'edit' || document.body.classList.contains('sheet-open')) return;
+    /* In den Hauptbereichen wechselt Wischen den Bereich (tabbar.js) */
+    if (e.touches.length !== 1 || nav.current === 'start' || nav.current === 'edit' || document.body.classList.contains('sheet-open') || document.body.classList.contains('tab-root')) return;
     const t = e.touches[0];
     if (t.clientX > 22) return;
     x0 = t.clientX; y0 = t.clientY; dx = 0; on = false;

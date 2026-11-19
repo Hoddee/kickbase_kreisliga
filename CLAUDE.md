@@ -61,6 +61,8 @@ Ergebnis zuerst, was er selbst tun muss (SQL ausführen, mergen) klar als eigene
 - Menü unten (`js/ui/tabbar.js`, `#tabbar`): Liga (`start`), Kader (`kader`, in `start.js`), Spiel (laufendes Spiel oder neues),
   Ranking (`hof`), Ich (`me`/`admin`). Menüpunkte rufen `show(name, { tab: true })` – der Verlauf wird ersetzt statt gestapelt.
   `body.has-tabbar` / `body.tab-root` steuern Abstand unten und den ausgeblendeten Zurück-Knopf. Router-Hook: `onShow(fn)`.
+  Waagerecht wischen wechselt zwischen Liga ⇄ Kader ⇄ Ranking ⇄ Ich (`initSwipe` in `tabbar.js`, nur bei `tab-root`);
+  Leisten, die selbst waagerecht scrollen, und `[data-noswipe]` sind ausgenommen.
 - `css/` – `theme.css` muss nach den Basis-CSS eingebunden sein (Reihenfolge der `<link>` zählt); neue CSS-Dateien in `index.html` und `sw.js` eintragen.
   Vor neuen Klassennamen per `grep` prüfen, dass es sie noch nicht gibt – Kollisionen haben schon die Startseite verbreitert.
 
