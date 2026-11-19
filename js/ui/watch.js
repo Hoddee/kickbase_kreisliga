@@ -1,6 +1,7 @@
 /* Live zuschauen: Kacheln auf der Startseite und die Live-Ansicht als Blatt.
    Die Daten kommen über services/live.js (Realtime); hier wird nur gezeichnet. */
-import { $, esc, fmt, cls, tierOf } from '../core/util.js';
+import { $, esc, fmt, cls, tierOf, shareLink, toast } from '../core/util.js';
+import { APP_URL } from '../config.js';
 import { PL, photoUrl } from '../data/players.js';
 import { CL, crestUrl, storageUrl } from '../data/clubs.js';
 import { live, onLive, ownLive, liveStatus } from '../services/live.js';
@@ -60,7 +61,7 @@ function html() {
   return '<section class="mhero"><div class="pphoto"><img src="' + esc(photo(d)) + '" alt=""></div>' +
     '<div class="mh-t"><span>' + esc(d.nm) + '</span><b>' + d.t + '</b><div class="mh-s"><img src="' + esc(s.l) + '" alt=""><div><strong>' + s.score + '</strong>' +
     '<small class="lv-st' + (d.ended ? '' : ' on') + '" data-lmin="' + esc(state.uid) + '">' + esc(liveStatus(d)) + '</small></div><img src="' + esc(s.r) + '" alt=""></div></div></section>' +
-    '<div class="pbody">' + sw + '<ul class="rows mrows">' + rows.map(rowLi).join('') + whistleLi() + '</ul></div>';
+    '<div class="pbody">' + sw + (d.ended ? '' : '<button type="button" class="btn full lvshare" data-lw="share">Live-Link teilen</button>') + '<ul class="rows mrows">' + rows.map(rowLi).join('') + whistleLi() + '</ul></div>';
 }
 function render(keep) {
   const sc = $('watchScroll'), top = sc.scrollTop, x = live.map.get(state.uid);
@@ -68,6 +69,20 @@ function render(keep) {
   $('watchMini').innerHTML = x ? '<span>' + esc(x.data.nm) + '</span><b>' + x.data.t + '</b><div class="mh-s sm"><img src="' + esc(sides(x.data).l) + '" alt=""><strong>' + sides(x.data).score + '</strong><img src="' + esc(sides(x.data).r) + '" alt=""></div>' : '';
   if (keep === true) { sc.scrollTop = top; return; }
   sc.scrollTop = 0; $('watchMini').classList.remove('on');
+}
+/* Live-Link: …/?live=<Spiel-ID> – öffnet den Live-Ticker, nach dem Abpfiff das gespeicherte Spiel */
+export const liveUrl = gid => APP_URL + '?live=' + encodeURIComponent(gid);
+export function shareLiveGame(gid, d) {
+  const score = d ? sides(d).score : '';
+  shareLink(liveUrl(gid), 'Live: ' + (d ? d.nm : 'Kreisliga'), d ? (CL[d.team] ? CL[d.team].n : '') + ' ' + score + ' – live verfolgen' : 'Live verfolgen');
+}
+export async function openLiveLink(gid) {
+  for (let i = 0; i < 40 && !live.ready; i++) await new Promise(r => setTimeout(r, 250));
+  const hit = [...live.map.entries()].filter(([, x]) => (x.data.gid || '') === gid).sort((a, b) => a[1].data.i - b[1].data.i)[0];
+  if (hit) { openWatch(hit[0]); return; }
+  await loadGames().catch(() => {});
+  if ((games.list || []).some(g => g.uid === gid)) openMatch(gid);
+  else toast('Das Spiel ist nicht mehr live');
 }
 export function openWatch(uid) { state.uid = uid; state.seen = new Set(); state.ended = null; show('watch'); }
 
@@ -90,6 +105,7 @@ export function initWatch() {
     const k = b.dataset.lw;
     if (k === 'saved') { const uid = state.uid; back(); openMatch(uid); }
     else if (k.startsWith('u:')) { state.uid = k.slice(2); state.seen = new Set(); render(); }
+    else if (k === 'share') { const x = live.map.get(state.uid); if (x) shareLiveGame(x.data.gid || state.uid, x.data); }
   });
   document.addEventListener('click', e => { const t = e.target.closest('[data-lv]'); if (t) openWatch(t.getAttribute('data-lv')); });
   onLive(ev => {

@@ -59,7 +59,7 @@ function snapshots() {
     out[P.uid] = {
       v: 1, gid, i, n, p: id, nm: pl.n || id, vn: pl.vn || '', pf: P.match.pf || null, of: P.match.of || null,
       pos: P.pos, team: teamOf(P.match), opp: P.match.o, home: isHome(), us: sc.us, them: sc.them,
-      t: total(), ended: !!S.ended, h2: !!S.h2, clock, rows: rows()
+      t: total(), ended: !!S.ended, h2: !!S.h2, ht: !!S.ht, clock, rows: rows()
     };
   });
   return out;
@@ -165,6 +165,7 @@ export function liveSeconds(d) {
 }
 export function liveStatus(d) {
   if (d.ended) return 'Abpfiff';
+  if (d.ht) return 'Halbzeit';
   const sec = liveSeconds(d), m = Math.floor(sec / 60) + 1;
   if (!d.clock || !d.clock.run) return sec > 0 ? 'Pause · ' + m + '’' : 'Gleich geht’s los';
   return m + '’';

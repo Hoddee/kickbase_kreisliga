@@ -9,7 +9,7 @@ import { statusIcon, ICON } from '../core/icons.js';
 import { marketOf, nextValue, rating } from '../core/market.js';
 import { games, loadGames, insertGame } from '../services/api.js';
 import { rowLi, whistleLi, areaBars, seasonChart, toChartEntry, scrollChartsToEnd } from './components.js';
-import { preloadShare, shareCard } from './share.js';
+import { preloadShare, shareCard, shareTeamCard, preloadTeamShare } from './share.js';
 import { SEASON } from '../config.js';
 import { registerView, nav } from '../router.js';
 import { publishNow } from '../services/live.js';
@@ -70,7 +70,8 @@ function saveHtml() {
   return '<div class="svc">' + b + note + (save.error ? '<div class="err">' + esc(save.error) + '</div>' : '') + '</div>';
 }
 function summaryHtml() {
-  return chartHtml() + marketHtml() + saveHtml() + '<h2 class="sec">Punkte nach Bereich</h2>' + areaBars(breakdown());
+  return chartHtml() + marketHtml() + saveHtml() +
+    (isMulti() ? '<button type="button" class="btn full teamshare" data-sv="team">' + ICON.share + 'Team-Bild teilen · ' + store.S.squad.length + ' Spieler</button>' : '') + '<h2 class="sec">Punkte nach Bereich</h2>' + areaBars(breakdown());
 }
 function renderSummary() {
   $('summary').innerHTML = summaryHtml();
@@ -116,7 +117,7 @@ export function render() {
   $('ctaI').textContent = S.ended ? '✎' : '+';
   $('listH').hidden = !S.ended;
   if (S.ended) {
-    renderSummary(); preloadShare();
+    renderSummary(); preloadShare(); preloadTeamShare();
     if (!games.list && !games.busy) loadGames().then(() => { if (nav.current === 'home' && store.S.ended) renderSummary(); });
   } else $('summary').innerHTML = '';
   $('rows').innerHTML = rowsData().map(rowLi).join('') + (started() ? whistleLi() : '');
@@ -149,5 +150,6 @@ export function initLive() {
     else if (v === 'no') { save.confirm = false; render(); }
     else if (v === 'yes') saveToCloud();
     else if (v === 'share') shareCard();
+    else if (v === 'team') shareTeamCard();
   });
 }

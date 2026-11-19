@@ -11,7 +11,7 @@ import { initProfile, openProfile } from './ui/profile.js';
 import { showIntro, introSeen } from './ui/intro.js';
 import { initMe } from './ui/me.js';
 import { initMatch, openMatch } from './ui/match.js';
-import { initWatch, tickLive } from './ui/watch.js';
+import { initWatch, tickLive, openLiveLink } from './ui/watch.js';
 import { startPublisher, startViewer } from './services/live.js';
 import { myPlayer, isAdmin as adminRole } from './services/auth.js';
 import { initAdmin, startPasswordFlow } from './ui/admin.js';
@@ -65,6 +65,13 @@ if (redirect && redirect.error) toast('Link ungültig oder abgelaufen: ' + redir
 
 show(store.S.match && !store.S.ended ? (store.S.manual ? 'edit' : 'home') : 'start');
 if (redirect && !redirect.error && (redirect.type === 'recovery' || redirect.type === 'invite')) startPasswordFlow();
+
+/* Live-Link aus WhatsApp & Co.: ?live=<Spiel-ID> */
+const liveParam = new URLSearchParams(location.search).get('live');
+if (liveParam) {
+  try { history.replaceState(null, '', location.pathname); } catch (e) {}
+  if (/^[A-Za-z0-9_-]{6,64}$/.test(liveParam)) openLiveLink(liveParam);
+}
 
 /* Startbildschirm ausblenden (mindestens kurz sichtbar, damit er nicht flackert); beim ersten Mal die Einführung */
 const splash = document.getElementById('splash');

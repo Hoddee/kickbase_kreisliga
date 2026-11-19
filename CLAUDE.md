@@ -40,6 +40,14 @@ Ergebnis zuerst, was er selbst tun muss (SQL ausführen, mergen) klar als eigene
 - `js/services/` – `api.js` (REST: spiele, kader, spielplan), `auth.js` (Login, Admin, Spielerkonten), `live.js` (Live senden/empfangen).
 - `js/ui/` – start (Übersicht + Live-Kacheln), setup (Neues Spiel), live (Spielerkarte), booking (Punktevergabe), squad (Spielerleiste),
   match (Spiel-Detail-Blatt), profile (Spielerprofil-Blatt), hof (Hall of Fame), me (Mein Bereich), admin, watch (Zuschauer), share, intro, sheet, components.
+- `js/ui/goal.js` – Tor-Assistent: nach Team-Tor/Gegentor (oder „Tor“/„Elfmeter“ beim Spieler) Blatt mit Torschütze,
+  Vorlage (+ Art, Boni wie absichtlich/Großchance) und Tor eingeleitet bzw. Gegentor-Verursacher. Team-Tor ist schon gebucht;
+  jeder Tipp bucht sofort (`gg` = Tor-Gruppe, `ga: 1`), „Tor zurück“ entfernt die ganze Gruppe. Team-Tore haben jetzt immer `grp`.
+  Begleitaktionen nie automatisch buchen (nicht jedes Tor bekommt sie bei Kickbase/Opta).
+- Punktevergabe: Leiste „Zuletzt gebucht“ unten (letzte 3, antippen = löschen / anderem Spieler geben), Halbzeit über
+  `S.ht` (Halbzeitpfiff → „2. Halbzeit anpfeifen“, Hinweisleiste in allen Reitern ab 45’/90’).
+- Live-Link: `?live=<Spiel-ID>` (= uid des ersten Spielers) öffnet den Live-Ticker, nach dem Abpfiff das gespeicherte Spiel.
+  Team-Bild (`shareTeamCard` in `share.js`) bei Spielen mit mehreren Spielern.
 - `js/ui/feel.js` + `css/feel.css` – App-Gefühl: Druck-Rückmeldung, Rand-Wischen = Zurück (nur iOS-Home-Bildschirm),
   Ziehen zum Aktualisieren (`REFRESH` je Ansicht), Service-Worker-Registrierung mit Update-Prüfung beim Zurückholen der App.
   Der Router merkt sich die Scrollposition je Ansicht und lässt Ansichten hereingleiten (`slideIn`); Ladezustände mit `skeleton()`.
