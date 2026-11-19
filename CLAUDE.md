@@ -56,7 +56,7 @@ Ergebnis zuerst, was er selbst tun muss (SQL ausführen, mergen) klar als eigene
   Auswahl mit weißer Kante, Farbe nur für Punkte-Stufen/Trends, Rot (`--live`) nur für Live. `--kb-red` ist dort absichtlich
   Weiß (alte Akzentfarbe). Schriften: „KL Pitch“ = Saira als variable Schrift (`assets/fonts/saira-kl-var.woff2`, Breite 70–100 %),
   Nachbau von KB Pitch: Überschriften mit `font-stretch: 88%` + `-0.02em` (`--font-head`), Zahlen normal breit (`--font-display`).
-  Text, Spielernamen in Listen und der kleine Name über der Punktzahl in Inter Tight (wie KB Volksans bei Kickbase).
+  Text, Spielernamen in Listen (normale Schreibweise, keine Großbuchstaben) und der kleine Name über der Punktzahl in Inter Tight (wie KB Volksans bei Kickbase).
   Die Original-Schriften von Kickbase nicht einbauen (keine Lizenz zur Weitergabe).
 - Menü unten (`js/ui/tabbar.js`, `#tabbar`): Liga (`start`), Kader (`kader`, in `start.js`), Spiel (laufendes Spiel oder neues),
   Ranking (`hof`), Ich (`me`/`admin`). Menüpunkte rufen `show(name, { tab: true })` – der Verlauf wird ersetzt statt gestapelt.
