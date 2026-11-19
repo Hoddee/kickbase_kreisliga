@@ -15,6 +15,7 @@ import { registerView, show, nav } from '../router.js';
 import { openSetup } from './setup.js';
 import { openGoal, closeGoal, initGoal } from './goal.js';
 import { shareLiveGame } from './watch.js';
+import { bookingTourSeen, showBookingTour } from './intro.js';
 
 let tab = 'spiel';
 const confirm = { end: false, reset: false };
@@ -29,11 +30,15 @@ function actBtn(key) {
     '</span><span class="pt ' + cls(p) + '">' + fmt(p) + '</span>' + (c ? '<span class="cnt">' + c + '</span>' : '') + '</button>';
 }
 /* Aktionen nach Bedeutung gruppiert (Schüsse, Pässe, Zweikämpfe …) – so findet man sie, ohne die Punkte zu kennen */
-const GOAL_HINT = '<p class="ahint">Tipp: Tore am besten im Reiter <b>Spiel</b> über „Tor“ buchen – dann fragt die App nach Torschütze und Vorlage.</p>';
+/* Kleine, häufige Aktionen oben (schnell erreichbar), große wie Tor oder Karte unten:
+   Gruppen nach durchschnittlichen Punkten sortiert, in der Gruppe ebenfalls aufsteigend (Minuspunkte nach Betrag) */
 function groupsHtml(k) {
-  const S = store.S;
-  return GROUPS[k].filter(g => !g.only || g.only === S.pos).map(g =>
-    '<h2>' + esc(g.t) + '</h2>' + (g.t === 'Tore & Vorlagen' ? GOAL_HINT : '') + '<div class="grid">' + g.a.map(x => actBtn(x[0])).join('') + '</div>').join('');
+  const S = store.S, size = key => Math.abs(val(ACT[key]));
+  return GROUPS[k].filter(g => !g.only || g.only === S.pos)
+    .map(g => ({ g, keys: g.a.map(x => x[0]).sort((a, b) => size(a) - size(b)) }))
+    .map(x => Object.assign(x, { avg: x.keys.reduce((s, key) => s + size(key), 0) / x.keys.length }))
+    .sort((a, b) => a.avg - b.avg)
+    .map(({ g, keys }) => '<h2>' + esc(g.t) + '</h2><div class="grid">' + keys.map(actBtn).join('') + '</div>').join('');
 }
 /* Suche über alle Reiter: „flanke“, „elfmeter“, „pass“ … */
 let query = '';
@@ -45,7 +50,7 @@ function searchHtml(q) {
     for (const x of g.a) { const l = norm(x[1] + ' ' + g.t); if (words.every(w => l.includes(w)) && !hits.includes(x[0])) hits.push(x[0]); }
   }
   return hits.length ? '<h2>' + hits.length + ' Treffer</h2><div class="grid">' + hits.map(actBtn).join('') + '</div>'
-    : '<p class="ahint">Nichts gefunden. Anders schreiben, z. B. „Pass“, „Schuss“ oder „Karte“.</p>';
+    : '<p class="ahint">Nichts gefunden.</p>';
 }
 const actListHtml = () => (query.trim() ? searchHtml(query) : groupsHtml(tab));
 const searchBox = () => '<div class="asearch"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>' +
@@ -94,7 +99,6 @@ function liveGameHtml() {
     '<div class="scorebox">' + scoreText(sc, isHome()) + '</div>' +
     '<div class="grid">' + (isHome() ? actBtn('tg') + actBtn('cg') : actBtn('cg') + actBtn('tg')) + '</div>' +
     '<div class="grid ungoal">' + (isHome() ? unBtn('tg', sc.us) + unBtn('cg', sc.them) : unBtn('cg', sc.them) + unBtn('tg', sc.us)) + '</div>' +
-    '<p class="ahint">' + (isMulti() ? 'Tore zählen für alle auf dem Platz. ' : '') + 'Nach dem Tor fragt die App, wer getroffen und vorgelegt hat.</p>' +
     (isMulti() ? lineupHtml(d) + addHtml() +
       '<h2>Einstellungen · ' + esc(names.player) + '</h2><div class="card">' + settingsHtml() + '</div>'
     : '<h2>Einsatz</h2><div class="card">' +
@@ -103,7 +107,7 @@ function liveGameHtml() {
       settingsHtml() +
     '</div>' + addHtml()) +
     '<h2>Automatische Punkte</h2><div class="card" id="autoBox">' + autoHtml() + '</div>' +
-    (S.ended ? '' : '<h2>Zuschauer</h2><p class="ahint">Mit dem Link können alle das Spiel live mitverfolgen.</p><button type="button" class="btn full lvshare" data-do="lshare">Live-Link teilen</button>') +
+    (S.ended ? '' : '<h2>Zuschauer</h2><button type="button" class="btn full lvshare" data-do="lshare">Live-Link teilen</button>') +
     endHtml();
 }
 
@@ -456,7 +460,11 @@ export function initBooking() {
   registerView('edit', {
     elements: ['edit'],
     guard: () => (store.S.match ? null : 'start'),
-    enter: () => { confirm.end = false; confirm.reset = false; add.open = false; },
+    enter: () => {
+      confirm.end = false; confirm.reset = false; add.open = false;
+      /* Beim ersten Mal erklären, wie die Punktevergabe funktioniert (nicht beim Nachtrag) */
+      if (!store.S.manual && !bookingTourSeen()) setTimeout(() => { if (nav.current === 'edit') showBookingTour(); }, 350);
+    },
     leave: () => closeGoal(),
     render
   });

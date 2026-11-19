@@ -57,7 +57,7 @@ function fixHtml(g) {
   const mine = recordTeam(g), step = (k, n) => '<span class="scst"><button type="button" data-mt="sc:' + k + ':-" aria-label="Tor weniger"' + (n ? '' : ' disabled') + '>−</button><b>' + n + '</b><button type="button" data-mt="sc:' + k + ':+" aria-label="Tor mehr">+</button></span>';
   h += '<div class="card fixscore"><div class="scrow"><img src="' + esc(crestUrl(mine)) + '" alt="">' + step('tg', fix.us) + '<i>:</i>' + step('cg', fix.them) + '<img src="' + esc(crestUrl(g.opp)) + '" alt=""></div>' +
     '<label class="nf"><span>Minute für Nachträge</span><input class="fi" id="fixMin" type="number" inputmode="numeric" min="1" max="130" placeholder="leer = ohne Minute" value="' + esc(fix.min) + '"></label>' +
-    '<p class="muted small">Zu null und Sieg/Niederlage passen sich dem Ergebnis an.</p></div>';
+    '</div>';
   if (!fix.pick) return h + '<button type="button" class="add-row" data-mt="fpick"><span class="plus">+</span><span>Aktion nachtragen<small>Vergessen oder falsch gebucht</small></span></button>';
   const groups = pickerGroups(g.pos), gr = groups[fix.grp] || groups[0], sub = wasSubbedIn(fix.ev);
   h += '<div class="card fixpick"><div class="fxg">' + groups.map((x, i) => '<button type="button" data-mt="fg:' + i + '" aria-pressed="' + (x === gr) + '">' + esc(x.t) + '</button>').join('') + '</div>' +

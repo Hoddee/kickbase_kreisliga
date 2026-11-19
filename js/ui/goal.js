@@ -9,15 +9,15 @@ import { PL } from '../data/players.js';
 import { store, saveGame, ACT, val, onField, eachPlayer, withPlayer, score, isHome, scoreText } from '../core/game.js';
 import { avatar } from './components.js';
 
-/* [Schlüssel, kurzer Name, Erklärung für Leute, die Kickbase nicht kennen] */
-const SCORE_KINDS = [['goal', 'Tor', 'Aus dem Spiel heraus'], ['pen', 'Elfmeter', 'Elfmeter verwandelt']];
-const SCORE_EXTRAS = [['long', 'Fernschuss', 'Von außerhalb des Strafraums'], ['sot', 'Schuss aufs Tor', 'Zählt zusätzlich als Torschuss']];
-const ASSIST_KINDS = [['ast', 'Torvorlage', 'Normaler letzter Pass'], ['defl', 'Abgefälscht', 'Ball noch abgefälscht'], ['reb', 'Abgeprallt', 'Tor nach Abpraller'], ['wood', 'Aluminium', 'Schuss an Pfosten/Latte, Nachschuss drin']];
-const ASSIST_EXTRAS = [['intent', 'Absichtlich', 'Bewusst zum Torschützen gespielt'], ['bcc', 'Großchance kreiert', 'Pass führt zu einer klaren Chance'],
-  ['deadly', 'Pass des Todes', 'Pass hebelt die Abwehr aus'], ['cross', 'Flanke', 'Vorlage kam per Flanke'],
-  ['pf3', 'Pass vorderes Drittel', 'Pass ins letzte Drittel'], ['poh', 'Pass gegn. Hälfte', 'Pass in die gegnerische Hälfte'],
-  ['lball', 'Präziser langer Ball', 'Langer Ball kommt genau an']];
-const FAULT_KINDS = [['mgoal', 'Fehler vor Gegentor', 'Fehler führt direkt zum Tor'], ['own', 'Eigentor', 'Ball selbst ins eigene Tor'], ['pcon', 'Elfmeter verschuldet', 'Foul oder Hand im Strafraum']];
+/* [Schlüssel, Name] */
+const SCORE_KINDS = [['goal', 'Tor'], ['pen', 'Elfmeter']];
+const SCORE_EXTRAS = [['long', 'Fernschuss'], ['sot', 'Schuss aufs Tor']];
+const ASSIST_KINDS = [['ast', 'Torvorlage'], ['defl', 'Abgefälscht'], ['reb', 'Abgeprallt'], ['wood', 'Aluminium']];
+const ASSIST_EXTRAS = [['intent', 'Absichtlich'], ['bcc', 'Großchance kreiert'],
+  ['deadly', 'Pass des Todes'], ['cross', 'Flanke'],
+  ['pf3', 'Pass vorderes Drittel'], ['poh', 'Pass gegn. Hälfte'],
+  ['lball', 'Präziser langer Ball']];
+const FAULT_KINDS = [['mgoal', 'Fehler vor Gegentor'], ['own', 'Eigentor'], ['pcon', 'Elfmeter verschuldet']];
 
 let st = null, onChange = () => {};
 const wrap = () => document.getElementById('gaSheet');
@@ -81,10 +81,10 @@ function playerGrid(role, cur, exclude, key, noneLabel) {
 }
 /* Auswahl-Zeilen: eine (radio) oder mehrere (check) – mit Erklärung und Punkten */
 function optRows(list, attr, isOn, who, multi) {
-  return '<div class="ga-opts">' + list.map(([k, l, hint]) => {
+  return '<div class="ga-opts">' + list.map(([k, l]) => {
     const on = isOn(k);
     return '<button type="button" class="ga-o' + (on ? ' on' : '') + (multi ? ' ga-multi' : '') + '" data-ga="' + attr + ':' + k + '" role="' + (multi ? 'checkbox' : 'radio') + '" aria-checked="' + on + '">' +
-      '<i class="ga-mk" aria-hidden="true"></i><span><b>' + esc(l) + '</b><small>' + esc(hint) + '</small></span>' + ptsTag(pts(who, k)) + '</button>';
+      '<i class="ga-mk" aria-hidden="true"></i><span><b>' + esc(l) + '</b></span>' + ptsTag(pts(who, k)) + '</button>';
   }).join('') + '</div>';
 }
 
@@ -93,7 +93,7 @@ function stepHtml(s) {
     let h = '<h3>Wer hat das Tor geschossen?</h3>' + playerGrid('sc', st.sc, [], st.sk, 'Anderer');
     if (st.sc != null) {
       h += '<h3>Wie?</h3>' + optRows(SCORE_KINDS, 'sk', k => st.sk === k, st.sc, false) +
-        '<h3>Dazu <em>(wenn passend)</em></h3>' + optRows(SCORE_EXTRAS.filter(([k]) => k !== 'long' || st.sk === 'goal'), 'sb', k => st.sb.has(k), st.sc, true);
+        '<h3>Dazu</h3>' + optRows(SCORE_EXTRAS.filter(([k]) => k !== 'long' || st.sk === 'goal'), 'sb', k => st.sb.has(k), st.sc, true);
     }
     return h;
   }
@@ -103,15 +103,15 @@ function stepHtml(s) {
       playerGrid('as', st.as, st.sc != null ? [st.sc] : [], pen ? 'pwon' : st.ak, pen ? 'Niemand' : 'Keine Vorlage');
     if (st.as != null && !pen) {
       h += '<h3>Art der Vorlage</h3>' + optRows(ASSIST_KINDS, 'ak', k => st.ak === k, st.as, false) +
-        '<h3>Was war besonders? <em>(mehrere möglich)</em></h3>' + optRows(ASSIST_EXTRAS, 'ab', k => st.ab.has(k), st.as, true);
+        '<h3>Was war besonders?</h3>' + optRows(ASSIST_EXTRAS, 'ab', k => st.ab.has(k), st.as, true);
     }
     return h;
   }
   if (s === 'su') {
-    return '<h3>Wer hat das Tor eingeleitet?</h3><p class="ga-help">Der Pass vor der Vorlage. Einfach überspringen, wenn unklar.</p>' +
+    return '<h3>Wer hat das Tor eingeleitet?</h3>' +
       playerGrid('su', st.su, [st.sc, st.as].filter(x => x != null), 'setup', 'Keiner');
   }
-  let h = '<h3>War einer von uns schuld?</h3><p class="ga-help">Nur antippen, wenn es eindeutig war.</p>' + playerGrid('fx', st.fx, [], st.fk, 'Niemand');
+  let h = '<h3>War einer von uns schuld?</h3>' + playerGrid('fx', st.fx, [], st.fk, 'Niemand');
   if (st.fx != null) h += '<h3>Was ist passiert?</h3>' + optRows(FAULT_KINDS, 'fk', k => st.fk === k, st.fx, false);
   return h;
 }
@@ -134,7 +134,7 @@ function footer() {
   for (const [pi, key] of picks()) per.set(pi, (per.get(pi) || 0) + pts(pi, key));
   const sum = [...per].map(([pi, p]) => '<span>' + esc(nm(pi)) + ' ' + ptsTag(p) + '</span>').join('');
   const nextLabel = 'Weiter';
-  return '<div class="ga-foot">' + (sum ? '<div class="ga-sum">' + sum + '</div>' : '<div class="ga-sum muted">Noch nichts ausgewählt – das Tor zählt trotzdem.</div>') +
+  return '<div class="ga-foot">' + (sum ? '<div class="ga-sum">' + sum + '</div>' : '<div class="ga-sum"></div>') +
     '<div class="ga-btns">' + (last ? '<button type="button" class="btn primary full" data-ga="done">Fertig</button>'
       : '<button type="button" class="btn" data-ga="done">Fertig</button><button type="button" class="btn primary" data-ga="next">' + nextLabel + ' ›</button>') + '</div></div>';
 }
