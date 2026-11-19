@@ -1,7 +1,7 @@
 # CLAUDE.md – Kreisliga Kickbase
 
-Hinweise für Claude Code. Die README ist teilweise veraltet – im Zweifel gilt der Code und die Merge-Historie
-(`git log --merges`), nicht die README.
+Hinweise für Claude Code. Die README ist auf dem Stand v4.3 (Nov. 2026) – bei größeren Änderungen mitpflegen.
+Im Zweifel gilt der Code und die Merge-Historie (`git log --merges`).
 
 ## Was das ist
 „Kickbase KL“ (Logo `assets/icons/logo.svg`, „KL“ kursiv): PWA im Kickbase-Stil für Amateurfußball (Kreisliga A2/B2/B5, Saison 2026/2027). Am Spielfeldrand werden pro Spieler
@@ -117,4 +117,3 @@ Tabellen: `spiele` (gespeicherte Spiele inkl. `events` jsonb), `kader`, `admins`
   Grace Period bis 08.12.2026; danach gibt es beim nächsten Überschreiten **keine** Schonfrist mehr (sofort 402).
   Bild- und Abfrage-Traffic deshalb weiter sparsam halten.
 - Saisonwechsel: `SEASON` steht fest in `config.js`, Plan für Marktwerte/Kader/Hall of Fame fehlt.
-- README ist veraltet.
