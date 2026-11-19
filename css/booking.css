@@ -1,7 +1,9 @@
 /* Punktevergabe: Kopfzeile, Reiter, Aktionsbuttons, Spieluhr, Verlauf */
 /* ---------- Punktevergabe ---------- */
 .ehead {
-  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 12;
+  /* Kopfzeile reicht hinter die Statusleiste (iPhone-App vom Home-Bildschirm). Früher: top = Statusleiste –
+     dann rutschte der Kopf beim Start über die ersten ~50 px des Inhalts und verdeckte z. B. „Mehrere Spieler“. */
+  position: sticky; top: 0; z-index: 12; padding-top: env(safe-area-inset-top, 0px);
   background: var(--bg); border-bottom: 1px solid var(--line);
 }
 .ehead .wrap { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; height: 58px; gap: 8px; }
