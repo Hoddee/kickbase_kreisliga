@@ -44,6 +44,11 @@ Ergebnis zuerst, was er selbst tun muss (SQL ausführen, mergen) klar als eigene
   Vorlage (+ Art, Boni wie absichtlich/Großchance) und Tor eingeleitet bzw. Gegentor-Verursacher. Team-Tor ist schon gebucht;
   jeder Tipp bucht sofort (`gg` = Tor-Gruppe, `ga: 1`), „Tor zurück“ entfernt die ganze Gruppe. Team-Tore haben jetzt immer `grp`.
   Begleitaktionen nie automatisch buchen (nicht jedes Tor bekommt sie bei Kickbase/Opta).
+  Aufbau als Assistent in Schritten (Torschütze → Vorlage → Einleitung; Schritte ohne mögliche Auswahl fallen weg),
+  Blatt mit fester Höhe: nur `.ga-body` scrollt, Fußzeile mit Zusammenfassung und „Fertig“ steht immer. Das `.ga-panel`
+  wird nur einmal angelegt (sonst fährt es bei jedem Tipp neu ein). Optionen als Zeilen mit kurzer Erklärung.
+- Aktionen in Angriff/Abwehr/Fehler nach Bedeutung gruppiert (`GROUPS` in `actions.js`), Suche über alle Reiter (`#aq`).
+- Spiel-Detail: „Korrekturen (n)“ öffnet ein eigenes Blatt (Ansicht `corr`, Overlay über `match`).
 - Punktevergabe: Leiste „Zuletzt gebucht“ unten (letzte 3, antippen = löschen / anderem Spieler geben), Halbzeit über
   `S.ht` (Halbzeitpfiff → „2. Halbzeit anpfeifen“, Hinweisleiste in allen Reitern ab 45’/90’).
 - Live-Link: `?live=<Spiel-ID>` (= uid des ersten Spielers) öffnet den Live-Ticker, nach dem Abpfiff das gespeicherte Spiel.

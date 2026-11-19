@@ -198,3 +198,8 @@ body.ended .cta button { background: rgba(19, 20, 23, .88); color: var(--ink); b
 .num, .gh .gbig, .pw-v, .mh-t > b { letter-spacing: -.015em; }
 /* Spielernamen in Listen wie bei Kickbase in der Textschrift (Großbuchstaben, nicht fett) */
 .prow b, .gi b { font: 600 16px/1.2 var(--font-body); letter-spacing: 0; text-transform: none; }
+
+/* Korrekturen-Blatt: etwas tiefer, damit das Spiel dahinter sichtbar bleibt */
+.sh-panel.sh-low { height: calc(100% - 64px - env(safe-area-inset-top, 0px)); }
+.corr-h { margin: 34px 0 22px; text-align: center; font: 800 26px/1 var(--font-head); font-stretch: 88%; letter-spacing: -.02em; text-transform: uppercase; color: #f4f6f9; }
+.row.corr { cursor: pointer; }
