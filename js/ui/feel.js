@@ -58,6 +58,7 @@ function initEdgeSwipe() {
 const REFRESH = {
   start: () => Promise.all([loadGames(true), loadRoster(), loadSchedule()]),
   hof: () => { forgetEvents(); return loadGames(true); },
+  kader: () => Promise.all([loadGames(true), loadRoster()]),
   me: () => loadGames(true)
 };
 function initPull() {

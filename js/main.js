@@ -13,9 +13,9 @@ import { initMe } from './ui/me.js';
 import { initMatch, openMatch } from './ui/match.js';
 import { initWatch, tickLive, openLiveLink } from './ui/watch.js';
 import { startPublisher, startViewer } from './services/live.js';
-import { myPlayer, isAdmin as adminRole } from './services/auth.js';
 import { initAdmin, startPasswordFlow } from './ui/admin.js';
 import { initFeel } from './ui/feel.js';
+import { initTabbar } from './ui/tabbar.js';
 import { loadRoster, loadSchedule } from './services/api.js';
 import { consumeRedirect, isLoggedIn, refreshAdminFlag, onAuthChange } from './services/auth.js';
 
@@ -30,6 +30,7 @@ initMe();
 initMatch();
 initWatch();
 initAdmin();
+initTabbar();
 
 /* Navigation über data-nav="…" (back = zur vorherigen Ansicht) */
 document.addEventListener('click', e => {
@@ -38,8 +39,6 @@ document.addEventListener('click', e => {
   const target = n.getAttribute('data-nav');
   if (target === 'back') { back(); return; }
   if (target === 'hof') resetHof();
-  /* Freigeschaltete Spieler landen über das Personen-Symbol direkt in ihrem Bereich */
-  if (target === 'admin' && n.id === 'adminBtn' && myPlayer() && !adminRole()) { show('me'); return; }
   show(target);
 });
 /* Profil oder Spiel öffnen: data-open="p:SPIELER" / "g:SPIEL" (überall in der App) */

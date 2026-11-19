@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Kreisliga Edition</title>
+<title>Kickbase KL</title>
 <meta name="description" content="Kickbase-Punkte für die Kreisliga: live buchen, Hall of Fame, Marktwerte.">
 <meta name="theme-color" content="#131417">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Kreisliga">
+<meta name="apple-mobile-web-app-title" content="Kickbase KL">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="assets/icons/icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
@@ -18,15 +18,13 @@
      (main.js blendet den Startbildschirm erst aus, wenn alle geladen sind) -->
 <style>
 html, body { background: #131417; }
-#splash { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; background: radial-gradient(90% 60% at 50% 40%, #2a1a12 0%, var(--bg, #131417) 70%); transition: opacity .35s ease; }
+#splash { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; background: #131417; transition: opacity .35s ease; }
 #splash.gone { opacity: 0; pointer-events: none; }
-.spl { display: grid; justify-items: center; gap: 10px; }
-.spl img { width: 96px; height: 96px; border-radius: 24px; box-shadow: 0 16px 50px rgba(255, 70, 0, .35); animation: splpop .5s ease-out both; }
-.spl b { margin-top: 10px; font: 800 30px/1 'Oxanium', system-ui, sans-serif; letter-spacing: .04em; color: #fff; }
-.spl i { font: 700 11px/1 'Inter Tight', system-ui, sans-serif; font-style: normal; letter-spacing: .3em; padding: 5px 8px 4px; border-radius: 5px; background: var(--kb-red, #ff4600); color: #fff; }
-.spl-bar { width: 120px; height: 3px; margin-top: 18px; border-radius: 2px; background: rgba(255, 255, 255, .1); overflow: hidden; }
-.spl-bar span { display: block; width: 40%; height: 100%; background: var(--kb-red, #ff4600); animation: splbar 1s ease-in-out infinite; }
-@keyframes splpop { from { transform: scale(.7); opacity: 0; } }
+.spl { display: grid; justify-items: center; gap: 22px; }
+.spl img { width: 132px; height: auto; animation: splpop .55s cubic-bezier(.2, .8, .2, 1) both; }
+.spl-bar { width: 64px; height: 2px; border-radius: 1px; background: rgba(255, 255, 255, .1); overflow: hidden; }
+.spl-bar span { display: block; width: 40%; height: 100%; background: #f0f3f7; animation: splbar 1s ease-in-out infinite; }
+@keyframes splpop { from { transform: translateX(-14px) skewX(-8deg); opacity: 0; } }
 @keyframes splbar { from { transform: translateX(-100%); } to { transform: translateX(260%); } }
 @media (prefers-reduced-motion: reduce) { .spl img, .spl-bar span { animation: none; } }
 </style>
@@ -41,7 +39,8 @@ html, body { background: #131417; }
 <link rel="stylesheet" href="css/profile.css" media="print" onload="this.media='all'">
 <link rel="stylesheet" href="css/sheet.css" media="print" onload="this.media='all'">
 <link rel="stylesheet" href="css/feel.css" media="print" onload="this.media='all'">
-<noscript><link rel="stylesheet" href="css/fonts.css"><link rel="stylesheet" href="css/tokens.css"><link rel="stylesheet" href="css/base.css"><link rel="stylesheet" href="css/live.css"><link rel="stylesheet" href="css/booking.css"><link rel="stylesheet" href="css/views.css"><link rel="stylesheet" href="css/theme.css"><link rel="stylesheet" href="css/admin.css"><link rel="stylesheet" href="css/profile.css"><link rel="stylesheet" href="css/sheet.css"><link rel="stylesheet" href="css/feel.css"></noscript>
+<link rel="stylesheet" href="css/brand.css" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="css/fonts.css"><link rel="stylesheet" href="css/tokens.css"><link rel="stylesheet" href="css/base.css"><link rel="stylesheet" href="css/live.css"><link rel="stylesheet" href="css/booking.css"><link rel="stylesheet" href="css/views.css"><link rel="stylesheet" href="css/theme.css"><link rel="stylesheet" href="css/admin.css"><link rel="stylesheet" href="css/profile.css"><link rel="stylesheet" href="css/sheet.css"><link rel="stylesheet" href="css/feel.css"><link rel="stylesheet" href="css/brand.css"></noscript>
 <script type="module" src="js/main.js"></script>
 <!-- Alle Module gleich parallel laden statt nacheinander (spart zwei Ladestufen) -->
 <link rel="modulepreload" href="js/core/game.js">
@@ -54,6 +53,7 @@ html, body { background: #131417; }
 <link rel="modulepreload" href="js/ui/booking.js">
 <link rel="modulepreload" href="js/ui/goal.js">
 <link rel="modulepreload" href="js/ui/feel.js">
+<link rel="modulepreload" href="js/ui/tabbar.js">
 <link rel="modulepreload" href="js/ui/hof.js">
 <link rel="modulepreload" href="js/ui/intro.js">
 <link rel="modulepreload" href="js/ui/live.js">
@@ -79,7 +79,7 @@ html, body { background: #131417; }
 </head>
 <body>
 <!-- Startbildschirm, bis die App geladen ist -->
-<div id="splash" aria-hidden="true"><div class="spl"><img src="assets/icons/icon-192.png" alt="" width="96" height="96" fetchpriority="high"><b>KREISLIGA</b><i>EDITION</i><span class="spl-bar"><span></span></span></div></div>
+<div id="splash" aria-hidden="true"><div class="spl"><img src="assets/icons/logo.svg" alt="" width="132" height="58" fetchpriority="high"><span class="spl-bar"><span></span></span></div></div>
 
 <!-- Spielerkarte (Live / Endstand) -->
 <div id="home" hidden>
@@ -107,17 +107,26 @@ html, body { background: #131417; }
 
 <!-- Startseite: Übersicht -->
 <section id="start" hidden>
-  <header class="ehead">
+  <header class="ehead thead">
     <div class="wrap">
-      <div class="brand"><svg viewBox="0 0 30 30" aria-hidden="true"><rect width="30" height="30" rx="8" fill="#ff4600"/><circle cx="15" cy="15" r="7.2" fill="none" stroke="#fff" stroke-width="2.2"/><path d="M15 3v24M3 15h4.8M22.2 15H27" stroke="#fff" stroke-width="2.2" stroke-linecap="round"/></svg><b>KREISLIGA</b><i>EDITION</i></div>
-      <div class="hdr-actions">
-        <button type="button" class="hofbtn" data-nav="hof"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0zM8 6H4v1a4 4 0 0 0 4 4M16 6h4v1a4 4 0 0 1-4 4M12 13v4M8 20h8M10 17h4"/></svg>Hall of Fame</button>
-        <button type="button" class="iconbtn" id="adminBtn" data-nav="admin" aria-label="Konto"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></button>
-      </div>
+      <img class="kl-logo" src="assets/icons/logo.svg" alt="Kickbase KL" width="54" height="24">
+      <div class="etitle">Liga</div>
+      <span class="tseason" id="startSeason"></span>
     </div>
   </header>
   <main class="wrap eb sb" id="startBody"></main>
-  <div class="go"><div class="wrap"><button type="button" class="newgame" data-st="new"><span aria-hidden="true">+</span>Neues Spiel</button></div></div>
+</section>
+
+<!-- Kader -->
+<section id="kader" hidden>
+  <header class="ehead thead">
+    <div class="wrap">
+      <img class="kl-logo" src="assets/icons/logo.svg" alt="" width="54" height="24">
+      <div class="etitle">Kader</div>
+      <span></span>
+    </div>
+  </header>
+  <main class="wrap eb sb" id="kaderBody"></main>
 </section>
 
 <!-- Spielerprofil (Blatt von unten) -->
@@ -227,6 +236,15 @@ html, body { background: #131417; }
     </div>
   </nav>
 </section>
+
+<!-- Menü unten (Liga, Kader, Spiel, Hall of Fame, Ich) -->
+<nav class="tabbar" id="tabbar" aria-label="Menü" hidden>
+  <button type="button" data-tb="start"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="5" r="1.6"/><circle cx="12" cy="5" r="1.6"/><circle cx="19" cy="5" r="1.6"/><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/><circle cx="5" cy="19" r="1.6"/><circle cx="12" cy="19" r="1.6"/><circle cx="19" cy="19" r="1.6"/></svg><span>Liga</span></button>
+  <button type="button" data-tb="kader"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 12h18M12 3v4M12 17v4"/><circle cx="12" cy="12" r="2.6"/></svg><span>Kader</span></button>
+  <button type="button" data-tb="game"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2 4.5 13.5H11l-1 8.5 8.5-11.5H12z"/></svg><span id="tbGameL">Spiel</span><i class="tb-dot" id="tbDot" hidden></i></button>
+  <button type="button" data-tb="hof"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><span>Ranking</span></button>
+  <button type="button" data-tb="me"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span id="tbMeL">Ich</span><i class="nbadge" id="tbBadge" hidden></i></button>
+</nav>
 
 <noscript><p style="padding:24px;color:#dee4ec;background:#131417">Bitte JavaScript aktivieren.</p></noscript>
 </body>

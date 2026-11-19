@@ -5,7 +5,7 @@
    Bilder (Spielerfotos, Wappen): nur einmal laden, danach immer aus dem Cache – kein erneutes Herunterladen.
    Geänderte Fotos bekommen eine neue Adresse (?v=…), alte Einträge werden beim Versionswechsel aufgeräumt.
    Datenbank-Anfragen (REST/Auth) werden nie zwischengespeichert. */
-const VERSION = 'kl-v3.12.1';
+const VERSION = 'kl-v4.0.0';
 const APP = 'app-' + VERSION;
 const IMG = 'img-v3';
 const SHELL = [
@@ -15,11 +15,12 @@ const SHELL = [
   'js/data/actions.js', 'js/data/clubs.js', 'js/data/players.js', 'js/data/schedule.js', 'js/core/cutout.js', 'js/ui/start.js', 'js/ui/profile.js', 'js/ui/squad.js', 'js/ui/intro.js', 'js/ui/me.js', 'css/profile.css', 'css/sheet.css', 'js/ui/sheet.js', 'js/ui/match.js', 'js/core/correct.js', 'js/services/live.js', 'js/ui/watch.js',
   'js/core/game.js', 'js/core/icons.js', 'js/core/market.js', 'js/core/util.js',
   'js/services/api.js', 'js/services/auth.js',
-  'js/ui/admin.js', 'js/ui/feel.js', 'js/ui/goal.js', 'css/feel.css', 'js/ui/booking.js', 'js/ui/components.js', 'js/ui/hof.js', 'js/ui/live.js', 'js/ui/setup.js', 'js/ui/share.js',
+  'js/ui/admin.js', 'js/ui/feel.js', 'js/ui/tabbar.js', 'css/brand.css', 'js/ui/goal.js', 'css/feel.css', 'js/ui/booking.js', 'js/ui/components.js', 'js/ui/hof.js', 'js/ui/live.js', 'js/ui/setup.js', 'js/ui/share.js',
   'assets/fonts/oxanium-latin-700-normal.woff2', 'assets/fonts/oxanium-latin-800-normal.woff2',
   'assets/fonts/inter-tight-latin-400-normal.woff2', 'assets/fonts/inter-tight-latin-500-normal.woff2',
   'assets/fonts/inter-tight-latin-600-normal.woff2', 'assets/fonts/inter-tight-latin-700-normal.woff2',
-  'assets/icons/icon-192.png'
+  'assets/fonts/saira-condensed-latin-700-normal.woff2', 'assets/fonts/saira-condensed-latin-800-normal.woff2',
+  'assets/icons/icon-192.png', 'assets/icons/logo.svg'
 ];
 
 let shellUrls = null;

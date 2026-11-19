@@ -74,7 +74,7 @@ function render(keep) {
 export const liveUrl = gid => APP_URL + '?live=' + encodeURIComponent(gid);
 export function shareLiveGame(gid, d) {
   const score = d ? sides(d).score : '';
-  shareLink(liveUrl(gid), 'Live: ' + (d ? d.nm : 'Kreisliga'), d ? (CL[d.team] ? CL[d.team].n : '') + ' ' + score + ' – live verfolgen' : 'Live verfolgen');
+  shareLink(liveUrl(gid), 'Live: ' + (d ? d.nm : 'Kickbase KL'), d ? (CL[d.team] ? CL[d.team].n : '') + ' ' + score + ' – live verfolgen' : 'Live verfolgen');
 }
 export async function openLiveLink(gid) {
   for (let i = 0; i < 40 && !live.ready; i++) await new Promise(r => setTimeout(r, 250));
@@ -94,6 +94,30 @@ export function tickLive() {
   }
 }
 
+/* Wechsel zu einem Mitspieler: alter Stand gleitet raus, neuer von der Seite rein (Richtung = Reihenfolge) */
+let swBusy = false;
+function switchTo(uid) {
+  if (uid === state.uid || swBusy) return;
+  const order = liveList().map(y => y.uid), dir = order.indexOf(uid) > order.indexOf(state.uid) ? 1 : -1;
+  const body = $('watchBody'), sc = $('watchScroll');
+  const go = () => {
+    state.uid = uid; state.seen = new Set();
+    const strip = body.querySelector('.wsq'), left = strip ? strip.scrollLeft : 0;
+    render();
+    const ns = body.querySelector('.wsq'); if (ns) { ns.scrollLeft = left; const on = ns.querySelector('[aria-pressed="true"]'); if (on) on.scrollIntoView({ inline: 'nearest', block: 'nearest', behavior: 'smooth' }); }
+  };
+  if (!Element.prototype.animate || matchMedia('(prefers-reduced-motion: reduce)').matches) { go(); return; }
+  swBusy = true;
+  const parts = () => [...body.querySelectorAll('.mhero .pphoto, .mhero .mh-t, .mrows, .lvshare')];
+  Promise.all(parts().map(el => el.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateX(' + (-24 * dir) + 'px)' }],
+    { duration: 140, easing: 'ease-in', fill: 'forwards' }).finished.catch(() => {}))).then(() => {
+    go(); sc.scrollTop = Math.min(sc.scrollTop, 0);
+    parts().forEach((el, i) => el.animate([{ opacity: 0, transform: 'translateX(' + (28 * dir) + 'px)' }, { opacity: 1, transform: 'none' }],
+      { duration: 260, delay: i * 25, easing: 'cubic-bezier(.2, .8, .2, 1)', fill: 'backwards' }));
+    swBusy = false;
+  });
+}
+
 export function initWatch() {
   registerView('watch', { elements: ['watch'], render, overlay: true });
   const sc = $('watchScroll');
@@ -104,7 +128,7 @@ export function initWatch() {
     if (!b) return;
     const k = b.dataset.lw;
     if (k === 'saved') { const uid = state.uid; back(); openMatch(uid); }
-    else if (k.startsWith('u:')) { state.uid = k.slice(2); state.seen = new Set(); render(); }
+    else if (k.startsWith('u:')) switchTo(k.slice(2));
     else if (k === 'share') { const x = live.map.get(state.uid); if (x) shareLiveGame(x.data.gid || state.uid, x.data); }
   });
   document.addEventListener('click', e => { const t = e.target.closest('[data-lv]'); if (t) openWatch(t.getAttribute('data-lv')); });

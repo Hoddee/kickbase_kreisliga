@@ -4,7 +4,7 @@ Hinweise für Claude Code. Die README ist teilweise veraltet – im Zweifel gilt
 (`git log --merges`), nicht die README.
 
 ## Was das ist
-PWA im Kickbase-Stil für Amateurfußball (Kreisliga A2/B2/B5, Saison 2026/2027). Am Spielfeldrand werden pro Spieler
+„Kickbase KL“ (Logo `assets/icons/logo.svg`, „KL“ kursiv): PWA im Kickbase-Stil für Amateurfußball (Kreisliga A2/B2/B5, Saison 2026/2027). Am Spielfeldrand werden pro Spieler
 Aktionen nach der Kickbase-Punktetabelle gebucht; daraus entstehen Punkte, Spielerprofile, Marktwerte, Hall of Fame
 und eine Live-Ansicht für Zuschauer. Live: https://hoddee.github.io/kickbase_kreisliga/ (GitHub Pages, Branch `main`).
 
@@ -52,6 +52,13 @@ Ergebnis zuerst, was er selbst tun muss (SQL ausführen, mergen) klar als eigene
   Ziehen zum Aktualisieren (`REFRESH` je Ansicht), Service-Worker-Registrierung mit Update-Prüfung beim Zurückholen der App.
   Der Router merkt sich die Scrollposition je Ansicht und lässt Ansichten hereingleiten (`slideIn`); Ladezustände mit `skeleton()`.
 - Installierte App (Home-Bildschirm) testen: iOS weckt sie nur auf statt neu zu starten – Updates kommen über `feel.js`.
+- Look (seit v4.0): `css/brand.css` wird zuletzt geladen und setzt den Kickbase-Stil – Schwarz/Weiß, Knöpfe weiß,
+  Auswahl mit weißer Kante, Farbe nur für Punkte-Stufen/Trends, Rot (`--live`) nur für Live. `--kb-red` ist dort absichtlich
+  Weiß (alte Akzentfarbe). Schriften: Saira Condensed (`--font-head`, Überschriften/Namen in Großbuchstaben; ersetzt KB Pitch),
+  Oxanium (Zahlen), Inter Tight (Text). Die Original-Schriften von Kickbase nicht einbauen (keine Lizenz zur Weitergabe).
+- Menü unten (`js/ui/tabbar.js`, `#tabbar`): Liga (`start`), Kader (`kader`, in `start.js`), Spiel (laufendes Spiel oder neues),
+  Ranking (`hof`), Ich (`me`/`admin`). Menüpunkte rufen `show(name, { tab: true })` – der Verlauf wird ersetzt statt gestapelt.
+  `body.has-tabbar` / `body.tab-root` steuern Abstand unten und den ausgeblendeten Zurück-Knopf. Router-Hook: `onShow(fn)`.
 - `css/` – `theme.css` muss nach den Basis-CSS eingebunden sein (Reihenfolge der `<link>` zählt); neue CSS-Dateien in `index.html` und `sw.js` eintragen.
   Vor neuen Klassennamen per `grep` prüfen, dass es sie noch nicht gibt – Kollisionen haben schon die Startseite verbreitert.
 

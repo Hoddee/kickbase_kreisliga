@@ -19,18 +19,21 @@ const reduced = () => window.matchMedia && matchMedia('(prefers-reduced-motion: 
    werden nur eingeblendet – ein transform würde sie sonst kurz an die falsche Stelle setzen. */
 function slideIn(def, dir) {
   if (reduced() || !Element.prototype.animate) return;
-  const dx = dir === 'back' ? -28 : 28;
+  const dx = dir === 'back' ? -28 : dir === 'tab' ? 0 : 28;
   for (const id of def.elements) {
     const root = document.getElementById(id);
     for (const el of root.children) {
       const fixed = getComputedStyle(el).position === 'fixed';
-      el.animate(fixed ? [{ opacity: 0 }, { opacity: 1 }] : [{ opacity: 0, transform: 'translateX(' + dx + 'px)' }, { opacity: 1, transform: 'none' }],
-        { duration: 240, easing: 'cubic-bezier(.2, .8, .2, 1)' });
+      el.animate(fixed || !dx ? [{ opacity: 0 }, { opacity: 1 }] : [{ opacity: 0, transform: 'translateX(' + dx + 'px)' }, { opacity: 1, transform: 'none' }],
+        { duration: dx ? 240 : 180, easing: 'cubic-bezier(.2, .8, .2, 1)' });
     }
   }
 }
 
 export function registerView(name, def) { views.set(name, def); }
+/* Wird nach jedem Ansichtswechsel aufgerufen (z. B. Menü unten) */
+const hooks = new Set();
+export const onShow = fn => hooks.add(fn);
 /* Elemente der gerade sichtbaren Ansicht */
 export const currentEls = () => ((views.get(nav.current) || {}).elements || []).map(id => document.getElementById(id)).filter(Boolean);
 
@@ -45,8 +48,9 @@ export function show(name, opts = {}) {
   }
   const st = nav.stack;
   const wasInStack = name === ROOT ? !!from : st.includes(name);
-  if (name === ROOT) st.length = 0;
-  else if (!st.length || st[0] !== ROOT) st.unshift(ROOT);
+  /* Menü unten: Bereiche ersetzen sich gegenseitig, statt sich zu stapeln */
+  if (name === ROOT || opts.tab) st.length = 0;
+  if (name !== ROOT && (!st.length || st[0] !== ROOT)) st.unshift(ROOT);
   const i = st.indexOf(name);
   if (i >= 0) st.length = i + 1; else st.push(name);
   /* Ansichten, die man vorwärts neu öffnet, starten oben */
@@ -66,8 +70,9 @@ export function show(name, opts = {}) {
   def.render();
   if (!opts.keepScroll && !def.overlay && !wasOverlay) window.scrollTo(0, wasInStack ? scrollMem.get(name) || 0 : 0);
   /* Gleiten nur zwischen normalen Ansichten; Blätter haben ihre eigene Animation */
-  if (from && from !== name && !def.overlay && !wasOverlay && !opts.noAnim) slideIn(def, wasInStack ? 'back' : 'fwd');
+  if (from && from !== name && !def.overlay && !wasOverlay && !opts.noAnim) slideIn(def, opts.tab ? 'tab' : wasInStack ? 'back' : 'fwd');
   wasOverlay = !!def.overlay;
+  for (const fn of hooks) try { fn(name); } catch (e) {}
   armHistory();
 }
 
