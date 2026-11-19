@@ -1,0 +1,166 @@
+/* Kickbase KL – Markenschicht (zuletzt geladen).
+   Wie die Kickbase-App: im Kern Schwarz und Weiß, Farbe nur für Punkte/Trends und Rot nur für „Live“.
+   Überschriften schmal und groß (Saira Condensed statt KB Pitch), Zahlen in Oxanium, Text in Inter Tight.
+   Trick: die alte Akzentfarbe --kb-red ist jetzt Weiß; echtes Live-Rot heißt --live. */
+:root {
+  --bg: #131417;
+  --surface: #1b1d21;
+  --raised: #25272c;
+  --line: rgba(222, 228, 236, .09);
+  --ink: #eef1f5;
+  --muted: #a8adb4;
+  --muted2: #7e8187;
+  --kb-red: #eef1f5; --kb-red-rgb: 238, 241, 245;
+  --live: #ff3b30; --live-rgb: 255, 59, 48;
+  --on-acc: #131417;
+  --font-head: 'Saira Condensed', 'Arial Narrow', system-ui, sans-serif;
+  --tabbar-h: 60px;
+}
+:focus-visible { outline-color: var(--ink); }
+
+/* ---------- Kopfzeilen ---------- */
+.ehead { background: rgba(19, 20, 23, .94); border-bottom: 0; }
+.etitle { font: 700 13.5px var(--font-body); letter-spacing: .08em; text-transform: uppercase; }
+.back { color: var(--ink); }
+.thead .wrap { grid-template-columns: 1fr auto 1fr; }
+.kl-logo { justify-self: start; display: block; width: 54px; height: auto; }
+.tseason { justify-self: end; font: 600 11.5px var(--font-body); letter-spacing: .1em; text-transform: uppercase; color: var(--muted2); white-space: nowrap; }
+body.tab-root .ehead .back { visibility: hidden; }
+
+/* ---------- Überschriften wie „AUFSTELLUNG“ ---------- */
+#startBody > h2, #kaderBody h2, #hofBody > h2, #meBody h2, #adminBody h2 {
+  margin: 34px 0 14px; font: 800 27px/1 var(--font-head); letter-spacing: .005em; color: #f4f6f9; text-transform: uppercase;
+}
+#startBody > h2::after, #kaderBody h2::after, #hofBody > h2::after, #meBody h2::after, #adminBody h2::after { display: none; }
+.eb h2 { letter-spacing: .14em; }
+.eb h2::after { background: rgba(222, 228, 236, .06); }
+.lh b, .pf h3, .pmini b, .lv-n b, .lv-gone b, .auth h3, .sheet h3, .shead, .gh .gname, .pnn { font-family: var(--font-head); font-weight: 800; letter-spacing: .005em; }
+.pnn { font-size: clamp(48px, 17vw, 76px); line-height: .9; }
+.pf h3 { font-size: 34px; }
+.lh b { font-size: 34px; }
+.pmini b { font-size: 26px; }
+.lv-n b { font-size: 26px; line-height: .95; }
+.gh .gname { font-size: 30px; text-transform: uppercase; }
+.auth h3 { font-size: 32px; text-transform: uppercase; }
+.sheet h3 { font-size: 26px; text-transform: uppercase; }
+
+/* ---------- Knöpfe: weiß gefüllt oder weiß umrandet ---------- */
+.btn.primary, .go button:not([disabled]), .cta button, .newgame, .ga-done {
+  background: var(--ink); border-color: var(--ink); color: var(--on-acc);
+  font: 700 14.5px var(--font-body); letter-spacing: .06em; text-transform: uppercase;
+}
+.btn.primary:active, .go button:not([disabled]):active, .cta button:active, .newgame:active { background: #c9ced6; }
+.go button { border-radius: 14px; }
+.go button[disabled] { background: var(--surface); color: var(--muted2); text-transform: uppercase; letter-spacing: .06em; font-size: 14.5px; }
+.go { background: linear-gradient(to bottom, rgba(19, 20, 23, 0), var(--bg) 45%); }
+.cta button { box-shadow: 0 10px 28px rgba(0, 0, 0, .65); border-radius: 14px; font-size: 13.5px; }
+.btn { border-color: rgba(222, 228, 236, .14); background: transparent; }
+.btn.danger { border-color: rgba(var(--live-rgb), .5); color: #ff6b61; }
+.obtn, .pplay { border-color: rgba(222, 228, 236, .55); }
+.kb-new { width: 100%; height: 54px; margin-top: 18px; border: 0; border-radius: 14px; }
+.cnt, .prow[aria-pressed="true"] .ck, .me-rank, .brand i { color: var(--on-acc); }
+.plus { color: var(--ink); background: rgba(222, 228, 236, .1); }
+.tag, .note-badge { background: rgba(222, 228, 236, .1); color: var(--ink); }
+.seg { background: transparent; }
+.chip { border-width: 1.5px; }
+
+/* Auswahl: weiße Kante statt Orange */
+.prow[aria-pressed="true"], .sqb[aria-pressed="true"], .multibtn[aria-pressed="true"], .ga-p.on, .ga-c.on, .rbc.on, .apk[aria-pressed="true"], .fxpick button[aria-pressed="true"] {
+  border-color: var(--ink); background: rgba(222, 228, 236, .08);
+}
+.otile[aria-pressed="true"], .ptile[aria-pressed="true"], .tchip[aria-pressed="true"] { border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink) inset; }
+.act.on { border-color: rgba(222, 228, 236, .7); }
+.multibtn[aria-pressed="true"] .mbi i { box-shadow: 0 0 0 2px var(--bg); }
+
+/* ---------- Live: das einzige Rot ---------- */
+.dot, .state.live::before, .lv-live i, .lv-st.on::before, .tb-dot { background: var(--live); }
+.state.live, .lv-live, .lv-st.on { color: #ff6b61 !important; }
+.htlabel { color: #ff6b61; }
+.htbar { border-color: rgba(var(--live-rgb), .4); background: rgba(var(--live-rgb), .08); }
+.nbadge, .nb { background: var(--live); color: #fff; }
+.ptr-ind.ready svg, .ptr-ind.spin svg { stroke: var(--ink); }
+
+/* ---------- Flächen: weniger Kästen, mehr Liste ---------- */
+.card, .act, .qc, .fxc, .tile, .kr, .rec, .stats4 div, .mwc, .gr, .prow, .lvc, .runc, .mecard, .pcard, .potw, .sheet { border-color: transparent; }
+.fxc, .tile, .rec, .stats4 div, .mwc, .card { background: var(--surface); }
+.runc { border: 0; background: var(--surface); }
+.runc-t small, .mecard small, .pcard small, .me-t small, .pw-k { color: var(--muted); }
+.mecard, .pcard { background: var(--surface); }
+.me-hero { background: linear-gradient(180deg, #23252b, var(--surface)); }
+.lvc { background: linear-gradient(180deg, #1f2125, var(--surface)); border: 1px solid rgba(var(--live-rgb), .22); }
+
+/* Kader / Ranking: Zeilen wie „MEINE SPIELER“ – ohne Kasten, Freisteller statt Kreis */
+.plist, .glist { gap: 0; }
+.prow, .gr { border: 0; border-radius: 0; background: transparent; padding: 12px 2px; border-bottom: 1px solid var(--line); }
+.prow:last-child, .glist > :last-child { border-bottom: 0; }
+.prow .hav, .gr .hav { border-radius: 10px; background: var(--surface); }
+.prow b, .gi b { font: 700 19px/1.05 var(--font-head); letter-spacing: .01em; text-transform: uppercase; }
+.prow[aria-pressed="true"] { background: rgba(222, 228, 236, .06); border-radius: 12px; border-bottom-color: transparent; padding-inline: 10px; }
+.gr > .ov { border-radius: 0; }
+.grp { color: var(--muted); }
+
+/* Punkteliste: „+2  Pass vorderes Drittel  16’“ */
+.row { border: 0; border-bottom: 1px solid var(--line); border-radius: 0; margin: 0; padding: 17px 4px; background: transparent; }
+.row.fresh { border-radius: 0; }
+.rp { font-size: 21px; }
+
+/* ---------- Reiter ---------- */
+/* Hall of Fame / Profil-Reiter oben: Text in Großbuchstaben, aktiver weiß */
+.htabs { background: transparent !important; border: 0 !important; gap: 4px; overflow-x: auto; scrollbar-width: none; }
+.htabs::-webkit-scrollbar { display: none; }
+.htabs button { background: transparent !important; color: var(--muted2) !important; font: 600 13px var(--font-body) !important; letter-spacing: .08em; text-transform: uppercase; box-shadow: none !important; border-radius: 0 !important; padding: 10px 6px !important; }
+.htabs button[aria-pressed="true"], .htabs button[aria-selected="true"] { color: #fff !important; }
+.lgs button { background: transparent; border-color: rgba(222, 228, 236, .18); text-transform: uppercase; letter-spacing: .06em; font-size: 12px; }
+.lgs button[aria-pressed="true"] { background: transparent; color: #fff; border-color: var(--ink); }
+
+/* Punktevergabe-Reiter unten und Profil-Reiter: Symbol, aktiver mit Beschriftung */
+.tabs { background: var(--bg); border-top: 0; }
+.tabs button { color: var(--muted2); border-top: 0 !important; }
+.tabs button[aria-selected="true"] { color: #fff; }
+.tabs button .tl { font: 600 10px var(--font-body); letter-spacing: .08em; text-transform: uppercase; }
+.sh-tabs { background: var(--bg); border-top: 0; gap: 0; justify-content: space-around; }
+.sh-tabs button { flex-direction: column; gap: 4px; height: 52px; padding: 0 14px; border-radius: 0; }
+.sh-tabs button[aria-pressed="true"] { background: none; color: #fff; }
+.sh-tabs span { font: 600 10px var(--font-body); letter-spacing: .08em; text-transform: uppercase; }
+
+/* ---------- Menü unten ---------- */
+.tabbar { position: fixed; z-index: 40; left: 0; right: 0; bottom: 0; display: flex; justify-content: space-around; align-items: stretch;
+  height: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px)); padding: 0 max(6px, env(safe-area-inset-left, 0px)) env(safe-area-inset-bottom, 0px);
+  background: rgba(19, 20, 23, .96); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); box-shadow: 0 -1px 0 rgba(222, 228, 236, .05); }
+.tabbar button { position: relative; flex: 1; max-width: 96px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+  border: 0; background: none; color: var(--muted2); transition: color .15s; }
+.tabbar svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; transition: transform .2s cubic-bezier(.2, .8, .2, 1); }
+.tabbar [data-tb="start"] svg { fill: currentColor; stroke: none; }
+.tabbar span { font: 600 9.5px/1 var(--font-body); letter-spacing: .1em; text-transform: uppercase; opacity: 0; transform: translateY(-3px); transition: opacity .15s, transform .2s; }
+.tabbar button.on { color: #fff; }
+.tabbar button.on span { opacity: 1; transform: none; }
+.tabbar button:not(.on) svg { transform: translateY(6px); }
+.tabbar .tb-dot { position: absolute; top: 12px; left: calc(50% + 9px); width: 8px; height: 8px; border-radius: 50%; box-shadow: 0 0 0 2px var(--bg); animation: kbpulse 1.4s ease-in-out infinite; }
+.tabbar .nbadge { top: 8px; right: auto; left: calc(50% + 6px); }
+body.has-tabbar .eb, body.has-tabbar .hb, body.has-tabbar .meb { padding-bottom: calc(var(--tabbar-h) + 40px + env(safe-area-inset-bottom, 0px)); }
+body.has-tabbar .toast { bottom: calc(var(--tabbar-h) + 20px + env(safe-area-inset-bottom, 0px)); }
+@media (prefers-reduced-motion: reduce) { .tabbar .tb-dot { animation: none; } }
+
+/* ---------- Startseite ---------- */
+.fxc { border-radius: 14px; }
+.lvh { margin-top: 26px !important; }
+.lvh .lv-live { font: 800 27px/1 var(--font-head); letter-spacing: .005em; color: #f4f6f9 !important; gap: 10px; }
+.lvh .lv-live i { width: 10px; height: 10px; }
+.mecard { margin-top: 12px; }
+.lh2 { justify-content: space-between; }
+.lh2 .lnk { font: 600 12px var(--font-body); letter-spacing: .1em; text-transform: uppercase; text-decoration: none; color: var(--muted); }
+#startBody .potw { margin-bottom: 0; }
+#startBody .glist { margin-top: -4px; }
+
+/* Schwebender Knopf weicht dem Speichern-Knopf aus */
+.cta { transition: opacity .18s, transform .18s; }
+.cta.away { opacity: 0; transform: translateY(16px); pointer-events: none; }
+
+/* Spielerkarte: Name groß und schmal wie „OLISE“ */
+.pname { font: 800 34px/1 var(--font-head); letter-spacing: .01em; text-transform: uppercase; color: #f4f6f9; }
+.mh-t > span { font-family: var(--font-head); font-weight: 800; letter-spacing: .01em; }
+/* Nach dem Abpfiff ist „Bearbeiten“ Nebensache: dunkel mit weißem Rand */
+body.ended .cta button { background: rgba(19, 20, 23, .88); color: var(--ink); border: 1.5px solid rgba(222, 228, 236, .55); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.lgs { overflow-x: auto; scrollbar-width: none; margin-inline: -16px; padding-inline: 16px; }
+.lgs::-webkit-scrollbar { display: none; }
+.lgs button { flex: none; white-space: nowrap; padding: 0 14px; }

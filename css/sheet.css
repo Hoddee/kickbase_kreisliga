@@ -255,7 +255,7 @@ body.sheet-open { overflow: hidden; }
 .lv-n em { display: block; margin-top: 4px; font-size: 12.5px; font-style: normal; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lv-n em i { font-style: normal; font-weight: 700; }
 .lv-p { text-align: right; }
-.lv-p b { display: block; font: 800 34px/1 var(--font-display); font-variant-numeric: tabular-nums; color: var(--tier, var(--ink)); }
+.lv-p b { display: block; font: 800 34px/1 var(--font-display); font-variant-numeric: tabular-nums; color: var(--ct, var(--ink)); }
 .lv-p small { display: block; margin-top: 2px; font-size: 11px; color: var(--muted); }
 .lvc.wide .lv-ph { width: 72px; height: 72px; }
 .lvc.wide .lv-main { grid-template-columns: 72px minmax(0, 1fr) auto; }

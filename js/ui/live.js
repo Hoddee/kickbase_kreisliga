@@ -125,6 +125,15 @@ export function render() {
   seenId = S.nextId - 1;
   signature = t + '|' + S.events.length + '|' + S.ended + '|' + (S.cur || 0);
   updateLiveState();
+  ctaCheck();
+}
+
+/* Der schwebende Knopf (Bearbeiten) weicht aus, solange er über „In Hall of Fame speichern“ läge */
+function ctaCheck() {
+  const c = $('cta'), s = nav.current === 'home' && document.querySelector('#summary .svc');
+  if (!s) { c.classList.remove('away'); return; }
+  const r = s.getBoundingClientRect(), h = window.innerHeight;
+  c.classList.toggle('away', r.top < h - 20 && r.bottom > h - 120);
 }
 
 /* Sekundentakt: Status aktualisieren, bei Änderungen neu zeichnen */
@@ -141,6 +150,7 @@ export function initLive() {
     enter: () => { save.confirm = false; },
     render
   });
+  window.addEventListener('scroll', ctaCheck, { passive: true });
   bindSquad($('squadH'), document.querySelector('#home .hero'), () => { buzz(8); render(); });
   document.addEventListener('click', e => {
     const b = e.target.closest('[data-sv]');

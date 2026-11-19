@@ -25,13 +25,14 @@ function formDots(id) {
   return '<span class="fdots" aria-label="Form der letzten Spiele">' + last.map(g => '<i class="tc" data-tier="' + tierOf(g.points) + '" title="' + g.points + '"></i>').join('') + '</span>';
 }
 
-function potw(list) {
+/* Spieler der Woche; open = auf der Startseite (öffnet das Spiel-Blatt statt der Hall-of-Fame-Ansicht) */
+export function potw(list, open) {
   const now = Date.now();
   let best = null;
   for (const g of list) if (now - new Date(g.played_at).getTime() < 7 * 864e5 && (!best || g.points > best.points)) best = g;
   if (!best) return '';
   const mine = recordTeam(best), l = best.home ? mine : best.opp, r = best.home ? best.opp : mine;
-  return '<button type="button" class="potw tc" data-tier="' + tierOf(best.points) + '" data-hof="g:' + esc(best.uid) + '"><img class="pw-ph" src="' + esc(photoUrl(best.player)) + '" alt="">' +
+  return '<button type="button" class="potw tc" data-tier="' + tierOf(best.points) + '" ' + (open ? 'data-open' : 'data-hof') + '="g:' + esc(best.uid) + '"><img class="pw-ph" src="' + esc(photoUrl(best.player)) + '" alt="">' +
     '<div class="pw-tx"><span class="pw-k">Spieler der Woche</span><b class="pw-n">' + nameWithStatus(best.player) + '</b><span class="pw-v">' + best.points + '</span>' +
     '<span class="pw-m"><img src="' + esc(crestUrl(l)) + '" alt="">' + scoreText(best, best.home) + '<img src="' + esc(crestUrl(r)) + '" alt=""></span></div></button>';
 }

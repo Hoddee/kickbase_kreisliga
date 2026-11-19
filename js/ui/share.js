@@ -21,7 +21,7 @@ function loadImg(url) {
   return imgCache.get(url);
 }
 function fontsReady() {
-  try { return Promise.all([document.fonts.load('800 100px Oxanium'), document.fonts.load('500 40px "Inter Tight"')]).catch(() => {}); }
+  try { return Promise.all([document.fonts.load('800 100px Oxanium'), document.fonts.load('500 40px "Inter Tight"'), document.fonts.load('800 60px "Saira Condensed"')]).catch(() => {}); }
   catch (e) { return Promise.resolve(); }
 }
 function urls() {
@@ -56,7 +56,7 @@ export async function shareCard() {
   g.addColorStop(0, 'rgba(19,20,23,0)'); g.addColorStop(1, '#131417');
   x.fillStyle = g; x.fillRect(0, 640, W, 380); x.fillStyle = '#131417'; x.fillRect(0, 1010, W, H - 1010);
   x.textAlign = 'center';
-  x.fillStyle = 'rgba(255,255,255,.92)'; x.font = '500 52px "Inter Tight", Arial, sans-serif'; x.fillText(names.player, W / 2, 810);
+  x.fillStyle = 'rgba(255,255,255,.92)'; x.font = '800 96px "Saira Condensed", Arial, sans-serif'; x.fillText(names.player.toUpperCase(), W / 2, 806);
   spacing(x, '-9px');
   x.fillStyle = col; x.font = '800 290px Oxanium, Arial, sans-serif'; x.fillText(String(t), W / 2, 1050);
   spacing(x, '0px');
@@ -69,7 +69,7 @@ export async function shareCard() {
   spacing(x, '0px');
   x.font = '500 26px "Inter Tight", Arial, sans-serif'; x.fillStyle = '#7e8187';
   const d = S.manual && S.playedAt ? new Date(S.playedAt) : new Date();
-  x.fillText('Kreisliga Edition · Kreisliga ' + (CL[teamOf(S.match)].lg || '') + ' · ' + dateLong(d), W / 2, 1316);
+  x.fillText('Kickbase KL · Kreisliga ' + (CL[teamOf(S.match)].lg || '') + ' · ' + dateLong(d), W / 2, 1316);
 
   shareCanvas(cv, names.player.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + t + '.png', names.player + ' – ' + t + ' Punkte');
 }
@@ -107,7 +107,7 @@ export async function shareTeamCard() {
     x.beginPath(); x.arc(xx, yy, 4, 0, 6.2832); x.fill();
   }
   x.textAlign = 'center';
-  spacing(x, '6px'); x.fillStyle = '#ff4600'; x.font = '700 30px "Inter Tight", Arial, sans-serif'; x.fillText('ENDSTAND', W / 2, 92); spacing(x, '0px');
+  spacing(x, '6px'); x.fillStyle = '#dee4ec'; x.font = '700 30px "Inter Tight", Arial, sans-serif'; x.fillText('ENDSTAND', W / 2, 92); spacing(x, '0px');
   fit(x, cl, 200, 230, 190); fit(x, cr, 880, 230, 190);
   x.fillStyle = '#fff'; x.font = '800 150px Oxanium, Arial, sans-serif';
   x.fillText(home ? sc.us + ' : ' + sc.them : sc.them + ' : ' + sc.us, W / 2, 285);
@@ -125,13 +125,13 @@ export async function shareTeamCard() {
     if (ph) { const w = s * 1.15, h = w * ph.height / ph.width; x.drawImage(ph, 140 - w / 2, cy - s / 2 - 2, w, h); }
     x.restore();
     x.textAlign = 'left';
-    x.fillStyle = '#fff'; x.font = '600 44px "Inter Tight", Arial, sans-serif'; x.fillText(r.n, 215, cy - 2);
+    x.fillStyle = '#fff'; x.font = '800 54px "Saira Condensed", Arial, sans-serif'; x.fillText(r.n.toUpperCase(), 215, cy - 2);
     const extra = [r.pos, r.g ? r.g + (r.g > 1 ? ' Tore' : ' Tor') : '', r.a ? r.a + (r.a > 1 ? ' Vorlagen' : ' Vorlage') : ''].filter(Boolean).join(' · ');
     x.fillStyle = '#8b9098'; x.font = '500 28px "Inter Tight", Arial, sans-serif'; x.fillText(extra, 215, cy + 36);
     x.textAlign = 'right'; x.fillStyle = col; x.font = '800 76px Oxanium, Arial, sans-serif'; x.fillText(String(r.t), W - 90, cy + 26);
   });
   x.textAlign = 'center'; x.font = '500 26px "Inter Tight", Arial, sans-serif'; x.fillStyle = '#7e8187';
-  x.fillText('Kreisliga Edition · Kreisliga ' + (CL[teamOf(S.match)].lg || ''), W / 2, H - 30);
+  x.fillText('Kickbase KL · Kreisliga ' + (CL[teamOf(S.match)].lg || ''), W / 2, H - 30);
   shareCanvas(cv, 'spiel-' + sc.us + '-' + sc.them + '.png', 'Endstand ' + (home ? sc.us + ':' + sc.them : sc.them + ':' + sc.us));
 }
 function roundRect(x, l, t, w, h, r) {

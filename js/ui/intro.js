@@ -10,7 +10,7 @@ const I = {
   user: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>'
 };
 const SLIDES = [
-  ['home', 'Kreisliga Edition', 'Kickbase-Punkte für eure Spiele. Spieler antippen = Profil.'],
+  ['home', 'Kickbase KL', 'Kickbase-Punkte für eure Spiele. Spieler antippen = Profil.'],
   ['plus', 'Neues Spiel', 'Gegner kommt aus dem Spielplan. Bis zu 5 Spieler gleichzeitig.'],
   ['tap', 'Punkte vergeben', 'Uhr starten, Aktionen antippen. Spieler wechseln: oben tippen oder wischen.'],
   ['trophy', 'Hall of Fame', 'Nach dem Abpfiff speichern – Punkte und Marktwert landen in der Hall of Fame.'],

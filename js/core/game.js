@@ -130,7 +130,7 @@ export function applyMatchNames() {
   const m = store.S.match;
   if (!m || !PL[m.p] || !CL[m.o]) return;
   names.player = PL[m.p].n; names.team = CL[teamOf(m)].n; names.opp = CL[m.o].n;
-  document.title = names.player + ' – Kreisliga Edition';
+  document.title = names.player + ' – Kickbase KL';
 }
 export const isHome = () => !!(store.S.match && store.S.match.home);
 export const scoreText = (sc, home) => (home ? sc.us + ' : ' + sc.them : sc.them + ' : ' + sc.us);

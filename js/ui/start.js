@@ -6,13 +6,16 @@ import { CL, OWN_CLUBS, crestUrl } from '../data/clubs.js';
 import { TEAMS, nextFixture } from '../data/schedule.js';
 import { store, total, score, started, isHome, teamOf, isMulti, allSaved } from '../core/game.js';
 import { games, loadGames } from '../services/api.js';
-import { isAdmin, isLoggedIn, pendingRequests, myPlayer } from '../services/auth.js';
+import { myPlayer } from '../services/auth.js';
 import { marketOf } from '../core/market.js';
 import { eur, signedEur, trendClass } from '../core/util.js';
-import { avatar, playerRow, nameWithStatus } from './components.js';
+import { SEASON } from '../config.js';
+import { avatar, playerRow, nameWithStatus, gameRow, skeleton } from './components.js';
 import { registerView, show, nav } from '../router.js';
 import { openSetup } from './setup.js';
 import { liveTilesHtml } from './watch.js';
+import { potw, resetHof } from './hof.js';
+import { byDate } from '../core/market.js';
 
 const CHEVRON = '<span class="chev" aria-hidden="true">›</span>';
 
@@ -83,8 +86,27 @@ function meCard() {
     '<em>' + eur(mw.v) + (mw.last ? ' <i class="' + trendClass(mw.last) + '">' + (mw.last > 0 ? '▲' : '▼') + ' ' + signedEur(mw.last) + '</i>' : '') + '</em></span>' + CHEVRON + '</button>';
 }
 
+/* Kein laufendes Spiel: großer Knopf zum Starten */
+const newGameBtn = () => (store.S.match && !(store.S.ended && allSaved()) ? '' :
+  '<button type="button" class="newgame kb-new" data-st="new"><span aria-hidden="true">+</span>Neues Spiel</button>');
+
+/* Liga-Ereignisse: Spieler der Woche und die letzten gespeicherten Spiele */
+function latest() {
+  if (!games.list) return games.busy ? '<h2>Letzte Spiele</h2>' + skeleton(3) : '';
+  const list = byDate(games.list.filter(g => PL[g.player])).reverse();
+  if (!list.length) return '';
+  const top = potw(list, true);
+  return (top ? '<h2>Spieler der Woche</h2>' + top : '') + '<h2 class="lh2">Letzte Spiele<button type="button" class="lnk inline" data-st="hof">Alle</button></h2>' +
+    '<ul class="glist">' + list.slice(0, 5).map(g => gameRow(g, 0)).join('') + '</ul>';
+}
+
 function html() {
-  let h = liveTilesHtml() + meCard() + runningCard() + fixturesStrip() + '<h2>Kader</h2>';
+  return liveTilesHtml() + runningCard() + newGameBtn() + meCard() + fixturesStrip() + latest();
+}
+
+/* Kader: alle aktiven Spieler, nach Mannschaft */
+function kaderHtml() {
+  let h = '';
   const active = PLAYER_LIST.filter(p => p.active !== false);
   const clubIds = [...new Set([...OWN_CLUBS, ...active.map(p => p.c)])].filter(id => CL[id]);
   for (const clubId of clubIds) {
@@ -99,17 +121,18 @@ function html() {
 export function render() {
   if (!games.list && !games.busy) loadGames().then(() => { if (nav.current === 'start') render(); });
   $('startBody').innerHTML = html();
-  const btn = $('adminBtn'), n = isAdmin() ? pendingRequests() : 0;
-  btn.classList.toggle('on', isLoggedIn());
-  let badge = btn.querySelector('.nbadge');
-  if (n && !badge) { badge = document.createElement('i'); badge.className = 'nbadge'; btn.appendChild(badge); }
-  if (badge) { if (n) badge.textContent = n > 9 ? '9+' : String(n); else badge.remove(); }
-  btn.setAttribute('aria-label', n ? 'Konto – ' + n + ' offene Anfragen' : 'Konto');
+  $('startSeason').textContent = 'Saison ' + SEASON.replace(/^20(\d\d)\/20(\d\d)$/, '$1/$2');
+  applyTier(0);
+}
+function renderKader() {
+  if (!games.list && !games.busy) loadGames().then(() => { if (nav.current === 'kader') renderKader(); });
+  $('kaderBody').innerHTML = kaderHtml();
   applyTier(0);
 }
 
 export function initStart() {
   registerView('start', { elements: ['start'], render });
+  registerView('kader', { elements: ['kader'], render: renderKader });
   $('start').addEventListener('click', e => {
     const b = e.target.closest('[data-st]');
     if (!b) return;
@@ -117,5 +140,6 @@ export function initStart() {
     if (k === 'resume') show(store.S.manual && !store.S.ended ? 'edit' : 'home');
     else if (k === 'new') requestNewGame();
     else if (k === 'me') show('me');
+    else if (k === 'hof') { resetHof(); show('hof', { tab: true }); }
   });
 }

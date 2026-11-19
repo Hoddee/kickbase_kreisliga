@@ -5,3 +5,6 @@
 @font-face { font-family: 'Inter Tight'; font-style: normal; font-weight: 500; font-display: swap; src: url('../assets/fonts/inter-tight-latin-500-normal.woff2') format('woff2'); }
 @font-face { font-family: 'Inter Tight'; font-style: normal; font-weight: 600; font-display: swap; src: url('../assets/fonts/inter-tight-latin-600-normal.woff2') format('woff2'); }
 @font-face { font-family: 'Inter Tight'; font-style: normal; font-weight: 700; font-display: swap; src: url('../assets/fonts/inter-tight-latin-700-normal.woff2') format('woff2'); }
+/* Saira Condensed (SIL OFL) für Überschriften und Namen – ersetzt „KB Pitch“ */
+@font-face { font-family: 'Saira Condensed'; font-style: normal; font-weight: 700; font-display: swap; src: url('../assets/fonts/saira-condensed-latin-700-normal.woff2') format('woff2'); }
+@font-face { font-family: 'Saira Condensed'; font-style: normal; font-weight: 800; font-display: swap; src: url('../assets/fonts/saira-condensed-latin-800-normal.woff2') format('woff2'); }
