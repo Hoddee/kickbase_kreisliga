@@ -10,7 +10,7 @@ import { login, logout, signup, currentUser, isLoggedIn, isAdmin, myAccount, myP
 import { cutout } from '../core/cutout.js';
 import { loadRoster, updatePlayer, insertPlayer, uploadPhoto, games, loadAccounts, decideAccount, loadSchedule, saveFixture, deleteFixture } from '../services/api.js';
 import { openProfile } from './profile.js';
-import { showIntro } from './intro.js';
+import { showIntro, showBookingTour } from './intro.js';
 import { marketOf } from '../core/market.js';
 import { ICON, statusIcon } from '../core/icons.js';
 import { avatar } from './components.js';
@@ -214,7 +214,7 @@ export function render() {
   else if (!isLoggedIn()) h = loginHtml();
   else if (isAdmin()) h = adminHtml();
   else h = playerHtml();
-  $('adminBody').innerHTML = h + '<button type="button" class="lnk" data-adm="intro">Einführung ansehen</button><p class="appver">Version ' + APP_VERSION + '</p>';
+  $('adminBody').innerHTML = h + '<button type="button" class="lnk" data-adm="intro">Einführung ansehen</button><button type="button" class="lnk" data-adm="tourbook">Punktevergabe erklärt</button><p class="appver">Version ' + APP_VERSION + '</p>';
   $('admTitle').textContent = isLoggedIn() && isAdmin() ? 'Admin' : 'Konto';
   applyTier(0);
 }
@@ -343,6 +343,7 @@ export function initAdmin() {
     else if (k === 'mode-login') { ui.mode = 'login'; ui.msg = ''; }
     else if (k === 'mode-register') { ui.mode = 'register'; ui.msg = ''; }
     else if (k === 'intro') { showIntro(); return; }
+    else if (k === 'tourbook') { showBookingTour(); return; }
     else if (k === 'change-player') { ui.changePlayer = true; ui.msg = ''; }
     else if (k === 'change-cancel') ui.changePlayer = false;
     else if (k === 'refresh') { await refreshAdminFlag(); toast(myPlayer() ? 'Du bist freigeschaltet!' : 'Noch nicht freigeschaltet'); }

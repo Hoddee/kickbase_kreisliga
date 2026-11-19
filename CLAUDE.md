@@ -11,6 +11,8 @@ und eine Live-Ansicht für Zuschauer. Live: https://hoddee.github.io/kickbase_kr
 Nutzer und Sprache: deutsch. UI-Texte, Code-Kommentare, Commit-Messages und Antworten an den Nutzer auf Deutsch.
 Der Nutzer ist Azubi Fachinformatiker Anwendungsentwicklung: Technik darf benannt werden, aber kurz. Antworten knapp,
 Ergebnis zuerst, was er selbst tun muss (SQL ausführen, mergen) klar als eigener Schritt. UI-Texte kurz und nicht „KI-mäßig“.
+**Keine erklärenden Hinweistexte in der Oberfläche** (z. B. „Nach dem Tor fragt die App …“, „Mit dem Link können alle …“,
+Erklärzeilen unter Optionen). Beschriftungen knapp halten; Erklärungen gehören höchstens in die Rundgänge (`intro.js`).
 
 ## Technik
 - Reines HTML/CSS/JS mit ES-Modulen. **Kein Build, kein npm, keine Frameworks, keine CDNs.** Schriften lokal.
@@ -48,6 +50,10 @@ Ergebnis zuerst, was er selbst tun muss (SQL ausführen, mergen) klar als eigene
   Blatt mit fester Höhe: nur `.ga-body` scrollt, Fußzeile mit Zusammenfassung und „Fertig“ steht immer. Das `.ga-panel`
   wird nur einmal angelegt (sonst fährt es bei jedem Tipp neu ein). Optionen als Zeilen mit kurzer Erklärung.
 - Aktionen in Angriff/Abwehr/Fehler nach Bedeutung gruppiert (`GROUPS` in `actions.js`), Suche über alle Reiter (`#aq`).
+  Reihenfolge: kleine Punkte oben (schnell erreichbar), große unten – Gruppen nach Durchschnitt, in der Gruppe aufsteigend.
+- Rundgänge (`js/ui/intro.js`): Einführung (`KEYS.intro2`) und „Punktevergabe erklärt“ (`KEYS.tourBook`, beim ersten
+  „Punkte vergeben“). Je einmal pro Gerät; neue Fassung = neuer Schlüssel. Bilder: Screenshots als WebP in `assets/img/tut/`
+  (600×676, Fenster 390×440 aufgenommen). Ändert sich die Oberfläche stark, die Bilder neu aufnehmen.
 - Spiel-Detail: „Korrekturen (n)“ öffnet ein eigenes Blatt (Ansicht `corr`, Overlay über `match`).
 - Punktevergabe: Leiste „Zuletzt gebucht“ unten (letzte 3, antippen = löschen / anderem Spieler geben), Halbzeit über
   `S.ht` (Halbzeitpfiff → „2. Halbzeit anpfeifen“, Hinweisleiste in allen Reitern ab 45’/90’).
