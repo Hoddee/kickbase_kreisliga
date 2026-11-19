@@ -1,51 +1,82 @@
-# Kreisliga Kickbase
+# Kickbase KL
 
-**Live:** https://hoddee.github.io/kickbase_kreisliga/
+Kickbase-Punkte für die Kreisliga (A2, B2, B5 · Saison 2026/2027). Am Spielfeldrand werden pro Spieler Aktionen
+nach der Kickbase-Punktetabelle gebucht – daraus entstehen Punkte, Profile, Marktwerte, die Hall of Fame und ein
+Live-Ticker für Zuschauer. Installierbar als App (Home-Bildschirm).
+
+**Live:** https://hoddee.github.io/kickbase_kreisliga/ (GitHub Pages, Branch `main`)
+
+## Funktionen
+
+- **Liga:** Live-Spiele, nächste Spiele, Spieler der Woche, letzte Spiele. Menü unten (Liga, Kader, Spiel, Ranking, Ich),
+  zwischen den Bereichen wischen.
+- **Punkte vergeben:** bis zu 7 Spieler pro Spiel, Spieluhr mit Halbzeit, Ein-/Auswechseln, Aktionen nach Reitern
+  (Angriff, Abwehr, Fehler) mit Suche, Leiste „Zuletzt gebucht“ (löschen oder anderem Spieler geben).
+- **Tor-Assistent:** nach dem Team-Tor in Schritten Torschütze → Vorlage (mit Extras) → Einleitung, beim Gegentor der Verursacher.
+- **Nachtrag:** Spiele nachträglich mit Minuten und Ergebnis eintragen.
+- **Profil:** Punkte pro Spiel, Marktwert-Verlauf, Form, Erfolge; Spiel-Detail mit allen Aktionen und Korrekturen.
+- **Hall of Fame / Ranking:** Top-Spiele, Tabelle, Neueste, Rekorde.
+- **Live:** Zuschauer sehen jede Aktion sofort (Supabase Realtime), Live-Link `?live=<Spiel-ID>` zum Teilen.
+- **Teilen:** Spielerkarte und Team-Bild als Bild.
+- **Konten:** Registrieren, vom Admin freischalten lassen, eigene Spiele nachtragen; Admins korrigieren gespeicherte Spiele.
+- **Rundgänge:** Einführung beim ersten Start und „Punktevergabe erklärt“ beim ersten Punkte vergeben (im Konto erneut aufrufbar).
+
+## Technik
+
+Reines HTML/CSS/JS mit ES-Modulen – kein Build, kein npm, keine Frameworks. Schriften liegen lokal.
+Backend ist Supabase (REST, Auth, Realtime, Storage); URL und Publishable Key stehen in `js/config.js`, die Rechte regelt RLS.
+
+Lokal starten:
+
+```bash
+python3 -m http.server
+```
+
+Dann http://localhost:8000 öffnen (am besten in Handy-Breite, die App wird fast nur am Smartphone genutzt).
+
+**Updates:** Der Service Worker liefert die App aus dem Cache. Bei jeder Änderung `VERSION` in `sw.js` und
+`APP_VERSION` in `js/config.js` hochzählen – sonst bekommt niemand das Update.
 
 ## Aufbau
 
 ```
-index.html              Grundgerüst aller Ansichten
-manifest.webmanifest    App-Manifest (Icon, Name, Farben)
-sw.js                   Service Worker (Offline-Cache)
+index.html              alle Ansichten als Abschnitte, Startbildschirm-CSS inline
+manifest.webmanifest    App-Manifest (Name, Icon, Farben)
+sw.js                   Service Worker (App-Dateien aus dem Cache, Bilder einmal laden)
 css/
-  fonts.css             Oxanium (Zahlen) + Inter Tight (Text), lokal eingebunden
-  tokens.css            Farben (Kickbase-Palette) und Stufenfarben
-  base.css, live.css, booking.css, views.css
-  theme.css             Kickbase-Designschicht (muss nach den anderen geladen werden)
-  admin.css             Admin-Bereich, Formulare, Rekorde
+  fonts.css             KL Pitch (Saira, variabel), Oxanium, Inter Tight
+  tokens.css, base.css, live.css, booking.css, views.css, theme.css, admin.css, profile.css, sheet.css, feel.css
+  brand.css             Kickbase-Look (Schwarz/Weiß), wird zuletzt geladen
 js/
-  main.js               Einstieg: Ansichten verdrahten, Sekundentakt, Service Worker
-  config.js             Supabase-URL/Key, Saison, Speicher-Schlüssel
-  router.js             Ansichtswechsel
-  data/                 Vereine (A2, B2, B5), Spielpläne, Kader (Offline-Stand), Aktionen/Punktetabelle
-  core/cutout.js        Bilder freistellen (Hintergrund entfernen) und zuschneiden
-  core/game.js          Spielzustand und komplette Punkteberechnung
-  core/market.js        Marktwert-Modell
-  core/util.js, icons.js
-  services/api.js       REST-Zugriff (spiele, kader)
-  services/auth.js      Admin-Login über Supabase Auth
-  ui/                   start (Übersicht), profile (Spielerprofil), setup (Neues Spiel), live (Spielerkarte),
-                        booking (Punktevergabe), hof, admin, share, components
-supabase/migrations/    SQL für Tabellen und Rechte
-assets/                 Schriften, Icons und Bilder (img/p = Spielerfotos 600 px, img/p/s = Vorschaubilder, img/c = Wappen; alles WebP)
+  main.js               Einstieg, Klick-Delegation, Sekundentakt, Wake Lock
+  config.js             Supabase, Saison, Version, Speicher-Schlüssel
+  router.js             Ansichten mit Verlauf, Blätter von unten
+  core/                 game (Spielzustand + Punkte), correct (Korrekturen), market (Marktwert), cutout (Fotos freistellen), util, icons
+  data/                 actions (Punktetabelle), clubs, players (Offline-Kader), schedule (Spielpläne)
+  services/             api (REST), auth (Login, Konten), live (Live senden/empfangen)
+  ui/                   start, tabbar, setup, live, booking, goal, squad, match, profile, hof, me, admin, watch,
+                        share, intro, feel, sheet, components
+supabase/migrations/    SQL für Tabellen und Rechte (fortlaufend nummeriert)
+assets/                 fonts, icons (Logo, App-Icons), img (p = Spielerfotos, p/s = Vorschau, c = Wappen, tut = Rundgang-Bilder; WebP)
 ```
+
 ## Datenbank (Supabase)
 
-| Tabelle  | Inhalt | Rechte |
-|----------|--------|--------|
-| `spiele` | gespeicherte Spiele mit allen Aktionen | alle lesen und live eintragen; Nachträge, Ändern, Löschen nur Admin |
-| `kader`  | Spieler, Position, Start-Marktwert, Status | alle lesen; ändern nur Admin |
+| Tabelle | Inhalt | Rechte |
+|---------|--------|--------|
+| `spiele` | gespeicherte Spiele mit allen Aktionen (`events`) | alle lesen und live eintragen; Nachträge, Ändern, Löschen nur Admin bzw. freigeschaltete Spieler (eigene) |
+| `kader` | Spieler, Position, Start-Marktwert, Status, Foto | alle lesen; ändern nur Admin |
+| `spielplan` | Spielpläne aller Teams | alle lesen; ändern nur Admin |
+| `spieler_konten` | Nutzer ↔ Spieler, Status offen/frei/abgelehnt | eigener Antrag; freischalten nur Admin |
+| `live_spiele` | Stand laufender Spiele für den Live-Ticker | alle lesen; schreiben per Geräte-Schlüssel (`x-live-key`, nur Hash gespeichert) |
 | `admins` | Benutzer-IDs mit Admin-Rechten | nur per SQL |
-| `spielplan` | Spielpläne aller Teams (Anstoß, Gegner, Heim) | alle lesen; ändern nur Admin (im Admin-Bereich) |
-| `spieler_konten` | Spielerkonten: Nutzer ↔ Spieler, Status offen/frei/abgelehnt | eigener Antrag; freischalten nur Admin |
 
-Registrierungen sind offen (ohne Bestätigungsmail): Spieler wählen beim Registrieren ihren Spieler, der Admin schaltet
-das Konto im Admin-Bereich frei (`006_spielerkonten.sql`). Freigeschaltete Spieler dürfen eigene Spiele nachtragen,
-bearbeiten und löschen. Admin werden: Benutzer unter Authentication → Users anlegen,
-dann `supabase/migrations/003_admin_eintragen.sql` ausführen.
+Storage-Bucket `kickbase`: Spielerfotos (nur Admins) und Bilder von Gastspielern/eigenen Gegnern unter `gast/`
+(nur neue Dateien). Feste Bilder liegen im Repo unter `assets/img`, um den Supabase-Traffic klein zu halten.
 
-Fotos neuer Spieler landen im Bucket `kickbase` unter `spieler/<id>.png` (Upload nur für Admins, siehe
-`supabase/migrations/004_spieler_fotos.sql`). Bilder von Gastspielern und eigenen Gegnern darf jeder unter
-`gast/<zufall>.png` hochladen – nur neue Dateien, nichts überschreiben (`005_spielplan_gastbilder.sql`).
-Die Spalten `team`, `player_foto`, `opp_foto` in `spiele` speichern Mannschaft (z. B. B5-Einsatz) und diese Bilder.
+**Schemaänderungen:** neue Datei `supabase/migrations/0NN_name.sql` (idempotent) und im Supabase-SQL-Editor ausführen.
+**Admin werden:** Benutzer unter Authentication → Users anlegen, dann `003_admin_eintragen.sql` ausführen.
+
+## Mitarbeiten
+
+Arbeit auf Feature-Branches, Pull Request nach `main`. Hinweise für Claude Code und Projektregeln stehen in [`CLAUDE.md`](CLAUDE.md).
