@@ -197,4 +197,4 @@ body.ended .cta button { background: rgba(19, 20, 23, .88); color: var(--ink); b
 /* Zahlen in normaler Breite, nicht ganz so eng wie früher bei Oxanium */
 .num, .gh .gbig, .pw-v, .mh-t > b { letter-spacing: -.015em; }
 /* Spielernamen in Listen wie bei Kickbase in der Textschrift (Großbuchstaben, nicht fett) */
-.prow b, .gi b { font: 600 15.5px/1.2 var(--font-body); letter-spacing: .03em; text-transform: uppercase; }
+.prow b, .gi b { font: 600 16px/1.2 var(--font-body); letter-spacing: 0; text-transform: none; }
