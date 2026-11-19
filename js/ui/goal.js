@@ -10,7 +10,9 @@ import { avatar } from './components.js';
 
 const SCORE_KINDS = [['goal', 'Tor'], ['pen', 'Elfmeter']];
 const ASSIST_KINDS = [['ast', 'Torvorlage'], ['defl', 'Abgefälscht'], ['reb', 'Abgeprallt'], ['wood', 'Aluminium']];
-const ASSIST_EXTRAS = [['intent', 'Absichtlich'], ['bcc', 'Großchance kreiert'], ['deadly', 'Pass des Todes'], ['cross', 'Flanke']];
+const SCORE_EXTRAS = [['long', 'Fernschuss'], ['sot', 'Torschuss aufs Tor']];
+const ASSIST_EXTRAS = [['intent', 'Absichtlich'], ['bcc', 'Großchance kreiert'], ['deadly', 'Pass des Todes'], ['cross', 'Flanke'],
+  ['pf3', 'Pass vorderes Drittel'], ['poh', 'Pass gegn. Hälfte'], ['lball', 'Präziser langer Ball']];
 const FAULT_KINDS = [['mgoal', 'Fehler vor Gegentor'], ['own', 'Eigentor'], ['pcon', 'Elfmeter verschuldet']];
 
 let st = null, onChange = () => {};
@@ -29,7 +31,7 @@ const pts = (i, key) => withPlayer(i, () => val(ACT[key]));
 function sync() {
   const g = st.grp, picks = [];
   if (st.side === 'us') {
-    if (st.sc != null) { picks.push([st.sc, st.sk]); if (st.long && st.sk === 'goal') picks.push([st.sc, 'long']); }
+    if (st.sc != null) { picks.push([st.sc, st.sk]); for (const k of st.sb) if (k !== 'long' || st.sk === 'goal') picks.push([st.sc, k]); }
     if (st.as != null) {
       picks.push([st.as, st.sk === 'pen' ? 'pwon' : st.ak]);
       if (st.sk !== 'pen') for (const k of st.ab) picks.push([st.as, k]);
@@ -66,7 +68,8 @@ function html() {
   if (us) {
     h += '<h3>Torschütze</h3>' + pickRow('sc', st.sc, [], st.sk, 'Anderer');
     if (st.sc != null) h += '<div class="ga-cs">' + SCORE_KINDS.map(([k, l]) => chip('sk:' + k, st.sk === k, l, pts(st.sc, k))).join('') +
-      (st.sk === 'goal' ? chip('long', st.long, 'Fernschuss', pts(st.sc, 'long')) : '') + '</div>';
+      '</div><div class="ga-cs extra"><span>dazu</span>' + SCORE_EXTRAS.filter(([k]) => k !== 'long' || st.sk === 'goal')
+        .map(([k, l]) => chip('sb:' + k, st.sb.has(k), l, pts(st.sc, k))).join('') + '</div>';
     const ak = st.sk === 'pen' ? 'pwon' : st.ak;
     h += '<h3>' + (st.sk === 'pen' ? 'Elfmeter rausgeholt' : 'Vorlage') + '</h3>' + pickRow('as', st.as, st.sc != null ? [st.sc] : [], ak, 'Keine');
     if (st.as != null && st.sk !== 'pen') {
@@ -85,7 +88,7 @@ function render() { const w = wrap(); if (w && st) w.innerHTML = html(); }
 
 /* side: 'us' | 'them'; grp: Gruppe des schon gebuchten Team-Tors; scorer/kind: vorbelegt (Tipp auf „Tor“ beim Spieler) */
 export function openGoal(side, grp, t, { scorer = null, kind = 'goal' } = {}) {
-  st = { side, grp, t, sc: scorer, sk: kind, long: false, as: null, ak: 'ast', ab: new Set(), su: null, showSu: false, fx: null, fk: 'mgoal' };
+  st = { side, grp, t, sc: scorer, sk: kind, sb: new Set(), as: null, ak: 'ast', ab: new Set(), su: null, showSu: false, fx: null, fk: 'mgoal' };
   let w = wrap();
   if (!w) {
     w = document.createElement('div'); w.id = 'gaSheet'; w.className = 'ga-wrap';
@@ -111,12 +114,12 @@ function onClick(e) {
   const idx = arg === '-' ? null : +arg;
   if (v === 'done') { closeGoal(); return; }
   if (v === 'showsu') { st.showSu = true; render(); return; }
-  if (v === 'long') st.long = !st.long;
+  if (k === 'sb') { if (st.sb.has(arg)) st.sb.delete(arg); else st.sb.add(arg); }
   else if (k === 'sc') { st.sc = idx; if (st.as === idx) st.as = null; if (st.su === idx) st.su = null; }
   else if (k === 'as') { st.as = idx; if (st.su === idx) st.su = null; }
   else if (k === 'su') st.su = idx;
   else if (k === 'fx') st.fx = idx;
-  else if (k === 'sk') { st.sk = arg; if (arg === 'pen') { st.long = false; st.su = null; } }
+  else if (k === 'sk') { st.sk = arg; if (arg === 'pen') { st.sb.delete('long'); st.su = null; } }
   else if (k === 'ak') st.ak = arg;
   else if (k === 'fk') st.fk = arg;
   else if (k === 'ab') { if (st.ab.has(arg)) st.ab.delete(arg); else st.ab.add(arg); }

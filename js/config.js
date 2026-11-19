@@ -9,7 +9,7 @@ export const APP_URL = 'https://hoddee.github.io/kickbase_kreisliga/';
 export const SEASON = '2026/2027';
 
 /* Angezeigte Version (Konto-Seite) – zusammen mit VERSION in sw.js hochzählen */
-export const APP_VERSION = '3.12.0';
+export const APP_VERSION = '3.12.1';
 
 /* localStorage-Schlüssel (alte Namen bleiben, damit laufende Spiele ein Update überstehen) */
 export const KEYS = {
