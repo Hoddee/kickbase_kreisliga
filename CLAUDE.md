@@ -40,6 +40,10 @@ Ergebnis zuerst, was er selbst tun muss (SQL ausführen, mergen) klar als eigene
 - `js/services/` – `api.js` (REST: spiele, kader, spielplan), `auth.js` (Login, Admin, Spielerkonten), `live.js` (Live senden/empfangen).
 - `js/ui/` – start (Übersicht + Live-Kacheln), setup (Neues Spiel), live (Spielerkarte), booking (Punktevergabe), squad (Spielerleiste),
   match (Spiel-Detail-Blatt), profile (Spielerprofil-Blatt), hof (Hall of Fame), me (Mein Bereich), admin, watch (Zuschauer), share, intro, sheet, components.
+- `js/ui/feel.js` + `css/feel.css` – App-Gefühl: Druck-Rückmeldung, Rand-Wischen = Zurück (nur iOS-Home-Bildschirm),
+  Ziehen zum Aktualisieren (`REFRESH` je Ansicht), Service-Worker-Registrierung mit Update-Prüfung beim Zurückholen der App.
+  Der Router merkt sich die Scrollposition je Ansicht und lässt Ansichten hereingleiten (`slideIn`); Ladezustände mit `skeleton()`.
+- Installierte App (Home-Bildschirm) testen: iOS weckt sie nur auf statt neu zu starten – Updates kommen über `feel.js`.
 - `css/` – `theme.css` muss nach den Basis-CSS geladen werden; neue CSS-Dateien in `index.html` und `sw.js` eintragen.
   Vor neuen Klassennamen per `grep` prüfen, dass es sie noch nicht gibt – Kollisionen haben schon die Startseite verbreitert.
 
@@ -57,8 +61,9 @@ Tabellen: `spiele` (gespeicherte Spiele inkl. `events` jsonb), `kader`, `admins`
   (`js/data/players.js`) eintragen und in der DB `foto` auf NULL lassen. Wird ein vorhandenes Bild ersetzt, `IMG` in `sw.js` hochzählen.
 
 ## Regeln bei jeder Änderung
-- **`sw.js`: `VERSION` bei jeder Änderung hochzählen** (z. B. `kl-v3.9.6` → `kl-v3.9.7`, größere Features Minor-Sprung),
-  sonst bekommen Handys das Update nicht. Neue JS/CSS-Dateien in `SHELL` aufnehmen.
+- **`sw.js`: `VERSION` bei jeder Änderung hochzählen** (z. B. `kl-v3.10.0` → `kl-v3.10.1`, größere Features Minor-Sprung),
+  sonst bekommen Handys das Update nicht. **`APP_VERSION` in `config.js` gleich mitziehen** (wird im Konto angezeigt).
+  Neue JS/CSS-Dateien in `SHELL` aufnehmen.
 - localStorage-Schlüssel in `config.js` nicht umbenennen (laufende Spiele müssen Updates überstehen); Formatänderungen
   am Spielzustand abwärtskompatibel laden (`loadGame`).
 - Punkte-/Marktwertregeln orientieren sich an Kickbase. Punkte werden beim Buchen gespeichert (neue Regeln gelten
@@ -75,6 +80,8 @@ Tabellen: `spiele` (gespeicherte Spiele inkl. `events` jsonb), `kader`, `admins`
 - Sicherheit: Punktwerte aus der DB werden teils ohne `esc()` angezeigt (`fmt(...)` in `components.js` u. a.) –
   ein präpariertes Spiel könnte Code einschleusen. `spiele` nimmt anonyme Einträge ungeprüft an (Punkte bis 3000,
   Größe von `events` unbegrenzt). Entscheidung offen, ob Speichern ohne Anmeldung bleiben soll.
-- Supabase-Kontingent der Organisation war überschritten; ohne Abhilfe Einschränkung ab 08.12.2026.
+- Supabase: Cached Egress (Gratis 5 GB/Monat) war im Okt./Nov. überschritten (Bilder aus dem Storage, inzwischen behoben).
+  Grace Period bis 08.12.2026; danach gibt es beim nächsten Überschreiten **keine** Schonfrist mehr (sofort 402).
+  Bild- und Abfrage-Traffic deshalb weiter sparsam halten.
 - Saisonwechsel: `SEASON` steht fest in `config.js`, Plan für Marktwerte/Kader/Hall of Fame fehlt.
 - README ist veraltet.

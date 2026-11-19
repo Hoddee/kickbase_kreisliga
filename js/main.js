@@ -15,6 +15,7 @@ import { initWatch, tickLive } from './ui/watch.js';
 import { startPublisher, startViewer } from './services/live.js';
 import { myPlayer, isAdmin as adminRole } from './services/auth.js';
 import { initAdmin, startPasswordFlow } from './ui/admin.js';
+import { initFeel } from './ui/feel.js';
 import { loadRoster, loadSchedule } from './services/api.js';
 import { consumeRedirect, isLoggedIn, refreshAdminFlag, onAuthChange } from './services/auth.js';
 
@@ -100,7 +101,5 @@ function keepAwake() {
 document.addEventListener('visibilitychange', keepAwake);
 document.addEventListener('click', keepAwake);
 
-/* Offline-Fähigkeit und "Zum Startbildschirm hinzufügen" */
-if ('serviceWorker' in navigator && location.protocol === 'https:') {
-  navigator.serviceWorker.register('./sw.js').catch(() => {});
-}
+/* App-Gefühl (Gesten, Antippen) und Service Worker mit Update-Prüfung */
+initFeel();
