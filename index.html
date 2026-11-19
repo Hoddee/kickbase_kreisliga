@@ -14,22 +14,71 @@
 <link rel="icon" href="assets/icons/icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
 <link rel="preconnect" href="https://eewvsquscmflxdhkgvna.supabase.co" crossorigin>
-<link rel="stylesheet" href="css/fonts.css">
-<link rel="stylesheet" href="css/tokens.css">
-<link rel="stylesheet" href="css/base.css">
-<link rel="stylesheet" href="css/live.css">
-<link rel="stylesheet" href="css/booking.css">
-<link rel="stylesheet" href="css/views.css">
-<link rel="stylesheet" href="css/theme.css">
-<link rel="stylesheet" href="css/admin.css">
-<link rel="stylesheet" href="css/profile.css">
-<link rel="stylesheet" href="css/sheet.css">
-<link rel="stylesheet" href="css/feel.css">
+<!-- Startbildschirm sofort zeigen: sein CSS steht hier, die übrigen Stylesheets laden ohne das erste Bild zu blockieren
+     (main.js blendet den Startbildschirm erst aus, wenn alle geladen sind) -->
+<style>
+html, body { background: #131417; }
+#splash { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; background: radial-gradient(90% 60% at 50% 40%, #2a1a12 0%, var(--bg, #131417) 70%); transition: opacity .35s ease; }
+#splash.gone { opacity: 0; pointer-events: none; }
+.spl { display: grid; justify-items: center; gap: 10px; }
+.spl img { width: 96px; height: 96px; border-radius: 24px; box-shadow: 0 16px 50px rgba(255, 70, 0, .35); animation: splpop .5s ease-out both; }
+.spl b { margin-top: 10px; font: 800 30px/1 'Oxanium', system-ui, sans-serif; letter-spacing: .04em; color: #fff; }
+.spl i { font: 700 11px/1 'Inter Tight', system-ui, sans-serif; font-style: normal; letter-spacing: .3em; padding: 5px 8px 4px; border-radius: 5px; background: var(--kb-red, #ff4600); color: #fff; }
+.spl-bar { width: 120px; height: 3px; margin-top: 18px; border-radius: 2px; background: rgba(255, 255, 255, .1); overflow: hidden; }
+.spl-bar span { display: block; width: 40%; height: 100%; background: var(--kb-red, #ff4600); animation: splbar 1s ease-in-out infinite; }
+@keyframes splpop { from { transform: scale(.7); opacity: 0; } }
+@keyframes splbar { from { transform: translateX(-100%); } to { transform: translateX(260%); } }
+@media (prefers-reduced-motion: reduce) { .spl img, .spl-bar span { animation: none; } }
+</style>
+<link rel="stylesheet" href="css/fonts.css" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="css/tokens.css" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="css/base.css" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="css/live.css" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="css/booking.css" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="css/views.css" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="css/theme.css" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="css/admin.css" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="css/profile.css" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="css/sheet.css" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="css/feel.css" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="css/fonts.css"><link rel="stylesheet" href="css/tokens.css"><link rel="stylesheet" href="css/base.css"><link rel="stylesheet" href="css/live.css"><link rel="stylesheet" href="css/booking.css"><link rel="stylesheet" href="css/views.css"><link rel="stylesheet" href="css/theme.css"><link rel="stylesheet" href="css/admin.css"><link rel="stylesheet" href="css/profile.css"><link rel="stylesheet" href="css/sheet.css"><link rel="stylesheet" href="css/feel.css"></noscript>
 <script type="module" src="js/main.js"></script>
+<!-- Alle Module gleich parallel laden statt nacheinander (spart zwei Ladestufen) -->
+<link rel="modulepreload" href="js/core/game.js">
+<link rel="modulepreload" href="js/core/util.js">
+<link rel="modulepreload" href="js/router.js">
+<link rel="modulepreload" href="js/services/api.js">
+<link rel="modulepreload" href="js/services/auth.js">
+<link rel="modulepreload" href="js/services/live.js">
+<link rel="modulepreload" href="js/ui/admin.js">
+<link rel="modulepreload" href="js/ui/booking.js">
+<link rel="modulepreload" href="js/ui/feel.js">
+<link rel="modulepreload" href="js/ui/hof.js">
+<link rel="modulepreload" href="js/ui/intro.js">
+<link rel="modulepreload" href="js/ui/live.js">
+<link rel="modulepreload" href="js/ui/match.js">
+<link rel="modulepreload" href="js/ui/me.js">
+<link rel="modulepreload" href="js/ui/profile.js">
+<link rel="modulepreload" href="js/ui/setup.js">
+<link rel="modulepreload" href="js/ui/start.js">
+<link rel="modulepreload" href="js/ui/watch.js">
+<link rel="modulepreload" href="js/config.js">
+<link rel="modulepreload" href="js/core/correct.js">
+<link rel="modulepreload" href="js/core/cutout.js">
+<link rel="modulepreload" href="js/core/icons.js">
+<link rel="modulepreload" href="js/core/market.js">
+<link rel="modulepreload" href="js/data/actions.js">
+<link rel="modulepreload" href="js/data/clubs.js">
+<link rel="modulepreload" href="js/data/players.js">
+<link rel="modulepreload" href="js/data/schedule.js">
+<link rel="modulepreload" href="js/ui/components.js">
+<link rel="modulepreload" href="js/ui/share.js">
+<link rel="modulepreload" href="js/ui/sheet.js">
+<link rel="modulepreload" href="js/ui/squad.js">
 </head>
 <body>
 <!-- Startbildschirm, bis die App geladen ist -->
-<div id="splash" aria-hidden="true"><div class="spl"><img src="assets/icons/icon-192.png" alt="" width="96" height="96"><b>KREISLIGA</b><i>EDITION</i><span class="spl-bar"><span></span></span></div></div>
+<div id="splash" aria-hidden="true"><div class="spl"><img src="assets/icons/icon-192.png" alt="" width="96" height="96" fetchpriority="high"><b>KREISLIGA</b><i>EDITION</i><span class="spl-bar"><span></span></span></div></div>
 
 <!-- Spielerkarte (Live / Endstand) -->
 <div id="home" hidden>

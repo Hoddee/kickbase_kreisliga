@@ -44,7 +44,7 @@ Ergebnis zuerst, was er selbst tun muss (SQL ausführen, mergen) klar als eigene
   Ziehen zum Aktualisieren (`REFRESH` je Ansicht), Service-Worker-Registrierung mit Update-Prüfung beim Zurückholen der App.
   Der Router merkt sich die Scrollposition je Ansicht und lässt Ansichten hereingleiten (`slideIn`); Ladezustände mit `skeleton()`.
 - Installierte App (Home-Bildschirm) testen: iOS weckt sie nur auf statt neu zu starten – Updates kommen über `feel.js`.
-- `css/` – `theme.css` muss nach den Basis-CSS geladen werden; neue CSS-Dateien in `index.html` und `sw.js` eintragen.
+- `css/` – `theme.css` muss nach den Basis-CSS eingebunden sein (Reihenfolge der `<link>` zählt); neue CSS-Dateien in `index.html` und `sw.js` eintragen.
   Vor neuen Klassennamen per `grep` prüfen, dass es sie noch nicht gibt – Kollisionen haben schon die Startseite verbreitert.
 
 ## Datenbank (Supabase)
@@ -61,9 +61,12 @@ Tabellen: `spiele` (gespeicherte Spiele inkl. `events` jsonb), `kader`, `admins`
   (`js/data/players.js`) eintragen und in der DB `foto` auf NULL lassen. Wird ein vorhandenes Bild ersetzt, `IMG` in `sw.js` hochzählen.
 
 ## Regeln bei jeder Änderung
-- **`sw.js`: `VERSION` bei jeder Änderung hochzählen** (z. B. `kl-v3.10.0` → `kl-v3.10.1`, größere Features Minor-Sprung),
-  sonst bekommen Handys das Update nicht. **`APP_VERSION` in `config.js` gleich mitziehen** (wird im Konto angezeigt).
-  Neue JS/CSS-Dateien in `SHELL` aufnehmen.
+- **`sw.js`: `VERSION` bei jeder Änderung hochzählen** (z. B. `kl-v3.11.0` → `kl-v3.11.1`, größere Features Minor-Sprung).
+  Der Service Worker liefert App-Dateien **aus dem Cache** (schneller Start) – ohne neue VERSION bekommt niemand das Update.
+  **`APP_VERSION` in `config.js` gleich mitziehen** (wird im Konto angezeigt).
+- Neue JS-Datei: in `SHELL` (`sw.js`) und als `<link rel="modulepreload">` in `index.html`. Neue CSS-Datei: in `SHELL` und in
+  `index.html` im selben Muster wie die anderen (`media="print" onload="this.media='all'"` + `<noscript>`-Zeile).
+  Das CSS des Startbildschirms steht inline in `index.html`; `main.js` blendet ihn erst aus, wenn alle Stylesheets geladen sind.
 - localStorage-Schlüssel in `config.js` nicht umbenennen (laufende Spiele müssen Updates überstehen); Formatänderungen
   am Spielzustand abwärtskompatibel laden (`loadGame`).
 - Punkte-/Marktwertregeln orientieren sich an Kickbase. Punkte werden beim Buchen gespeichert (neue Regeln gelten

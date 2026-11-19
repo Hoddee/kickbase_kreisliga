@@ -135,19 +135,6 @@ body.multi .quick { top: calc(58px + var(--sqh, 88px) + env(safe-area-inset-top,
 .poslist b { font: 600 14px var(--font-body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .poslist .seg button { padding: 0 9px; min-height: 36px; font-size: 12px; }
 
-/* ---------- Startbildschirm ---------- */
-#splash { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; background: radial-gradient(90% 60% at 50% 40%, #2a1a12 0%, var(--bg, #131417) 70%); transition: opacity .35s ease; }
-#splash.gone { opacity: 0; pointer-events: none; }
-.spl { display: grid; justify-items: center; gap: 10px; }
-.spl img { width: 96px; height: 96px; border-radius: 24px; box-shadow: 0 16px 50px rgba(255, 70, 0, .35); animation: splpop .5s ease-out both; }
-.spl b { margin-top: 10px; font: 800 30px/1 var(--font-display); letter-spacing: .04em; color: #fff; }
-.spl i { font: 700 11px/1 var(--font-body); font-style: normal; letter-spacing: .3em; padding: 5px 8px 4px; border-radius: 5px; background: var(--kb-red, #ff4600); color: #fff; }
-.spl-bar { width: 120px; height: 3px; margin-top: 18px; border-radius: 2px; background: rgba(255, 255, 255, .1); overflow: hidden; }
-.spl-bar span { display: block; width: 40%; height: 100%; background: var(--kb-red, #ff4600); animation: splbar 1s ease-in-out infinite; }
-@keyframes splpop { from { transform: scale(.7); opacity: 0; } }
-@keyframes splbar { from { transform: translateX(-100%); } to { transform: translateX(260%); } }
-@media (prefers-reduced-motion: reduce) { .spl img, .spl-bar span { animation: none; } }
-
 /* ---------- Einführung ---------- */
 .intro { position: fixed; inset: 0; z-index: 90; display: flex; align-items: flex-end; background: rgba(0, 0, 0, .7); transition: opacity .25s; }
 .intro.gone { opacity: 0; }

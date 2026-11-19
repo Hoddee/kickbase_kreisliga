@@ -68,10 +68,13 @@ if (redirect && !redirect.error && (redirect.type === 'recovery' || redirect.typ
 
 /* Startbildschirm ausblenden (mindestens kurz sichtbar, damit er nicht flackert); beim ersten Mal die Einführung */
 const splash = document.getElementById('splash');
-setTimeout(() => {
+/* Stylesheets laden ohne zu blockieren (siehe index.html) – Startbildschirm bleibt, bis alle da sind */
+const cssReady = () => Promise.all([...document.querySelectorAll('link[rel="stylesheet"]')].map(l =>
+  l.sheet && l.media !== 'print' ? 0 : new Promise(r => { l.addEventListener('load', r, { once: true }); l.addEventListener('error', r, { once: true }); setTimeout(r, 8000); })));
+Promise.all([cssReady(), new Promise(r => setTimeout(r, Math.max(0, 500 - performance.now())))]).then(() => {
   if (splash) { splash.classList.add('gone'); setTimeout(() => splash.remove(), 400); }
   if (!introSeen() && !(redirect && !redirect.error)) setTimeout(showIntro, 250);
-}, Math.max(0, 700 - performance.now()));
+});
 
 /* Kader (Status, Positionen, Marktwerte) aus der Datenbank holen */
 loadRoster().then(ok => { if (ok) rerender(); });
