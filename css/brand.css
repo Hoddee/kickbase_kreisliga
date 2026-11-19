@@ -231,3 +231,90 @@ body.ended .cta button { background: rgba(19, 20, 23, .88); color: var(--ink); b
 .tour-nav .btn { min-height: 54px; }
 @media (max-height: 640px) { .tour h2 { margin-top: 16px; font-size: 26px; } .tour p { font-size: 14.5px; } .tour-shot { max-height: 46vh; } }
 .tour:focus { outline: none; }
+
+/* ---------- Spieltag-Karte (Liga) ---------- */
+.lh2 small { margin-left: 10px; font: 600 12px var(--font-body); letter-spacing: .08em; color: var(--muted2); text-transform: none; }
+.md-next { display: flex; align-items: center; gap: 10px; margin: -2px 0 12px; padding: 12px 14px; border-radius: 12px; background: var(--surface); font-size: 14px; }
+.md-next i { width: 8px; height: 8px; border-radius: 50%; background: #E1BE38; box-shadow: 0 0 0 4px rgba(225, 190, 56, .18); }
+.md-next b { font-weight: 700; margin-right: 4px; }
+.md-next small { margin-left: auto; color: var(--muted); font-size: 12.5px; }
+.mdc { padding: 16px 14px 14px; border-radius: 16px; background: linear-gradient(180deg, #1f2125, var(--surface)); }
+.mdc-pod { display: grid; grid-template-columns: 1fr 1.15fr 1fr; align-items: end; gap: 8px; }
+.mdc-p { position: relative; display: grid; justify-items: center; gap: 4px; padding: 0; border: 0; background: none; color: var(--ink); }
+.mdc-p .hav { width: 58px; height: 58px; border: 2px solid var(--c, var(--line)); }
+.mdc-p.r1 .hav { width: 76px; height: 76px; }
+.mdc-p i { position: absolute; top: -4px; left: calc(50% + 16px); width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: var(--ink); color: var(--bg); font: 800 12px var(--font-display); font-style: normal; }
+.mdc-p.r1 i { left: calc(50% + 24px); background: #E1BE38; }
+.mdc-p span { max-width: 100%; font: 600 13.5px var(--font-body); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mdc-p b { font: 800 20px/1 var(--font-display); color: var(--ct); }
+.mdc-go { margin-top: 14px; min-height: 48px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.mdc-go svg { width: 16px; height: 16px; fill: currentColor; }
+
+/* ---------- MVP-Stage ---------- */
+.mvp { position: fixed; inset: 0; z-index: 96; overflow: hidden; background: radial-gradient(120% 60% at 50% 0%, #1c1d22 0%, #0b0c0e 60%); color: var(--ink); }
+.mvp-bg { position: absolute; inset: 0; pointer-events: none; }
+.mvp-beam { position: absolute; top: -10%; left: 50%; width: 42vw; max-width: 260px; height: 120%; transform-origin: 50% 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .16), rgba(255, 255, 255, 0) 75%); filter: blur(14px); opacity: 0; transition: opacity 1.2s; clip-path: polygon(40% 0, 60% 0, 100% 100%, 0 100%); }
+.mvp-beam.b1 { transform: translateX(-50%) rotate(24deg); animation: mvpsweep 6s ease-in-out infinite alternate; }
+.mvp-beam.b2 { transform: translateX(-50%); }
+.mvp-beam.b3 { transform: translateX(-50%) rotate(-24deg); animation: mvpsweep2 6s ease-in-out infinite alternate; }
+.mvp.mvp-go .mvp-beam { opacity: .9; }
+@keyframes mvpsweep { to { transform: translateX(-50%) rotate(12deg); } }
+@keyframes mvpsweep2 { to { transform: translateX(-50%) rotate(-12deg); } }
+.mvp-in { position: relative; display: flex; flex-direction: column; height: 100%; max-width: 560px; margin: 0 auto;
+  padding: calc(10px + env(safe-area-inset-top, 0px)) 14px calc(16px + env(safe-area-inset-bottom, 0px)); }
+.mvp-x { position: absolute; z-index: 3; top: calc(6px + env(safe-area-inset-top, 0px)); right: 8px; width: 44px; height: 44px; border: 0; background: none; color: var(--muted); font: 300 32px/1 var(--font-body); }
+.mvp-head { flex: none; margin-top: 4vh; text-align: center; opacity: 0; transform: translateY(14px); transition: opacity .7s, transform .7s cubic-bezier(.2, .8, .2, 1); }
+.mvp.mvp-go .mvp-head { opacity: 1; transform: none; }
+.mvp-head small { font: 600 12px var(--font-body); letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+.mvp-head h1 { margin: 6px 0 0; font: 800 clamp(72px, 24vw, 120px)/.85 var(--font-head); font-stretch: 88%; letter-spacing: -.02em; color: #f4f6f9; }
+.mvp-head h1 span { display: block; margin-top: 8px; font: 700 20px var(--font-body); letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+.mvp-pod { position: relative; flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1.15fr 1fr; align-items: end; gap: 8px; margin-top: 2vh; }
+.mp { position: relative; display: flex; flex-direction: column; align-items: center; min-width: 0; padding: 0; border: 0; background: none; color: var(--ink); }
+.mp-ph { width: 100%; height: 24vh; display: flex; justify-content: center; align-items: flex-end; overflow: hidden; opacity: 0; transform: translateY(40px) scale(.94);
+  transition: opacity .6s .35s, transform .8s .35s cubic-bezier(.2, .8, .2, 1); -webkit-mask-image: linear-gradient(#000 70%, transparent); mask-image: linear-gradient(#000 70%, transparent); }
+.r1 .mp-ph { height: 30vh; }
+.mp-ph img { height: 100%; width: auto; max-width: none; }
+.mp-n { margin-top: -6px; text-align: center; max-width: 100%; opacity: 0; transition: opacity .5s .6s; }
+.mp-n small { display: block; font: 500 13px var(--font-body); color: var(--muted); }
+.mp-n b { display: block; font: 800 clamp(20px, 6vw, 28px)/1 var(--font-head); font-stretch: 88%; letter-spacing: -.02em; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.r1 .mp-n b { font-size: clamp(24px, 7.5vw, 34px); }
+.mp-v { margin: 6px 0 8px; font: 800 clamp(30px, 9vw, 44px)/1 var(--font-display); color: var(--c); opacity: 0; transition: opacity .4s .55s; font-variant-numeric: tabular-nums; }
+.r1 .mp-v { font-size: clamp(38px, 12vw, 58px); }
+.mp-blk { width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding-top: 10px; border-radius: 14px 14px 0 0;
+  background: linear-gradient(180deg, #24262b, #17181b); border-top: 4px solid var(--c); transform: scaleY(0); transform-origin: 50% 100%; transition: transform .6s cubic-bezier(.2, .8, .2, 1); }
+.r1 .mp-blk { height: 22vh; } .r2 .mp-blk { height: 15vh; } .r3 .mp-blk { height: 10vh; }
+.mp-blk i { font: 800 clamp(40px, 13vw, 64px)/1 var(--font-display); font-style: normal; color: rgba(255, 255, 255, .14); }
+.mp-blk small { font: 600 11px var(--font-body); letter-spacing: .12em; color: var(--muted2); }
+.mp.on .mp-blk { transform: none; }
+.mp.on .mp-ph { opacity: 1; transform: none; }
+.mp.on .mp-n, .mp.on .mp-v { opacity: 1; }
+.r1.on .mp-blk { box-shadow: 0 -10px 60px rgba(225, 190, 56, .25); }
+/* Trommelwirbel vor Platz 1 */
+.mvp.mvp-drum .mvp-pod::before { content: ""; position: absolute; left: 50%; bottom: 0; width: 34%; height: 22vh; transform: translateX(-50%); border-radius: 14px 14px 0 0;
+  background: rgba(225, 190, 56, .12); animation: mvpdrum .25s ease-in-out infinite alternate; }
+@keyframes mvpdrum { to { background: rgba(225, 190, 56, .3); } }
+.mvp-cf { position: absolute; left: 50%; top: 35%; width: 8px; height: 13px; border-radius: 2px; pointer-events: none; z-index: 2; }
+.mvp-cta { flex: none; display: grid; grid-template-columns: 1fr 1.4fr; gap: 10px; margin-top: 16px; opacity: 0; transform: translateY(10px); transition: opacity .5s, transform .5s; pointer-events: none; }
+.mvp.mvp-done .mvp-cta { opacity: 1; transform: none; pointer-events: auto; }
+.mvp-cta .btn { min-height: 54px; }
+@media (prefers-reduced-motion: reduce) { .mvp-beam { animation: none; } .mvp.mvp-drum .mvp-pod::before { animation: none; } }
+/* Podest an die Höhe anpassen: auf normalen Handys kompakter, damit die Knöpfe frei bleiben */
+.mvp-head { margin-top: 2vh; }
+.mvp-head h1 { font-size: clamp(60px, 11vh, 120px); }
+.mp-ph { height: 15vh; } .r1 .mp-ph { height: 21vh; }
+.r1 .mp-blk { height: 13vh; } .r2 .mp-blk { height: 9vh; } .r3 .mp-blk { height: 6vh; }
+.mp-blk i { font-size: clamp(30px, 6vh, 56px); }
+.mp-n b { font-size: clamp(17px, 5vw, 24px); }
+.r1 .mp-n b { font-size: clamp(22px, 7vw, 32px); }
+.mp-v { margin: 4px 0 6px; font-size: clamp(26px, 8vw, 40px); }
+.mvp-pod { overflow: hidden; }
+@media (min-height: 780px) {
+  .mp-ph { height: 19vh; } .r1 .mp-ph { height: 25vh; }
+  .r1 .mp-blk { height: 16vh; } .r2 .mp-blk { height: 11vh; } .r3 .mp-blk { height: 7vh; }
+}
+.mvp-head { margin-top: 1vh; }
+.mvp-head h1 { font-size: clamp(54px, 9vh, 110px); }
+.mvp-head h1 span { margin-top: 4px; font-size: 17px; }
+.mvp-cta { margin-top: 10px; }
+.mp-ph { height: 13vh; } .r1 .mp-ph { height: 19vh; }
