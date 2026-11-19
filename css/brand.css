@@ -1,6 +1,6 @@
 /* Kickbase KL – Markenschicht (zuletzt geladen).
    Wie die Kickbase-App: im Kern Schwarz und Weiß, Farbe nur für Punkte/Trends und Rot nur für „Live“.
-   Überschriften schmal und groß (Saira Condensed statt KB Pitch), Zahlen in Oxanium, Text in Inter Tight.
+   Überschriften und Zahlen in „KL Pitch“ (Saira, Nachbau von KB Pitch), Text in Inter Tight.
    Trick: die alte Akzentfarbe --kb-red ist jetzt Weiß; echtes Live-Rot heißt --live. */
 :root {
   --bg: #131417;
@@ -13,7 +13,8 @@
   --kb-red: #eef1f5; --kb-red-rgb: 238, 241, 245;
   --live: #ff3b30; --live-rgb: 255, 59, 48;
   --on-acc: #131417;
-  --font-head: 'Saira Condensed', 'Arial Narrow', system-ui, sans-serif;
+  --font-head: 'KL Pitch', 'Arial Narrow', system-ui, sans-serif;
+  --font-display: 'KL Pitch', 'Oxanium', system-ui, sans-serif;
   --tabbar-h: 60px;
 }
 :focus-visible { outline-color: var(--ink); }
@@ -99,10 +100,11 @@ body.tab-root .ehead .back { visibility: hidden; }
 .gr > .ov { border-radius: 0; }
 .grp { color: var(--muted); }
 
-/* Punkteliste: „+2  Pass vorderes Drittel  16’“ */
-.row { border: 0; border-bottom: 1px solid var(--line); border-radius: 0; margin: 0; padding: 17px 4px; background: transparent; }
-.row.fresh { border-radius: 0; }
-.rp { font-size: 21px; }
+/* Punkteliste wie bei Kickbase: dezent umrandete Kästen, Punkte farbig, Minute rechts */
+.row { grid-template-columns: 74px minmax(0, 1fr) auto; min-height: 66px; margin: 0 0 12px; padding: 12px 20px 12px 22px; border: 1px solid rgba(222, 228, 236, .13); border-radius: 10px; background: transparent; }
+.rp { font: 800 23px/1 var(--font-display); letter-spacing: -.01em; }
+.rl { font: 400 17px/1.25 var(--font-body); color: #eef1f5; }
+.rt { font: 400 15px var(--font-body); color: var(--muted); }
 
 /* ---------- Reiter ---------- */
 /* Hall of Fame / Profil-Reiter oben: Text in Großbuchstaben, aktiver weiß */
@@ -156,11 +158,43 @@ body.has-tabbar .toast { bottom: calc(var(--tabbar-h) + 20px + env(safe-area-ins
 .cta { transition: opacity .18s, transform .18s; }
 .cta.away { opacity: 0; transform: translateY(16px); pointer-events: none; }
 
-/* Spielerkarte: Name groß und schmal wie „OLISE“ */
-.pname { font: 800 34px/1 var(--font-head); letter-spacing: .01em; text-transform: uppercase; color: #f4f6f9; }
-.mh-t > span { font-family: var(--font-head); font-weight: 800; letter-spacing: .01em; }
+/* Spielerkarte, Live-Ansicht, Spiel-Detail wie bei Kickbase: Name klein („Gruda“), riesige Punktzahl,
+   Ergebnis in Textschrift mit „ENDSTAND“ darunter, feines Punkteraster statt Farbverlauf */
+.pname, .mh-t > span { font: 500 22px/1.2 var(--font-body) !important; letter-spacing: 0 !important; text-transform: none !important; color: rgba(255, 255, 255, .9); }
+.num, .mh-t > b { font-family: var(--font-display) !important; font-weight: 800; font-stretch: 100%; color: #f4f6f9; }
+.mh-t > b { font-size: clamp(100px, 34vw, 150px); line-height: .95; margin-top: 4px; }
+.num { font-size: clamp(100px, 34vw, 150px); line-height: .95; }
+.mh-s { gap: 22px; margin-top: 10px; }
+.mh-s img, .badge img { width: 62px; height: 62px; }
+.mh-s strong, .sc { font: 400 32px/1.1 var(--font-body) !important; letter-spacing: .08em; color: #f4f6f9; }
+.mh-s small, .state { font: 500 14px var(--font-body) !important; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-top: 4px; }
+.mh-s.sm strong { font-size: 17px !important; }
+.mhero, .phero { background: var(--bg); }
+.mhero::before, .phero::before { content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background-image: radial-gradient(circle, rgba(255, 255, 255, .13) 1.2px, transparent 1.7px); background-size: 28px 28px; background-position: center 14px;
+  -webkit-mask-image: linear-gradient(#000 30%, transparent 85%); mask-image: linear-gradient(#000 30%, transparent 85%); }
+.pphoto { z-index: 1; }
+.mhero::after, .phero::after { z-index: 1; }
+.mh-t, .pnames { z-index: 2; }
+.hero::before { background-image: radial-gradient(circle, rgba(255, 255, 255, .13) 1.2px, transparent 1.7px); background-size: 28px 28px; }
+.sh-mini.mm > span { font-family: var(--font-head); font-stretch: 88%; letter-spacing: -.02em; }
+/* Profil: Vorname klein, Nachname groß („Michael / OLISE“), Kästchen für Position */
+.pvn { font: 500 22px/1.2 var(--font-body); }
+.pchip { border-radius: 6px; background: #26282d; font: 500 15px var(--font-body); letter-spacing: .04em; }
+.obtn, .pplay { border-radius: 10px; letter-spacing: .1em; }
 /* Nach dem Abpfiff ist „Bearbeiten“ Nebensache: dunkel mit weißem Rand */
 body.ended .cta button { background: rgba(19, 20, 23, .88); color: var(--ink); border: 1.5px solid rgba(222, 228, 236, .55); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
 .lgs { overflow-x: auto; scrollbar-width: none; margin-inline: -16px; padding-inline: 16px; }
 .lgs::-webkit-scrollbar { display: none; }
 .lgs button { flex: none; white-space: nowrap; padding: 0 14px; }
+
+/* ---------- Schrift wie KB Pitch ---------- */
+/* Überschriften und große Namen: schmal (88 %), eng gesetzt */
+#startBody > h2, #kaderBody h2, #hofBody > h2, #meBody h2, #adminBody h2, .lvh .lv-live,
+.lh b, .pf h3, .pmini b, .lv-n b, .lv-gone b, .auth h3, .sheet h3, .shead, .gh .gname, .pnn, {}
+#startBody > h2, #kaderBody h2, #hofBody > h2, #meBody h2, #adminBody h2, .lvh .lv-live { font-size: 28px; }
+.pnn { font-size: clamp(46px, 16vw, 70px); }
+/* Zahlen in normaler Breite, nicht ganz so eng wie früher bei Oxanium */
+.num, .gh .gbig, .pw-v, .mh-t > b { letter-spacing: -.015em; }
+/* Spielernamen in Listen wie bei Kickbase in der Textschrift (Großbuchstaben, nicht fett) */
+.prow b, .gi b { font: 600 15.5px/1.2 var(--font-body); letter-spacing: .03em; text-transform: uppercase; }
