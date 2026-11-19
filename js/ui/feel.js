@@ -104,7 +104,7 @@ function initPull() {
    Beim Zurückholen der App nach neuer Version fragen; ist eine da, wird neu geladen, sobald gerade
    keine Punkte vergeben werden (der Spielstand liegt im Gerät und übersteht das Neuladen). */
 function initUpdates() {
-  if (!('serviceWorker' in navigator) || location.protocol !== 'https:') return;
+  if (!('serviceWorker' in navigator) || (location.protocol !== 'https:' && location.hostname !== 'localhost')) return;
   const hadController = !!navigator.serviceWorker.controller;
   let pending = false;
   const safe = () => nav.current !== 'edit' && !document.querySelector('input:focus, textarea:focus, select:focus');

@@ -1,9 +1,11 @@
 /* Service Worker: App läuft auch bei schlechtem Netz am Sportplatz.
-   App-Dateien: erst Netz, bei Ausfall aus dem Cache (so kommen Updates sofort an).
+   App-Dateien (SHELL): sofort aus dem Cache – so startet die App ohne Warten aufs Netz. Updates kommen über eine neue
+   VERSION: die neue sw.js lädt alle Dateien frisch (cache: 'reload'), übernimmt, und feel.js lädt die Seite neu.
+   Andere eigene Dateien: erst Netz, bei Ausfall aus dem Cache.
    Bilder (Spielerfotos, Wappen): nur einmal laden, danach immer aus dem Cache – kein erneutes Herunterladen.
    Geänderte Fotos bekommen eine neue Adresse (?v=…), alte Einträge werden beim Versionswechsel aufgeräumt.
    Datenbank-Anfragen (REST/Auth) werden nie zwischengespeichert. */
-const VERSION = 'kl-v3.10.1';
+const VERSION = 'kl-v3.11.0';
 const APP = 'app-' + VERSION;
 const IMG = 'img-v3';
 const SHELL = [
@@ -20,8 +22,11 @@ const SHELL = [
   'assets/icons/icon-192.png'
 ];
 
+let shellUrls = null;
+const isShell = url => (shellUrls || (shellUrls = new Set(SHELL.map(u => new URL(u, self.registration.scope).pathname)))).has(url.pathname);
+
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(APP).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(APP).then(c => c.addAll(SHELL.map(u => new Request(u, { cache: 'reload' })))).then(() => self.skipWaiting()));
 });
 self.addEventListener('activate', e => {
   e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k => (k.startsWith('app-') && k !== APP) || (k.startsWith('img-') && k !== IMG)).map(k => caches.delete(k)))).then(() => self.clients.claim()));
@@ -47,9 +52,12 @@ self.addEventListener('fetch', e => {
     return;
   }
   if (url.origin === self.location.origin) {
-    /* no-cache: immer beim Server nachfragen (ETag), nie eine veraltete Kopie aus dem Browser-Cache nehmen */
-    const fresh = req.mode === 'navigate' ? new Request(req.url, { cache: 'no-cache', credentials: 'same-origin' }) : new Request(req, { cache: 'no-cache' });
-    e.respondWith(fetch(fresh).then(r => {
+    if (req.mode === 'navigate' || isShell(url)) {
+      e.respondWith(caches.open(APP).then(async c => (await c.match(req.mode === 'navigate' ? './' : req, { ignoreSearch: true })) ||
+        fetch(req).then(r => { if (r.ok && req.mode !== 'navigate') c.put(req, r.clone()); return r; })));
+      return;
+    }
+    e.respondWith(fetch(req).then(r => {
       if (r.ok) { const copy = r.clone(); caches.open(APP).then(c => c.put(req, copy)); }
       return r;
     }).catch(() => caches.match(req, { ignoreSearch: true }).then(r => r || caches.match('index.html'))));
