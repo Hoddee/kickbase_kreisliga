@@ -54,8 +54,10 @@ Ergebnis zuerst, was er selbst tun muss (SQL ausführen, mergen) klar als eigene
 - Installierte App (Home-Bildschirm) testen: iOS weckt sie nur auf statt neu zu starten – Updates kommen über `feel.js`.
 - Look (seit v4.0): `css/brand.css` wird zuletzt geladen und setzt den Kickbase-Stil – Schwarz/Weiß, Knöpfe weiß,
   Auswahl mit weißer Kante, Farbe nur für Punkte-Stufen/Trends, Rot (`--live`) nur für Live. `--kb-red` ist dort absichtlich
-  Weiß (alte Akzentfarbe). Schriften: Saira Condensed (`--font-head`, Überschriften/Namen in Großbuchstaben; ersetzt KB Pitch),
-  Oxanium (Zahlen), Inter Tight (Text). Die Original-Schriften von Kickbase nicht einbauen (keine Lizenz zur Weitergabe).
+  Weiß (alte Akzentfarbe). Schriften: „KL Pitch“ = Saira als variable Schrift (`assets/fonts/saira-kl-var.woff2`, Breite 70–100 %),
+  Nachbau von KB Pitch: Überschriften mit `font-stretch: 88%` + `-0.02em` (`--font-head`), Zahlen normal breit (`--font-display`).
+  Text, Spielernamen in Listen und der kleine Name über der Punktzahl in Inter Tight (wie KB Volksans bei Kickbase).
+  Die Original-Schriften von Kickbase nicht einbauen (keine Lizenz zur Weitergabe).
 - Menü unten (`js/ui/tabbar.js`, `#tabbar`): Liga (`start`), Kader (`kader`, in `start.js`), Spiel (laufendes Spiel oder neues),
   Ranking (`hof`), Ich (`me`/`admin`). Menüpunkte rufen `show(name, { tab: true })` – der Verlauf wird ersetzt statt gestapelt.
   `body.has-tabbar` / `body.tab-root` steuern Abstand unten und den ausgeblendeten Zurück-Knopf. Router-Hook: `onShow(fn)`.

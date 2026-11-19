@@ -9,6 +9,8 @@ import { tierOf, dateLong } from '../core/util.js';
 const TIER_COLOR = { red: '#E0343F', orange: '#ED8928', lime: '#9CE04A', emerald: '#28DE86', gold: '#E1BE38' };
 const imgCache = new Map();
 
+/* Namen schmal wie die Überschriften (KB-Pitch-Nachbau); ältere Browser zeichnen normal breit */
+const narrow = (x, on) => { if ('fontStretch' in x) x.fontStretch = on ? 'semi-condensed' : 'normal'; };
 function loadImg(url) {
   if (!imgCache.has(url)) {
     imgCache.set(url, new Promise(res => {
@@ -21,7 +23,7 @@ function loadImg(url) {
   return imgCache.get(url);
 }
 function fontsReady() {
-  try { return Promise.all([document.fonts.load('800 100px Oxanium'), document.fonts.load('500 40px "Inter Tight"'), document.fonts.load('800 60px "Saira Condensed"')]).catch(() => {}); }
+  try { return Promise.all([document.fonts.load('800 100px "KL Pitch"'), document.fonts.load('500 40px "Inter Tight"'), document.fonts.load('800 60px "KL Pitch"')]).catch(() => {}); }
   catch (e) { return Promise.resolve(); }
 }
 function urls() {
@@ -56,9 +58,9 @@ export async function shareCard() {
   g.addColorStop(0, 'rgba(19,20,23,0)'); g.addColorStop(1, '#131417');
   x.fillStyle = g; x.fillRect(0, 640, W, 380); x.fillStyle = '#131417'; x.fillRect(0, 1010, W, H - 1010);
   x.textAlign = 'center';
-  x.fillStyle = 'rgba(255,255,255,.92)'; x.font = '800 96px "Saira Condensed", Arial, sans-serif'; x.fillText(names.player.toUpperCase(), W / 2, 806);
+  x.fillStyle = 'rgba(255,255,255,.92)'; x.font = '800 96px "KL Pitch", Arial, sans-serif'; narrow(x, true); x.fillText(names.player.toUpperCase(), W / 2, 806); narrow(x, false);
   spacing(x, '-9px');
-  x.fillStyle = col; x.font = '800 290px Oxanium, Arial, sans-serif'; x.fillText(String(t), W / 2, 1050);
+  x.fillStyle = col; x.font = '800 290px "KL Pitch", Oxanium, Arial, sans-serif'; x.fillText(String(t), W / 2, 1050);
   spacing(x, '0px');
   fit(x, cl, 215, 1175, 170); fit(x, cr, 865, 1175, 170);
   spacing(x, '6px');
@@ -109,7 +111,7 @@ export async function shareTeamCard() {
   x.textAlign = 'center';
   spacing(x, '6px'); x.fillStyle = '#dee4ec'; x.font = '700 30px "Inter Tight", Arial, sans-serif'; x.fillText('ENDSTAND', W / 2, 92); spacing(x, '0px');
   fit(x, cl, 200, 230, 190); fit(x, cr, 880, 230, 190);
-  x.fillStyle = '#fff'; x.font = '800 150px Oxanium, Arial, sans-serif';
+  x.fillStyle = '#fff'; x.font = '800 150px "KL Pitch", Oxanium, Arial, sans-serif';
   x.fillText(home ? sc.us + ' : ' + sc.them : sc.them + ' : ' + sc.us, W / 2, 285);
   x.fillStyle = '#a8adb4'; x.font = '500 30px "Inter Tight", Arial, sans-serif';
   const d = S.manual && S.playedAt ? new Date(S.playedAt) : new Date();
@@ -125,10 +127,10 @@ export async function shareTeamCard() {
     if (ph) { const w = s * 1.15, h = w * ph.height / ph.width; x.drawImage(ph, 140 - w / 2, cy - s / 2 - 2, w, h); }
     x.restore();
     x.textAlign = 'left';
-    x.fillStyle = '#fff'; x.font = '800 54px "Saira Condensed", Arial, sans-serif'; x.fillText(r.n.toUpperCase(), 215, cy - 2);
+    x.fillStyle = '#fff'; x.font = '800 54px "KL Pitch", Arial, sans-serif'; narrow(x, true); x.fillText(r.n.toUpperCase(), 215, cy - 2); narrow(x, false);
     const extra = [r.pos, r.g ? r.g + (r.g > 1 ? ' Tore' : ' Tor') : '', r.a ? r.a + (r.a > 1 ? ' Vorlagen' : ' Vorlage') : ''].filter(Boolean).join(' · ');
     x.fillStyle = '#8b9098'; x.font = '500 28px "Inter Tight", Arial, sans-serif'; x.fillText(extra, 215, cy + 36);
-    x.textAlign = 'right'; x.fillStyle = col; x.font = '800 76px Oxanium, Arial, sans-serif'; x.fillText(String(r.t), W - 90, cy + 26);
+    x.textAlign = 'right'; x.fillStyle = col; x.font = '800 76px "KL Pitch", Oxanium, Arial, sans-serif'; x.fillText(String(r.t), W - 90, cy + 26);
   });
   x.textAlign = 'center'; x.font = '500 26px "Inter Tight", Arial, sans-serif'; x.fillStyle = '#7e8187';
   x.fillText('Kickbase KL · Kreisliga ' + (CL[teamOf(S.match)].lg || ''), W / 2, H - 30);
