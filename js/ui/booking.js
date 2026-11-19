@@ -28,15 +28,29 @@ function actBtn(key) {
   return '<button type="button" class="act' + (c ? ' on' : '') + '" data-k="' + key + '"><span class="lb">' + esc(a.l) +
     '</span><span class="pt ' + cls(p) + '">' + fmt(p) + '</span>' + (c ? '<span class="cnt">' + c + '</span>' : '') + '</button>';
 }
-/* Aktionen nach Punktgröße gebündelt: klein oben, groß unten */
+/* Aktionen nach Bedeutung gruppiert (Schüsse, Pässe, Zweikämpfe …) – so findet man sie, ohne die Punkte zu kennen */
+const GOAL_HINT = '<p class="ahint">Tipp: Tore am besten im Reiter <b>Spiel</b> über „Tor“ buchen – dann fragt die App nach Torschütze und Vorlage.</p>';
 function groupsHtml(k) {
-  const S = store.S, keys = [];
-  for (const g of GROUPS[k]) { if (g.only && g.only !== S.pos) continue; for (const x of g.a) keys.push(x[0]); }
-  const sm = [], mid = [], big = [];
-  for (const key of keys) { const p = Math.abs(val(ACT[key])); (p >= 25 ? big : p >= 10 ? mid : sm).push(key); }
-  const sec = (t, list, c) => (list.length ? '<h2>' + t + '</h2><div class="' + c + '">' + list.map(actBtn).join('') + '</div>' : '');
-  return sec('Klein', sm, 'grid chips') + sec('Mittel', mid, 'grid') + sec('Hoch', big, 'grid big');
+  const S = store.S;
+  return GROUPS[k].filter(g => !g.only || g.only === S.pos).map(g =>
+    '<h2>' + esc(g.t) + '</h2>' + (g.t === 'Tore & Vorlagen' ? GOAL_HINT : '') + '<div class="grid">' + g.a.map(x => actBtn(x[0])).join('') + '</div>').join('');
 }
+/* Suche über alle Reiter: „flanke“, „elfmeter“, „pass“ … */
+let query = '';
+const norm = t => t.toLowerCase().replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss');
+function searchHtml(q) {
+  const S = store.S, words = norm(q).split(/\s+/).filter(Boolean), hits = [];
+  for (const k of ['att', 'def', 'err']) for (const g of GROUPS[k]) {
+    if (g.only && g.only !== S.pos) continue;
+    for (const x of g.a) { const l = norm(x[1] + ' ' + g.t); if (words.every(w => l.includes(w)) && !hits.includes(x[0])) hits.push(x[0]); }
+  }
+  return hits.length ? '<h2>' + hits.length + ' Treffer</h2><div class="grid">' + hits.map(actBtn).join('') + '</div>'
+    : '<p class="ahint">Nichts gefunden. Anders schreiben, z. B. „Pass“, „Schuss“ oder „Karte“.</p>';
+}
+const actListHtml = () => (query.trim() ? searchHtml(query) : groupsHtml(tab));
+const searchBox = () => '<div class="asearch"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>' +
+  '<input id="aq" type="search" enterkeyhint="search" autocomplete="off" placeholder="' + (isMulti() ? 'Aktion für ' + esc(names.player) + ' suchen …' : 'Aktion suchen …') + '" aria-label="Aktion suchen" value="' + esc(query) + '">' +
+  (query ? '<button type="button" class="aqx" data-do="q-x" aria-label="Suche löschen">×</button>' : '') + '</div>';
 function autoHtml() {
   const ls = [startLine(), ...endLines()].filter(Boolean);
   return ls.length ? '<ul class="auto">' + ls.map(l => '<li><span>' + esc(l.l) + (l.h ? '<small>' + esc(l.h) + '</small>' : '') + '</span><span class="v ' + cls(l.p) + '">' + fmt(l.p) + '</span></li>').join('') + '</ul>' : '';
@@ -76,19 +90,21 @@ function liveGameHtml() {
       '<button type="button" class="btn primary big" data-do="' + (S.ht ? 'half2' : 'clock') + '"' + d + '>' + big + '</button>' +
       '<div class="trio"><button type="button" class="btn" data-do="m-1"' + d + '>-1 Min</button><button type="button" class="btn" data-do="m+1"' + d + '>+1 Min</button>' +
       third + '</div></div>' +
-    (S.ended ? '' : '<button type="button" class="btn full lvshare" data-do="lshare">Live-Link teilen</button>') +
     '<h2>Spielstand</h2>' +
     '<div class="scorebox">' + scoreText(sc, isHome()) + '</div>' +
     '<div class="grid">' + (isHome() ? actBtn('tg') + actBtn('cg') : actBtn('cg') + actBtn('tg')) + '</div>' +
     '<div class="grid ungoal">' + (isHome() ? unBtn('tg', sc.us) + unBtn('cg', sc.them) : unBtn('cg', sc.them) + unBtn('tg', sc.us)) + '</div>' +
-    (isMulti() ? '<p class="muted small hint">Tore zählen für alle auf dem Platz.</p>' + lineupHtml(d) + addHtml() +
+    '<p class="ahint">' + (isMulti() ? 'Tore zählen für alle auf dem Platz. ' : '') + 'Nach dem Tor fragt die App, wer getroffen und vorgelegt hat.</p>' +
+    (isMulti() ? lineupHtml(d) + addHtml() +
       '<h2>Einstellungen · ' + esc(names.player) + '</h2><div class="card">' + settingsHtml() + '</div>'
     : '<h2>Einsatz</h2><div class="card">' +
       seg('Start', [['start1', 'Startelf'], ['start0', 'Bank']], S.startelf ? 'start1' : 'start0') +
       '<button type="button" class="btn full" style="margin-top:10px" data-do="field"' + d + '>' + (onField() ? 'Auswechseln' : 'Einwechseln') + '</button>' +
       settingsHtml() +
     '</div>' + addHtml()) +
-    '<h2>Automatische Punkte</h2><div class="card" id="autoBox">' + autoHtml() + '</div>' + endHtml();
+    '<h2>Automatische Punkte</h2><div class="card" id="autoBox">' + autoHtml() + '</div>' +
+    (S.ended ? '' : '<h2>Zuschauer</h2><p class="ahint">Mit dem Link können alle das Spiel live mitverfolgen.</p><button type="button" class="btn full lvshare" data-do="lshare">Live-Link teilen</button>') +
+    endHtml();
 }
 
 /* Aufstellung bei mehreren Spielern: Startelf/Bank vor dem Anpfiff, danach Ein-/Auswechseln – ohne Spielerwechsel */
@@ -281,7 +297,7 @@ export function render() {
   const m = main();
   if (tab === 'spiel') m.innerHTML = S.manual ? manualGameHtml() : liveGameHtml();
   else if (tab === 'log') m.innerHTML = logHtml();
-  else m.innerHTML = '<div id="htBar">' + htBarHtml() + '</div>' + groupsHtml(tab);
+  else m.innerHTML = '<div id="htBar">' + htBarHtml() + '</div>' + searchBox() + '<div id="actList">' + actListHtml() + '</div>';
   document.querySelectorAll('[data-tab]').forEach(b => b.setAttribute('aria-selected', String(b.getAttribute('data-tab') === tab)));
   refresh();
 }
@@ -396,6 +412,7 @@ function doAct(what) {
       break;
     }
     case 'copy': copySummary(); return;
+    case 'q-x': query = ''; render(); { const q = $('aq'); if (q) q.focus(); } return;
     case 'lshare': shareLiveGame(isMulti() ? S.squad[0].uid : S.uid, { nm: isMulti() ? S.squad.length + ' Spieler' : names.player, team: teamOf(S.match), home: isHome(), us: score().us, them: score().them, opp: S.match.o }); return;
     case 'add': add.open = true; add.p = null; add.all = false; render(); return;
     case 'add-x': add.open = false; render(); return;
@@ -451,6 +468,14 @@ export function initBooking() {
     else if (b.hasAttribute('data-do')) doAct(b.getAttribute('data-do'));
     else { const id = +b.getAttribute('data-del'), ev = store.S.events.find(x => x.id === id); if (ev) dropEvent(ev); saveGame(); render(); }
   });
+  main().addEventListener('input', e => {
+    if (e.target.id !== 'aq') return;
+    query = e.target.value;
+    $('actList').innerHTML = actListHtml();
+    const box = e.target.parentElement, x = box.querySelector('.aqx');
+    if (query && !x) box.insertAdjacentHTML('beforeend', '<button type="button" class="aqx" data-do="q-x" aria-label="Suche löschen">×</button>');
+    else if (!query && x) x.remove();
+  });
   /* Nachtrag: Eingabefelder */
   main().addEventListener('change', e => {
     const f = e.target.closest('[data-mf]'), S = store.S;
@@ -475,7 +500,7 @@ export function initBooking() {
   document.querySelector('.tabs').addEventListener('click', e => {
     const b = e.target.closest('[data-tab]');
     if (!b) return;
-    tab = b.getAttribute('data-tab'); confirm.end = false; confirm.reset = false;
+    tab = b.getAttribute('data-tab'); confirm.end = false; confirm.reset = false; query = '';
     render(); window.scrollTo(0, 0);
   });
 }

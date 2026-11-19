@@ -15,7 +15,7 @@ import { rowsFromRecord, rowLi, whistleLi, skeleton } from './components.js';
 import { openHofGame } from './hof.js';
 import { openProfile } from './profile.js';
 
-const state = { uid: null, open: false };
+const state = { uid: null };
 /* Korrektur-Modus: Entwurf der Aktionen, Auswahl zum Nachtragen */
 const fix = { on: false, ev: null, pick: false, grp: 0, min: '', busy: false, base: null, orig: null, us: 0, them: 0 };
 /* Nach jeder Änderung: Ergebnis aus den Tor-Aktionen zählen und abhängige Boni nachziehen */
@@ -23,7 +23,7 @@ function resettle() { const r = settle(fix.ev, rec(), fix.base, fix.orig); fix.e
 const rec = () => (games.list || []).find(g => g.uid === state.uid);
 
 export function openMatch(uid) {
-  state.uid = uid; state.open = false;
+  state.uid = uid;
   fix.on = false; fix.ev = null; fix.pick = false;
   show('match');
   if (!cachedEvents(uid)) loadEvents(uid).then(() => { if (nav.current === 'match' && state.uid === uid) render(); }).catch(() => {});
@@ -35,13 +35,18 @@ function rowsHtml(ev, g) {
   return rows.map(rowLi).join('') + whistleLi();
 }
 
-/* „Korrekturen (n)“ wie bei Kickbase: Summe, aufklappbar */
+/* „Korrekturen (n)“ wie bei Kickbase: Summe; Antippen öffnet ein eigenes Blatt mit allen Korrekturen */
 function corrHtml(ev) {
   const list = corrections(ev);
   if (!list.length) return '';
   const sum = list.reduce((s, x) => s + x.p, 0);
-  return '<li class="row corr" data-mt="corr" aria-expanded="' + state.open + '"><span class="rp ' + cls(sum) + '">' + fmt(sum) + '</span><span class="rl">Korrekturen <em>(' + list.length + ')</em></span><span class="rt chev">›</span></li>' +
-    (state.open ? list.map(x => rowLi({ p: x.p, label: x.label, r: x.t >= 0 ? Math.floor(x.t / 60) + 1 + '’' : '' })).join('') + '<li class="corr-end"></li>' : '');
+  return '<li class="row corr" data-mt="corr" role="button" tabindex="0" aria-label="Korrekturen ansehen"><span class="rp ' + cls(sum) + '">' + fmt(sum) + '</span><span class="rl">Korrekturen <em>(' + list.length + ')</em></span><span class="rt chev">›</span></li>';
+}
+function renderCorr() {
+  const list = corrections(cachedEvents(state.uid) || []);
+  $('corrBody').innerHTML = '<h2 class="corr-h">Korrekturen</h2><ul class="rows mrows">' +
+    (list.length ? list.map(x => rowLi({ p: x.p, label: x.label, r: x.t >= 0 ? Math.floor(x.t / 60) + 1 + '’' : '' })).join('') : '<li class="hmsg">Keine Korrekturen.</li>') + '</ul>';
+  $('corrScroll').scrollTop = 0;
 }
 
 /* Admin: Leiste mit neuem Stand + Nachtragen */
@@ -127,6 +132,8 @@ async function saveFix() {
 export function initMatch() {
   registerView('match', { elements: ['match'], render, overlay: true,
     leave: () => { fix.on = false; fix.ev = null; fix.pick = false; } });
+  registerView('corr', { elements: ['corr'], render: renderCorr, overlay: true });
+  bindSheet($('corr'), $('corrScroll'), () => back());
   const sc = $('matchScroll');
   bindSheet($('match'), sc, () => back());
   sc.addEventListener('scroll', () => { const h = sc.querySelector('.mhero'); $('matchMini').classList.toggle('on', !!h && sc.scrollTop > h.offsetHeight - 150); }, { passive: true });
@@ -148,7 +155,7 @@ export function initMatch() {
     if (k === 'edit') { openHofGame(state.uid); return; }
     /* Profil legt sich über das Spiel-Blatt; „Zurück“ dort führt wieder hierher */
     if (k === 'prof') { if (g) openProfile(g.player); return; }
-    if (k === 'corr') { state.open = !state.open; render(true); return; }
+    if (k === 'corr') { show('corr'); return; }
     if (k === 'fix') { fix.on = true; fix.ev = (cachedEvents(state.uid) || []).slice(); fix.base = scoreBase(g, fix.ev); fix.orig = scoreOrig(fix.base, fix.ev); fix.pick = false; fix.min = ''; resettle(); render(true); return; }
     /* Ergebnis: + bucht ein Tor nach, − nimmt das letzte Tor dieser Seite heraus */
     if (k.startsWith('sc:')) {
