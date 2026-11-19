@@ -9,19 +9,48 @@ const views = new Map();
 export const nav = { current: null, previous: null, stack: [] };
 const ROOT = 'start';
 let wasOverlay = false;
+/* Scrollposition je Ansicht: beim Zurückgehen landet man wieder an derselben Stelle */
+const scrollMem = new Map();
+/* Scrollen stellt die App selbst wieder her – sonst setzt der Browser es bei der Zurück-Taste auf 0 */
+try { history.scrollRestoration = 'manual'; } catch (e) {}
+const reduced = () => window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* Ansicht gleitet herein (vorwärts von rechts, zurück von links). Fest positionierte Teile (Knöpfe unten)
+   werden nur eingeblendet – ein transform würde sie sonst kurz an die falsche Stelle setzen. */
+function slideIn(def, dir) {
+  if (reduced() || !Element.prototype.animate) return;
+  const dx = dir === 'back' ? -28 : 28;
+  for (const id of def.elements) {
+    const root = document.getElementById(id);
+    for (const el of root.children) {
+      const fixed = getComputedStyle(el).position === 'fixed';
+      el.animate(fixed ? [{ opacity: 0 }, { opacity: 1 }] : [{ opacity: 0, transform: 'translateX(' + dx + 'px)' }, { opacity: 1, transform: 'none' }],
+        { duration: 240, easing: 'cubic-bezier(.2, .8, .2, 1)' });
+    }
+  }
+}
 
 export function registerView(name, def) { views.set(name, def); }
+/* Elemente der gerade sichtbaren Ansicht */
+export const currentEls = () => ((views.get(nav.current) || {}).elements || []).map(id => document.getElementById(id)).filter(Boolean);
 
 export function show(name, opts = {}) {
   const def = views.get(name);
   if (!def) return;
   if (def.guard) { const redirect = def.guard(); if (redirect && redirect !== name) return show(redirect, opts); }
-  if (nav.current && nav.current !== name) { const old = views.get(nav.current); if (old && old.leave) old.leave(); }
+  const from = nav.current, old = from ? views.get(from) : null;
+  if (old && from !== name) {
+    if (old.leave) old.leave();
+    if (!old.overlay) scrollMem.set(from, window.scrollY);
+  }
   const st = nav.stack;
+  const wasInStack = name === ROOT ? !!from : st.includes(name);
   if (name === ROOT) st.length = 0;
   else if (!st.length || st[0] !== ROOT) st.unshift(ROOT);
   const i = st.indexOf(name);
   if (i >= 0) st.length = i + 1; else st.push(name);
+  /* Ansichten, die man vorwärts neu öffnet, starten oben */
+  if (!wasInStack) scrollMem.delete(name);
   nav.previous = st.length > 1 ? st[st.length - 2] : null;
   nav.current = name;
   /* Blätter (overlay) liegen über der Ansicht darunter: die bleibt sichtbar */
@@ -35,7 +64,9 @@ export function show(name, opts = {}) {
   document.body.classList.toggle('sheet-open', !!def.overlay);
   if (def.enter) def.enter(opts);
   def.render();
-  if (!opts.keepScroll && !def.overlay && !wasOverlay) window.scrollTo(0, 0);
+  if (!opts.keepScroll && !def.overlay && !wasOverlay) window.scrollTo(0, wasInStack ? scrollMem.get(name) || 0 : 0);
+  /* Gleiten nur zwischen normalen Ansichten; Blätter haben ihre eigene Animation */
+  if (from && from !== name && !def.overlay && !wasOverlay && !opts.noAnim) slideIn(def, wasInStack ? 'back' : 'fwd');
   wasOverlay = !!def.overlay;
   armHistory();
 }

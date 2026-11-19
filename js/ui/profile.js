@@ -10,7 +10,7 @@ import { recordTeam, scoreText } from '../core/game.js';
 import { marketOf, byDate } from '../core/market.js';
 import { statusIcon } from '../core/icons.js';
 import { games, loadGames, loadPlayerEvents } from '../services/api.js';
-import { profileChart, scrollToCurrent, playerStats } from './components.js';
+import { profileChart, scrollToCurrent, playerStats, skeleton } from './components.js';
 import { registerView, show, back, nav } from '../router.js';
 import { SEASON } from '../config.js';
 import { requestNewGame } from './start.js';
@@ -132,7 +132,7 @@ function html() {
   let h = '';
   if (state.tab === 'ov') h += hero(p, id, mw) + '<div class="pbody">' + clubRow(c) + overview(p, id, played, mw) + '</div>';
   else h += '<div class="pbody">' + miniHead(p) + (state.tab === 'perf' ? performance(id, played, p) : marketTab(id, played, mw)) + '</div>';
-  if (games.busy && !games.list) h += '<p class="hmsg">Lädt …</p>';
+  if (games.busy && !games.list) h += skeleton(3);
   return h;
 }
 

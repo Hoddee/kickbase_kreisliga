@@ -9,7 +9,7 @@ import { marketOf, byDate } from '../core/market.js';
 import { games, loadGames, loadEvents, cachedEvents, forgetEvents, updateGame, deleteGame } from '../services/api.js';
 import { isAdmin, canManage } from '../services/auth.js';
 import { ICON } from '../core/icons.js';
-import { avatar, nameWithStatus, rowLi, rowsFromRecord, whistleLi, areaBars, gameRow } from './components.js';
+import { avatar, nameWithStatus, rowLi, rowsFromRecord, whistleLi, areaBars, gameRow, skeleton } from './components.js';
 import { registerView, show, back as goBack, nav } from '../router.js';
 import { openMatch } from './match.js';
 
@@ -123,7 +123,7 @@ function gameHtml() {
     '<div class="gname">' + nameWithStatus(g.player) + '</div><div class="gbig">' + g.points + '</div>' +
     '<div class="gm"><img src="' + esc(crestUrl(l)) + '" alt="">' + scoreText(g, g.home) + '<img src="' + esc(crestUrl(r)) + '" alt=""></div>' +
     '<div class="gsub">' + dateShort(g.played_at) + ' · ' + POS_NAME[g.pos] + ' · ' + g.minutes + ' Min.' + (g.manual ? ' · Nachtrag' : '') + '</div></div>' + adminTools(g);
-  if (!ev) return head + (ui.eventsError ? '<p class="hmsg">Keine Verbindung.</p><button type="button" class="btn full" data-hof="g:' + esc(g.uid) + '">Nochmal versuchen</button>' : '<p class="hmsg">Lädt …</p>');
+  if (!ev) return head + (ui.eventsError ? '<p class="hmsg">Keine Verbindung.</p><button type="button" class="btn full" data-hof="g:' + esc(g.uid) + '">Nochmal versuchen</button>' : skeleton(6, true));
   const sums = new Map();
   for (const x of ev) {
     if (x.k === 'ht' || x.k === 'sub' || x.x) continue;
@@ -141,7 +141,7 @@ function overviewHtml() {
     '<button type="button" data-hof="t:' + k + '" aria-pressed="' + (ui.tab === k) + '">' + t + '</button>').join('') + '</div>' +
     '<div class="lgs">' + [['ALL', 'Alle'], ['A2', 'Kreisliga A2'], ['B2', 'Kreisliga B2'], ['B5', 'B5']].map(([k, t]) =>
       '<button type="button" data-hof="l:' + k + '" aria-pressed="' + (ui.league === k) + '">' + t + '</button>').join('') + '</div>';
-  if (games.busy && !games.list) return h + '<p class="hmsg">Lädt …</p>';
+  if (games.busy && !games.list) return h + skeleton(6);
   if (!games.list) return h + '<p class="hmsg">Keine Verbindung.</p><button type="button" class="btn full" data-hof="reload">Nochmal versuchen</button>';
   const list = games.list.filter(inLeague);
   if (!list.length) return h + '<p class="hmsg">Noch keine Spiele gespeichert.</p>';

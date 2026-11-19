@@ -8,6 +8,9 @@ import { marketOf } from '../core/market.js';
 import { games } from '../services/api.js';
 import { SEASON } from '../config.js';
 
+/* Platzhalter beim Laden (graue Zeilen statt „Lädt …“) */
+export const skeleton = (n = 5, small = false) => '<ul class="sk-list" aria-label="Lädt">' +
+  ('<li class="sk-row' + (small ? ' sm' : '') + '"><i class="sk c"></i><span><i class="sk w60"></i><i class="sk w35"></i></span><i class="sk n"></i></li>').repeat(n) + '</ul>';
 export const halftimeLi = () => '<li class="ht">' + ICON.halftime + 'Halbzeit</li>';
 export const subLi = x => '<li class="ht sub ' + (x.o === 'in' ? 'in' : 'out') + '">' + (x.o === 'in' ? ICON.subIn : ICON.subOut) +
   (x.o === 'in' ? 'Eingewechselt' : 'Ausgewechselt') + (x.t >= 0 ? ' ' + minStamp(x.t) : '') + '</li>';

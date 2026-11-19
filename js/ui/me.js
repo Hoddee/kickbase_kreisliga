@@ -7,7 +7,7 @@ import { nextFixture } from '../data/schedule.js';
 import { marketOf, byDate } from '../core/market.js';
 import { games, loadGames } from '../services/api.js';
 import { myPlayer, isLoggedIn } from '../services/auth.js';
-import { sparkline } from './components.js';
+import { sparkline, skeleton } from './components.js';
 import { registerView, show, nav } from '../router.js';
 import { requestNewGame } from './start.js';
 import { openSetup } from './setup.js';
@@ -86,7 +86,7 @@ const whenText = d => { const n = daysUntil(d); return n <= 0 ? 'Heute' : n === 
 function html() {
   const id = myPlayer();
   if (!id || !PL[id]) return '<p class="hmsg">Nur für freigeschaltete Spieler.</p>';
-  if (!games.list) return '<p class="hmsg">Lädt …</p>';
+  if (!games.list) return skeleton(4);
   const p = PL[id], l = gamesOf(id), mw = marketOf(id, games.list), table = standings();
   const rank = table.findIndex(x => x.p === id), mine = rank >= 0 ? table[rank].t : 0;
   const avg = l.length ? Math.round(sum(l, g => g.points) / l.length) : null;
