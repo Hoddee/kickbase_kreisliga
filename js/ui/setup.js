@@ -8,7 +8,7 @@ import { store, replaceGame, freshGame, applyMatchNames, applyMedia, eachPlayer,
 import { marketOf } from '../core/market.js';
 import { cutout } from '../core/cutout.js';
 import { games, loadGames, uploadGuestImage } from '../services/api.js';
-import { isAdmin, canManage } from '../services/auth.js';
+import { isAdmin, canManage, isLoggedIn, myPlayer, currentUser } from '../services/auth.js';
 import { avatar, nameWithStatus, playerRow as baseRow } from './components.js';
 import { registerView, show, nav } from '../router.js';
 import { prepareManual, resetTab } from './booking.js';
@@ -219,10 +219,41 @@ export function render() {
   applyTier(0);
 }
 
+/* Wer trägt ein? Angemeldet: Spielername bzw. E-Mail-Name, sonst der gemerkte Name von diesem Gerät */
+export function recorderName() {
+  if (isLoggedIn()) {
+    const id = myPlayer(), u = currentUser();
+    if (id && PL[id]) return fullName(PL[id]);
+    return u && u.email ? u.email.split('@')[0].slice(0, 40) : null;
+  }
+  return readJson(KEYS.recorder, '') || null;
+}
+/* Nicht angemeldet und noch kein Name: einmal fragen (Blatt von unten) */
+export function askName(onDone, current = '') {
+  const el = document.createElement('div');
+  el.className = 'sheet-bg';
+  el.innerHTML = '<form class="sheet" role="dialog" aria-modal="true" aria-labelledby="nmT"><h3 id="nmT">Dein Name</h3>' +
+    '<input class="fi" id="nmI" type="text" maxlength="40" autocomplete="name" autocapitalize="words" enterkeyhint="go" value="' + esc(current) + '">' +
+    '<button type="submit" class="btn primary full" id="nmGo" style="margin-top:12px;min-height:52px">Weiter</button></form>';
+  const inp = el.querySelector('#nmI'), go = el.querySelector('#nmGo');
+  const upd = () => { go.disabled = inp.value.trim().length < 2; };
+  inp.addEventListener('input', upd); upd();
+  el.addEventListener('click', e => { if (e.target === el) el.remove(); });
+  el.querySelector('form').addEventListener('submit', e => {
+    e.preventDefault();
+    const n = inp.value.trim().replace(/\s+/g, ' ').slice(0, 40);
+    if (n.length < 2) return;
+    writeJson(KEYS.recorder, n); el.remove(); onDone(n);
+  });
+  document.body.appendChild(el);
+  setTimeout(() => inp.focus(), 50);
+}
 function start() {
   if (!(sel.p && sel.o) || forms.busy) return;
   if (sel.manual && !canManage(sel.p)) return;
+  if (!recorderName()) { askName(() => start()); return; }
   const g = freshGame({ pos: sel.pos });
+  g.by = recorderName();
   g.match = { p: sel.p, o: sel.o, home: sel.home, team: sel.team || defaultTeam(sel.p) };
   if (isGuest(sel.p) && sel.pf) g.match.pf = sel.pf;
   if (isCustomClub(sel.o) && sel.of) g.match.of = sel.of;

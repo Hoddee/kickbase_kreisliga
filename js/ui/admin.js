@@ -1,11 +1,11 @@
 /* Konto-Bereich: Anmelden, Registrieren (Spielerkonto), Passwort.
    Spieler: Freigabe-Status, eigene Spiele nachtragen. Admin: Anfragen freischalten, Spiel nachtragen, Kader pflegen. */
-import { $, esc, eur, toast, applyTier } from '../core/util.js';
+import { $, esc, eur, toast, applyTier, readJson } from '../core/util.js';
 import { PL, PLAYER_LIST, POS_NAME, POS_ORDER, STATUS_NAME, fullName } from '../data/players.js';
 import { CL, CLUB_LIST, LEAGUES, crestUrl } from '../data/clubs.js';
 import { TEAMS, allFixtures } from '../data/schedule.js';
 import { pad2 } from '../core/util.js';
-import { APP_VERSION } from '../config.js';
+import { APP_VERSION, KEYS } from '../config.js';
 import { login, logout, signup, currentUser, isLoggedIn, isAdmin, myAccount, myPlayer, requestAccount, refreshAdminFlag, requestPasswordReset, updatePassword, onAuthChange } from '../services/auth.js';
 import { cutout } from '../core/cutout.js';
 import { loadRoster, updatePlayer, insertPlayer, uploadPhoto, games, loadAccounts, decideAccount, loadSchedule, saveFixture, deleteFixture } from '../services/api.js';
@@ -15,7 +15,7 @@ import { marketOf } from '../core/market.js';
 import { ICON, statusIcon } from '../core/icons.js';
 import { avatar } from './components.js';
 import { registerView, show, nav } from '../router.js';
-import { openSetup } from './setup.js';
+import { openSetup, askName } from './setup.js';
 
 const ui = { spTeam: 'vfr', spEdit: null, spDel: null, mode: 'login', busy: false, msg: '', editing: null, passwordMode: false, email: '', adding: false, accounts: null, changePlayer: false };
 
@@ -214,7 +214,7 @@ export function render() {
   else if (!isLoggedIn()) h = loginHtml();
   else if (isAdmin()) h = adminHtml();
   else h = playerHtml();
-  $('adminBody').innerHTML = h + '<button type="button" class="lnk" data-adm="intro">Einführung ansehen</button><button type="button" class="lnk" data-adm="tourbook">Punktevergabe erklärt</button><p class="appver">Version ' + APP_VERSION + '</p>';
+  $('adminBody').innerHTML = h + (!isLoggedIn() && readJson(KEYS.recorder, '') ? '<button type="button" class="lnk" data-adm="rname">Name ändern · ' + esc(readJson(KEYS.recorder, '')) + '</button>' : '') + '<button type="button" class="lnk" data-adm="intro">Einführung ansehen</button><button type="button" class="lnk" data-adm="tourbook">Punktevergabe erklärt</button><p class="appver">Version ' + APP_VERSION + '</p>';
   $('admTitle').textContent = isLoggedIn() && isAdmin() ? 'Admin' : 'Konto';
   applyTier(0);
 }
@@ -344,6 +344,7 @@ export function initAdmin() {
     else if (k === 'mode-register') { ui.mode = 'register'; ui.msg = ''; }
     else if (k === 'intro') { showIntro(); return; }
     else if (k === 'tourbook') { showBookingTour(); return; }
+    else if (k === 'rname') { askName(() => render(), readJson(KEYS.recorder, '')); return; }
     else if (k === 'change-player') { ui.changePlayer = true; ui.msg = ''; }
     else if (k === 'change-cancel') ui.changePlayer = false;
     else if (k === 'refresh') { await refreshAdminFlag(); toast(myPlayer() ? 'Du bist freigeschaltet!' : 'Noch nicht freigeschaltet'); }

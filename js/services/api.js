@@ -25,6 +25,9 @@ const json = { 'Content-Type': 'application/json' };
 
 /* ---------- Spiele ---------- */
 const LIST_FIELDS = 'uid,created_at,played_at,season,player,opp,home,pos,us,them,minutes,points,goals,assists,manual,team,player_foto,opp_foto';
+/* „erfasst_von“ kommt mit Migration 011 – bis sie ausgeführt ist, ohne die Spalte weiterarbeiten */
+let byCol = true;
+const noByCol = e => /erfasst_von/.test(e && e.message || '');
 
 export const games = { list: null, busy: false, error: false, failedAt: 0 };
 const gameListeners = new Set();
@@ -36,7 +39,9 @@ export async function loadGames(force = false) {
   if (!force && games.error && Date.now() - games.failedAt < 20000) return games.list;
   games.busy = true; games.error = false;
   try {
-    const r = await rest('spiele?select=' + LIST_FIELDS + '&order=played_at.desc&limit=2000');
+    let r;
+    try { r = await rest('spiele?select=' + LIST_FIELDS + (byCol ? ',erfasst_von' : '') + '&order=played_at.desc&limit=2000'); }
+    catch (e) { if (!byCol || !noByCol(e)) throw e; byCol = false; r = await rest('spiele?select=' + LIST_FIELDS + '&order=played_at.desc&limit=2000'); }
     const d = await r.json();
     /* Live gebuchte Spiele ohne Einsatzminuten (nur auf der Bank) zählen nirgends mit.
        Nachträge hat jemand bewusst eingetragen – die bleiben immer. */
@@ -50,8 +55,10 @@ export async function loadGames(force = false) {
 }
 
 export async function insertGame(row) {
+  const post = r => rest('spiele', { method: 'POST', headers: Object.assign({ Prefer: 'return=minimal' }, json), body: JSON.stringify(r) });
   try {
-    await rest('spiele', { method: 'POST', headers: Object.assign({ Prefer: 'return=minimal' }, json), body: JSON.stringify(row) });
+    try { await post(row); }
+    catch (e) { if (!('erfasst_von' in row) || !noByCol(e)) throw e; byCol = false; const r = Object.assign({}, row); delete r.erfasst_von; await post(r); }
   } catch (e) {
     if (e.status !== 409) throw e; // 409 = schon gespeichert (z. B. doppelter Tipp)
   }

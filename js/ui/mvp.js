@@ -1,7 +1,7 @@
 /* Spieltag: MVP-Stage mit den Top 3.
-   Ein Spieltag ist eine Woche (Montag 0:00 bis Sonntag 24:00, Uhrzeit des Geräts). Sonntag ab 19:00 wird er „gelauncht“:
-   Die MVP-Stage (Top 3 mit Animation) öffnet sich einmal von selbst, danach über die Karte auf der Liga-Seite.
-   Gezählt wird je Spieler sein bestes Spiel der Woche. Bis Sonntag 19:00 bleibt der vorige Spieltag sichtbar. */
+   Ein Spieltag ist eine Woche (Montag 0:00 bis Sonntag 24:00, Uhrzeit des Geräts). Am Montag danach um 19:00 wird er
+   „gelauncht“: Die MVP-Stage (Top 3 mit Animation) öffnet sich einmal von selbst, danach über die Karte auf der Liga-Seite
+   und den MVP-Verlauf in der Hall of Fame. Gezählt wird je Spieler sein bestes Spiel der Woche. */
 import { $, esc, tierOf, buzz, readJson, writeJson, pad2 } from '../core/util.js';
 import { KEYS } from '../config.js';
 import { PL, POS_SHORT, photoUrl } from '../data/players.js';
@@ -14,9 +14,10 @@ import { TIER_COLOR, loadImg, fontsReady, shareCanvas, roundRect, narrow } from 
 
 const DAY = 864e5, REVEAL_H = 19;
 const weekStart = d => { const x = new Date(d); x.setHours(0, 0, 0, 0); x.setDate(x.getDate() - (x.getDay() + 6) % 7); return x; };
-const revealAt = ws => { const r = new Date(ws); r.setDate(r.getDate() + 6); r.setHours(REVEAL_H, 0, 0, 0); return r; };
+/* Vorstellung: Montag nach dem Spieltag, 19:00 */
+const revealAt = ws => { const r = new Date(ws); r.setDate(r.getDate() + 7); r.setHours(REVEAL_H, 0, 0, 0); return r; };
+const addWeeks = (ws, n) => { const d = new Date(ws); d.setDate(d.getDate() + 7 * n); return d; };
 const idOf = ws => ws.getFullYear() + '-' + pad2(ws.getMonth() + 1) + '-' + pad2(ws.getDate());
-const range = ws => { const e = new Date(ws.getTime() + 6 * DAY); return pad2(ws.getDate()) + '.' + (ws.getMonth() === e.getMonth() ? '' : pad2(ws.getMonth() + 1) + '.') + '–' + pad2(e.getDate()) + '.' + pad2(e.getMonth() + 1) + '.'; };
 
 /* Spieltag-Nummer: Woche 09.–15.11.2026 war der 13. Spieltag. Danach zählt jede Woche mit Spielen im Spielplan
    (Winterpause wird übersprungen), davor wird wochenweise zurückgerechnet. Zum Saisonwechsel den Anker anpassen. */
@@ -42,12 +43,24 @@ function bestOf(ws) {
   }
   return [...best.values()].sort((a, b) => b.points - a.points || (b.goals || 0) - (a.goals || 0));
 }
-/* Welcher Spieltag ist gerade dran? Vor Sonntag 19:00 der vorige; dazu ein Hinweis, wann der nächste startet */
+/* Ein Spieltag zählt (Stage, Titel, Verlauf) erst ab 3 verschiedenen Spielern mit eingetragenem Spiel */
+const MIN_PLAYERS = 3;
+const mdOf = ws => { const list = bestOf(ws); return { id: idOf(ws), ws, title: mdTitle(ws), list: list.length >= MIN_PLAYERS ? list : [] }; };
+/* Welcher Spieltag ist gerade dran? Bis Montag 19:00 noch der vorvorige; dazu, wann der nächste vorgestellt wird */
 export function current(now = new Date()) {
-  const ws = weekStart(now), rv = revealAt(ws), live = now >= rv;
-  const shown = live ? ws : new Date(ws.getTime() - 7 * DAY);
-  const list = bestOf(shown), next = live ? null : { at: rv, count: bestOf(ws).length };
-  return { id: idOf(shown), ws: shown, label: range(shown), title: mdTitle(shown), list, next };
+  const ws = weekStart(now), last = addWeeks(ws, -1), live = now >= revealAt(last);
+  const shown = live ? last : addWeeks(ws, -2), upcoming = live ? ws : last;
+  return Object.assign(mdOf(shown), { next: { at: revealAt(upcoming), count: bestOf(upcoming).length } });
+}
+/* Alle schon vorgestellten Spieltage mit Spielen, neueste zuerst (MVP-Verlauf) */
+export function history(now = new Date()) {
+  const out = [], first = (games.list || []).reduce((m, g) => Math.min(m, new Date(g.played_at).getTime()), Infinity);
+  if (first === Infinity) return out;
+  for (let ws = current(now).ws; ws.getTime() + 7 * DAY > first; ws = addWeeks(ws, -1)) {
+    const md = mdOf(ws);
+    if (md.list.length) out.push(md);
+  }
+  return out;
 }
 
 /* ---------- Karte auf der Liga-Seite ---------- */
@@ -55,21 +68,32 @@ function until(at) {
   const m = Math.max(0, Math.round((at - Date.now()) / 6e4));
   if (m < 60) return 'in ' + m + ' Min';
   if (m < 24 * 60) return 'in ' + Math.floor(m / 60) + ' Std ' + (m % 60) + ' Min';
-  return 'Sonntag ' + REVEAL_H + ':00';
+  return 'Montag ' + REVEAL_H + ':00';
+}
+/* Ankündigung, solange die Stage neu ist (bis 07.12.2026, wegklickbar) */
+const NEWS_UNTIL = new Date(2026, 11, 7, 23, 59);
+function newsHtml() {
+  if (Date.now() > NEWS_UNTIL || readJson(KEYS.mvpNews, false)) return '';
+  return '<div class="md-news"><span class="md-news-k">Neu</span><b>Ab jetzt jeden Montag um 19 Uhr: die MVP-Stage</b>' +
+    '<button type="button" class="md-news-x" data-md="news-x" aria-label="Ausblenden">×</button></div>';
 }
 export function spieltagCardHtml() {
   if (!games.list) return '';
-  const md = current(), top = md.list.slice(0, 3);
-  const teaser = md.next && md.next.count ? '<div class="md-next"><i></i><span><b>MVP-Stage</b> ' + esc(until(md.next.at)) + '</span><small>' + md.next.count + ' Spieler</small></div>' : '';
-  if (!top.length) return teaser ? '<h2>' + esc(mdTitle(weekStart(new Date()))) + '</h2>' + teaser : '';
-  const order = [top[1], top[0], top[2]].filter(Boolean);
-  return '<h2 class="lh2">' + esc(md.title) + '<small>' + esc(md.label) + '</small></h2>' + teaser +
-    '<div class="mdc"><div class="mdc-pod">' + order.map(g => {
+  const md = current(), top = md.list.slice(0, 3), news = newsHtml();
+  const teaser = md.next.count ? '<div class="md-next"><i></i><span><b>MVP-Stage</b> ' + esc(until(md.next.at)) + '</span><small>' + md.next.count + ' Spieler</small></div>' : '';
+  if (!top.length) return teaser || news ? '<h2>MVP-Stage</h2>' + news + teaser : '';
+  return '<h2>' + esc(md.title) + '</h2>' + news + teaser + podiumCard(md, true);
+}
+/* Podest-Karte (Liga-Seite und MVP-Verlauf); live = aktueller Spieltag */
+const PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>';
+export function podiumCard(md, live) {
+  const top = md.list.slice(0, 3), order = [top[1], top[0], top[2]].filter(Boolean);
+  return '<div class="mdc">' + (live ? '' : '<div class="mdc-t">' + esc(md.title) + '</div>') + '<div class="mdc-pod">' + order.map(g => {
       const r = top.indexOf(g) + 1;
       return '<button type="button" class="mdc-p r' + r + ' tc" data-tier="' + tierOf(g.points) + '" data-match="' + esc(g.uid) + '">' + avatar(g.player) +
         '<i>' + r + '</i><span>' + esc(PL[g.player].n) + '</span><b>' + g.points + '</b></button>';
     }).join('') + '</div>' +
-    '<button type="button" class="btn primary full mdc-go" data-md="stage"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>MVP-Stage</button></div>';
+    '<button type="button" class="btn ' + (live ? 'primary' : '') + ' full mdc-go" data-md="stage' + (live ? '' : ':' + esc(md.id)) + '">' + PLAY + 'MVP-Stage</button></div>';
 }
 
 /* ---------- MVP-Stage ---------- */
@@ -79,7 +103,7 @@ function stageHtml(md) {
   const top = md.list.slice(0, 3), slots = [[top[1], 2], [top[0], 1], [top[2], 3]].filter(x => x[0]);
   return '<div class="mvp-bg" aria-hidden="true"><i class="mvp-beam b1"></i><i class="mvp-beam b2"></i><i class="mvp-beam b3"></i></div>' +
     '<div class="mvp-in"><button type="button" class="mvp-x" data-md="close" aria-label="Schließen">×</button>' +
-    '<div class="mvp-head"><small>' + esc(md.title) + ' · ' + esc(md.label) + '</small><h1>MVP<span>des Spieltags</span></h1></div>' +
+    '<div class="mvp-head"><small>' + esc(md.title) + '</small><h1>MVP<span>des Spieltags</span></h1></div>' +
     '<div class="mvp-pod">' + slots.map(([g, r]) => {
       const p = PL[g.player];
       return '<button type="button" class="mp r' + r + '" data-r="' + r + '" data-match="' + esc(g.uid) + '" style="--c:' + TIER_COLOR[tierOf(g.points)] + '">' +
@@ -125,11 +149,14 @@ function finish() {
   [3, 2, 1].forEach(r => reveal(r, true));
   stage.el.classList.add('mvp-done'); stage.el.classList.remove('mvp-drum');
 }
+/* pick = ID eines älteren Spieltags (aus dem MVP-Verlauf), sonst der aktuelle */
+let pick = null;
+const pickedMd = () => (pick && history().find(m => m.id === pick)) || current();
 function renderStage() {
-  const md = current(), el = $('mvp');
+  const md = pickedMd(), el = $('mvp');
   if (stage) stage.timers.forEach(clearTimeout);
   stage = { el, md, timers: [] };
-  writeJson(KEYS.mvpSeen, md.id);
+  if (md.id === current().id) writeJson(KEYS.mvpSeen, md.id);
   el.className = 'mvp';
   el.innerHTML = stageHtml(md);
   if (reduced()) { finish(); return; }
@@ -146,18 +173,18 @@ function renderStage() {
 export function maybeLaunch() {
   if (!games.list || nav.current !== 'start' || !introSeen() || document.getElementById('tour') || document.body.classList.contains('sheet-open')) return;
   const md = current();
-  if (md.list.length && readJson(KEYS.mvpSeen, '') !== md.id) show('mvp');
+  if (md.list.length && readJson(KEYS.mvpSeen, '') !== md.id) { pick = null; show('mvp'); }
 }
 
 /* ---------- Teilen ---------- */
 async function shareTop() {
-  const md = current(), top = md.list.slice(0, 3);
+  const md = stage ? stage.md : current(), top = md.list.slice(0, 3);
   if (!top.length) return;
   const W = 1080, H = 1350, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
   const x = cv.getContext('2d'), photos = await Promise.all(top.map(g => loadImg(photoUrl(g.player)))); await fontsReady();
   x.fillStyle = '#131417'; x.fillRect(0, 0, W, H);
   for (let yy = 30; yy < 700; yy += 54) for (let xx = 27; xx < W; xx += 54) { x.fillStyle = 'rgba(255,255,255,' + (0.16 * (1 - yy / 700)).toFixed(3) + ')'; x.beginPath(); x.arc(xx, yy, 3, 0, 6.2832); x.fill(); }
-  x.textAlign = 'center'; x.fillStyle = '#a8adb4'; x.font = '600 30px "Inter Tight", Arial, sans-serif'; x.fillText(md.title.toUpperCase() + ' · ' + md.label, W / 2, 96);
+  x.textAlign = 'center'; x.fillStyle = '#a8adb4'; x.font = '600 30px "Inter Tight", Arial, sans-serif'; x.fillText(md.title.toUpperCase(), W / 2, 96);
   x.fillStyle = '#f4f6f9'; x.font = '800 120px "KL Pitch", Arial, sans-serif'; narrow(x, true); x.fillText('MVP', W / 2, 220); narrow(x, false);
   /* [Index in top, Mitte x, Platz, Höhe] – Platz 1 zuletzt, damit sein Foto vorne liegt */
   const slot = [[1, W / 2 - 330, 2, 340], [2, W / 2 + 330, 3, 260], [0, W / 2, 1, 470]];
@@ -180,7 +207,8 @@ export function initMvp() {
     const b = e.target.closest('[data-md]');
     if (b) {
       const k = b.dataset.md;
-      if (k === 'stage') show('mvp');
+      if (k === 'stage' || k.startsWith('stage:')) { pick = k.slice(6) || null; show('mvp'); }
+      else if (k === 'news-x') { writeJson(KEYS.mvpNews, true); const n = b.closest('.md-news'); if (n) n.remove(); }
       else if (k === 'close') back();
       else if (k === 'share-top') shareTop();
       return;
@@ -188,6 +216,6 @@ export function initMvp() {
     /* Tipp auf die Bühne überspringt die Animation */
     if (stage && e.target.closest('#mvp') && !stage.el.classList.contains('mvp-done')) { e.stopPropagation(); e.preventDefault(); finish(); }
   }, true);
-  /* Um 19:00 am Sonntag: Liga neu zeichnen und die Stage starten, falls die App gerade offen ist */
+  /* Um 19:00 am Montag: Liga neu zeichnen und die Stage starten, falls die App gerade offen ist */
   setInterval(() => { if (nav.current === 'start') { const md = current(); if (readJson(KEYS.mvpSeen, '') !== md.id && md.list.length) maybeLaunch(); } }, 30000);
 }
