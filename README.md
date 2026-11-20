@@ -10,8 +10,11 @@ Live-Ticker für Zuschauer. Installierbar als App (Home-Bildschirm).
 
 - **Liga:** Live-Spiele, nächste Spiele, Spieler der Woche, letzte Spiele. Menü unten (Liga, Kader, Spiel, Ranking, Ich),
   zwischen den Bereichen wischen.
-- **Punkte vergeben:** bis zu 7 Spieler pro Spiel, Spieluhr mit Halbzeit, Ein-/Auswechseln, Aktionen nach Reitern
+- **Punkte vergeben:** bis zu 15 Spieler pro Spiel, Spieluhr mit Halbzeit, Ein-/Auswechseln, Aktionen nach Reitern
   (Angriff, Abwehr, Fehler) mit Suche, Leiste „Zuletzt gebucht“ (löschen oder anderem Spieler geben).
+- **Mitbuchen:** bis zu 3 weitere Handys buchen per QR-Code mit (ohne Konto, nur Name). Jeder sperrt seine Spieler,
+  Tore darf jeder melden; Uhr, Wechsel, Abpfiff und Speichern bleiben beim Gastgeber.
+- **Ein-Hand-Modus:** sechs große Kacheln im Daumenbereich.
 - **Tor-Assistent:** nach dem Team-Tor in Schritten Torschütze → Vorlage (mit Extras) → Einleitung, beim Gegentor der Verursacher.
 - **Nachtrag:** Spiele nachträglich mit Minuten und Ergebnis eintragen.
 - **Profil:** Punkte pro Spiel, Marktwert-Verlauf, Form, Erfolge; Spiel-Detail mit allen Aktionen und Korrekturen.
@@ -19,7 +22,7 @@ Live-Ticker für Zuschauer. Installierbar als App (Home-Bildschirm).
 - **Live:** Zuschauer sehen jede Aktion sofort (Supabase Realtime), Live-Link `?live=<Spiel-ID>` zum Teilen.
 - **Teilen:** Spielerkarte und Team-Bild als Bild.
 - **Konten:** Registrieren, vom Admin freischalten lassen, eigene Spiele nachtragen; Admins korrigieren gespeicherte Spiele.
-- **Rundgänge:** Einführung beim ersten Start und „Punktevergabe erklärt“ beim ersten Punkte vergeben (im Konto erneut aufrufbar).
+- **Rundgänge:** mit App-Bildern und eigenen Fotos – Einführung beim ersten Start und „Punktevergabe erklärt“ beim ersten Punkte vergeben (im Konto erneut aufrufbar).
 
 ## Technik
 
@@ -51,11 +54,11 @@ js/
   main.js               Einstieg, Klick-Delegation, Sekundentakt, Wake Lock
   config.js             Supabase, Saison, Version, Speicher-Schlüssel
   router.js             Ansichten mit Verlauf, Blätter von unten
-  core/                 game (Spielzustand + Punkte), correct (Korrekturen), market (Marktwert), cutout (Fotos freistellen), util, icons
+  core/                 game (Spielzustand + Punkte), correct (Korrekturen), market (Marktwert), cutout (Fotos freistellen), qr (QR-Code), util, icons
   data/                 actions (Punktetabelle), clubs, players (Offline-Kader), schedule (Spielpläne)
-  services/             api (REST), auth (Login, Konten), live (Live senden/empfangen)
+  services/             api (REST), auth (Login, Konten), live (Live senden/empfangen), mit (Mitbuchen), push, traffic
   ui/                   start, tabbar, setup, live, booking, goal, squad, match, profile, hof, me, admin, watch,
-                        share, intro, feel, sheet, components
+                        share, intro, feel, sheet, components, onehand, mit, mvp
 supabase/migrations/    SQL für Tabellen und Rechte (fortlaufend nummeriert)
 assets/                 fonts, icons (Logo, App-Icons), img (p = Spielerfotos, p/s = Vorschau, c = Wappen, tut = Rundgang-Bilder; WebP)
 ```

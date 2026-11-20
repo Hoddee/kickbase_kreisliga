@@ -29,10 +29,16 @@ function loadGame() {
   return null;
 }
 export const store = { S: loadGame() || freshGame() };
+/* hooks.save läuft nach jedem Speichern (Mitbuch-Modus: Änderungen weitergeben) */
+export const hooks = { save: null };
 export function saveGame() {
   if (isMulti()) store.S.squad[store.S.cur] = extract(store.S);
-  try { localStorage.setItem(KEYS.game, JSON.stringify(store.S)); } catch (e) {}
+  /* Mitbucher arbeiten auf einer Kopie des fremden Spiels – das eigene Spiel im Speicher bleibt unberührt */
+  if (!store.S.remote) try { localStorage.setItem(KEYS.game, JSON.stringify(store.S)); } catch (e) {}
+  if (hooks.save) try { hooks.save(); } catch (e) {}
 }
+/* Eigenes Spiel wieder aus dem Speicher holen (nach dem Mitbuchen) */
+export function reloadGame() { store.S = loadGame() || freshGame(); applyMatchNames(); }
 
 /* ---------- Mehrere Spieler in einem Spiel ----------
    Gemeinsam: Uhr, Gegner, Spielort, Mannschaft, Spielende. Pro Spieler: Position, Startelf, Einsatzzeiten,
@@ -41,14 +47,14 @@ export function saveGame() {
 const SLOT_KEYS = ['pos', 'startelf', 'stints', 'events', 'subs', 'nextId', 'h2Id', 'uid', 'saved'];
 /* Team-Tor/Gegentor ohne Punkte (Spieler nicht auf dem Platz): zählt fürs Ergebnis, erscheint aber nirgends */
 export const silentGoal = e => (e.key === 'tg' || e.key === 'cg') && !e.pts;
-export const MAX_SQUAD = 7;
+export const MAX_SQUAD = 15;
 export const isMulti = () => !!(store.S.squad && store.S.squad.length > 1);
-function extract(S) {
+export function extract(S) {
   const o = { p: S.match.p, pf: S.match.pf || null };
   for (const k of SLOT_KEYS) o[k] = S[k];
   return o;
 }
-function load(S, o) {
+export function load(S, o) {
   S.match.p = o.p;
   if (o.pf) S.match.pf = o.pf; else delete S.match.pf;
   for (const k of SLOT_KEYS) S[k] = o[k];
@@ -84,6 +90,22 @@ export function addToSquad(p, mode = 'start') {
   S.squad.push(slot);
   saveGame();
   return true;
+}
+/* Team-Tor/Gegentor für alle Spieler buchen; gibt die Gruppen-ID zurück */
+export function bookGoal(key, t, ts) {
+  const a = ACT[key], grp = 'g' + ts;
+  eachPlayer(() => { const P = store.S; P.events.push({ id: P.nextId++, key, label: a.s || a.l, pts: val(a), t, ts, grp }); });
+  saveGame();
+  return grp;
+}
+/* Spiel-ID je Spieler-Eintrag und die Spieler, die dieses Gerät gerade bucht (Mitbucher: nur die gesperrten) */
+export const uidAt = i => (isMulti() ? (i === store.S.cur ? store.S.uid : store.S.squad[i].uid) : store.S.uid);
+export const mineAt = i => !store.S.mine || store.S.mine.includes(uidAt(i));
+/* Nächster Spieler beim Wischen (Mitbucher: nur die eigenen) */
+export function stepPlayer(dir) {
+  const S = store.S, n = isMulti() ? S.squad.length : 1;
+  for (let k = 1; k < n; k++) { const i = (S.cur + dir * k + n * k) % n; if (mineAt(i)) return switchPlayer(i), true; }
+  return false;
 }
 export const squadIds = () => (isMulti() ? eachPlayer(() => store.S.match.p) : store.S.match ? [store.S.match.p] : []);
 

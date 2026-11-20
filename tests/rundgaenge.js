@@ -1,7 +1,7 @@
 const { chromium, devices } = require('playwright');
 (async () => {
   const b = await chromium.launch(); const ctx = await b.newContext({ ...devices['iPhone 13'], serviceWorkers: 'block' });
-  await ctx.addInitScript(() => { if (!sessionStorage.getItem('x')) { localStorage.setItem('kl-intro-v1', 'true'); sessionStorage.setItem('x', 1); } });
+  await ctx.addInitScript(() => { if (!sessionStorage.getItem('x')) { localStorage.setItem('kl-intro-v1', 'true'); localStorage.setItem('kl-recorder', JSON.stringify('Test')); localStorage.setItem('kl-mvp-news', 'true'); localStorage.setItem('kl-mvp-seen', JSON.stringify('2099-01-01')); sessionStorage.setItem('x', 1); } });
   await ctx.route(/supabase\.co/, r => r.request().method() !== 'GET' ? r.fulfill({ status: 201, body: '[]' }) : r.continue());
   const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
   const c = s => p.evaluate(s => { const e = document.querySelector(s); if (!e) return false; e.click(); return true; }, s);
@@ -10,7 +10,7 @@ const { chromium, devices } = require('playwright');
   console.log('Start (alter Nutzer):', await tour());
   await p.screenshot({ path: 'out/t1.png' });
   await c('[data-tr="next"]'); await p.waitForTimeout(400); console.log('Weiter:', await tour()); await p.screenshot({ path: 'out/t2.png' });
-  await c('[data-tr="go:5"]'); await p.waitForTimeout(300); console.log('Punkt 6:', await tour(), '| Knopf:', await p.$eval('.tour-nav .primary', e => e.textContent));
+  await c('[data-tr="go:6"]'); await p.waitForTimeout(300); console.log('Punkt 7:', await tour(), '| Knopf:', await p.$eval('.tour-nav .primary', e => e.textContent));
   await c('[data-tr="done"]'); await p.waitForTimeout(400); console.log('nach Los geht’s:', await tour());
   await p.reload({ waitUntil: 'networkidle' }); await p.waitForTimeout(1500); console.log('nach Neuladen:', await tour());
   await c('[data-tb="game"]'); await p.waitForTimeout(400); await c('[data-pick="p:Klenk"]');

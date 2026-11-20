@@ -71,7 +71,8 @@ function snapshots() {
 const sent = new Map();
 let pubBusy = false, pauseUntil = 0;
 async function publish(force) {
-  if (pubBusy || !navigator.onLine || (!force && Date.now() < pauseUntil)) return;
+  /* Mitbucher senden nichts – live geht das Spiel vom Gastgeber */
+  if (store.S.remote || pubBusy || !navigator.onLine || (!force && Date.now() < pauseUntil)) return;
   pubBusy = true;
   try {
     const want = snapshots(), pub = readPub(), key = await deviceKey();

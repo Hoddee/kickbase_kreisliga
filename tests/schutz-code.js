@@ -2,7 +2,7 @@ const { chromium, devices } = require('playwright');
 const X = '<img src=x onerror="window.__pwned=(window.__pwned||0)+1">';
 (async () => {
   const b = await chromium.launch(); const ctx = await b.newContext({ ...devices['iPhone 13'], serviceWorkers: 'block' });
-  await ctx.addInitScript(() => { for (const k of ['kl-intro-v1', 'kl-intro-v2', 'kl-tour-book-v1', 'kl-mvp-news']) localStorage.setItem(k, 'true'); localStorage.setItem('kl-mvp-seen', JSON.stringify('x')); });
+  await ctx.addInitScript(() => { for (const k of ['kl-intro-v1', 'kl-intro-v2', 'kl-intro-v3', 'kl-tour-book-v2', 'kl-tour-book-v1', 'kl-mvp-news']) localStorage.setItem(k, 'true'); localStorage.setItem('kl-mvp-seen', JSON.stringify('x')); });
   const evil = { uid: 'evil1234567890', created_at: new Date().toISOString(), played_at: new Date().toISOString(), season: '2026/2027', player: 'Klenk', opp: 'tsc', home: true, pos: 'MIT" onmouseover="x', us: X, them: 1, minutes: 90, points: X, goals: X, assists: 0, manual: false, team: 'vfrk', player_foto: X, opp_foto: null, erfasst_von: X };
   const evilEv = [{ k: 'goal', l: X, p: X, t: X }, { k: 'sub', o: X, t: 600 }];
   const liveRow = { uid: 'evilive12345', updated_at: new Date().toISOString(), data: { v: 1, gid: X, i: 0, n: 1, p: 'Klenk', nm: X, vn: X, team: 'vfrk', opp: 'tsc', home: true, us: X, them: X, t: X, ended: false, clock: { el: X, run: true, at: Date.now() }, rows: [{ p: X, l: X, r: X, id: 1 }], by: X, byP: X } };

@@ -3,7 +3,7 @@ const mk = (uid, i, p, nm, t, by, byP) => ({ uid, updated_at: new Date().toISOSt
 const rows = [mk('abcdef123456', 1, 'Klenk', 'Klenk', 120, 'Niklas Collin', 'Collin'), mk('abcdef123457', 2, 'Krauss', 'Krauss', 61, 'Papa Krauss', null)];
 (async () => {
   const b = await chromium.launch(); const ctx = await b.newContext({ ...devices['iPhone 13'], serviceWorkers: 'block' });
-  await ctx.addInitScript(() => { for (const k of ['kl-intro-v1', 'kl-intro-v2', 'kl-tour-book-v1', 'kl-mvp-news']) localStorage.setItem(k, 'true'); localStorage.setItem('kl-mvp-seen', JSON.stringify('x')); });
+  await ctx.addInitScript(() => { for (const k of ['kl-intro-v1', 'kl-intro-v2', 'kl-intro-v3', 'kl-tour-book-v2', 'kl-tour-book-v1', 'kl-mvp-news']) localStorage.setItem(k, 'true'); localStorage.setItem('kl-mvp-seen', JSON.stringify('x')); });
   await ctx.route(/supabase\.co/, r => { const u = r.request().url(); if (r.request().method() !== 'GET') return r.fulfill({ status: 201, body: '[]' });
     if (u.includes('/live_spiele')) return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(rows) }); return r.continue(); });
   const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));

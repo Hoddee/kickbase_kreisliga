@@ -8,12 +8,16 @@ const CSS = `.tut-hl{outline:3px solid #28de86!important;outline-offset:3px;box-
   const b = await chromium.launch();
   const ctx = await b.newContext({ viewport: { width: 390, height: 440 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true, serviceWorkers: 'block',
     userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1' });
-  await ctx.addInitScript(() => { for (const k of ['kl-intro-v1', 'kl-intro-v2', 'kl-tour-book-v1']) localStorage.setItem(k, 'true'); });
+  await ctx.addInitScript(() => { for (const k of ['kl-intro-v1', 'kl-intro-v2', 'kl-intro-v3', 'kl-tour-book-v1', 'kl-tour-book-v2', 'kl-mvp-news']) localStorage.setItem(k, 'true');
+    localStorage.setItem('kl-recorder', JSON.stringify('Gast'));
+    /* MVP-Stage des letzten Spieltags als gesehen markieren (sonst öffnet sie sich mitten drin) */
+    const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() - (d.getDay() + 6) % 7); const r = new Date(d); r.setDate(r.getDate() + 6); r.setHours(19); if (new Date() < r) d.setDate(d.getDate() - 7);
+    const z = n => (n < 10 ? '0' : '') + n; localStorage.setItem('kl-mvp-seen', JSON.stringify(d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate()))); });
   await ctx.route(/supabase\.co/, r => { const u = r.request().url();
     if (r.request().method() !== 'GET') return r.fulfill({ status: 201, body: '[]' });
     if (u.includes('/live_spiele')) return r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(rows) });
     return r.continue(); });
-  const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
+  const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => { errs.push(e.message); console.log('PAGEERR', e.message, e.stack); });
   const c = s => p.evaluate(s => { const e = document.querySelector(s); if (!e) return false; e.click(); return true; }, s);
   const hl = (sel, tap = true) => p.evaluate(([sel, tap]) => {
     document.querySelectorAll('.tut-hl,.tut-tap').forEach(e => e.classList.contains('tut-tap') ? e.remove() : e.classList.remove('tut-hl'));
@@ -52,10 +56,12 @@ const CSS = `.tut-hl{outline:3px solid #28de86!important;outline-offset:3px;box-
   await c('#editBody [data-k="cg"]'); await p.waitForTimeout(500); await c('[data-ga="fx:2"]'); await p.waitForTimeout(200);
   await p.evaluate(() => { const b = document.querySelector('.ga-body'); b.scrollTop = 0; }); await hl('.ga-p.on', false); await shot('b-gegentor'); await hl(null);
   await c('[data-ga="done"]'); await p.waitForTimeout(300);
-  await c('.tabs [data-tab="att"]'); await p.waitForTimeout(300); await p.fill('#aq', 'flanke'); await p.waitForTimeout(300);
-  await p.evaluate(() => { document.activeElement.blur(); const e = document.querySelector('.asearch'); const q = document.getElementById('quick'); window.scrollTo(0, e.getBoundingClientRect().top + scrollY - q.getBoundingClientRect().bottom - 8); }); await hl('.asearch input', false); await shot('b-suche'); await hl(null);
-  await c('#actList [data-k="cross"]'); await p.waitForTimeout(300); await c('[data-do="q-x"]'); await p.evaluate(() => document.activeElement.blur());
+  await c('.tabs [data-tab="att"]'); await p.waitForTimeout(300); await c('#actList [data-k="cross"]'); await p.waitForTimeout(300);
   await c('#actList [data-k="icpt"]'); await p.waitForTimeout(300);
   await c('#undoTx .rbc'); await p.waitForTimeout(400); await hl('#undoTx .rbc', false); await shot('b-zuletzt');
+  await c('[data-rb-x]'); await p.waitForTimeout(200); await p.evaluate(() => window.scrollTo(0, 0));
+  await c('[data-oh="toggle"]'); await p.waitForTimeout(400); await hl('.oh-grid', false); await shot('b-einhand'); await hl(null); await c('[data-oh="toggle"]');
+  await c('.tabs [data-tab="spiel"]'); await p.waitForTimeout(300); await c('[data-mt="host"]'); await p.waitForTimeout(1500);
+  await p.evaluate(() => { for (const id of ['squadE', 'undo']) document.getElementById(id).style.display = 'none'; const e = document.querySelector('.mt-qr'); window.scrollTo(0, e.getBoundingClientRect().top + scrollY - 84); }); await shot('b-mit');
   console.log('Fehler:', errs.length ? errs : 'keine'); await b.close();
 })();
