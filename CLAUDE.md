@@ -52,6 +52,13 @@ Erklärzeilen unter Optionen). Beschriftungen knapp halten; Erklärungen gehöre
   wird nur einmal angelegt (sonst fährt es bei jedem Tipp neu ein). Optionen als Zeilen mit kurzer Erklärung.
 - Aktionen in Angriff/Abwehr/Fehler nach Bedeutung gruppiert (`GROUPS` in `actions.js`), Suche über alle Reiter (`#aq`).
   Reihenfolge: kleine Punkte oben (schnell erreichbar), große unten – Gruppen nach Durchschnitt, in der Gruppe aufsteigend.
+- Ein-Hand-Modus (`js/ui/onehand.js`, Hand-Symbol neben der Suche): 6 große Kacheln mit festen Plätzen im Daumenbereich.
+  Eigenes Modul, damit er leicht wieder entfernt werden kann (Kopfkommentar listet alle Stellen).
+- Push (`js/services/push.js`, Schalter im Konto; `sw.js` zeigt an): Edge Function `supabase/functions/push` (README dort),
+  ausgelöst vom Trigger auf `live_spiele` (nur Spieler `i = 0`) und per Cron Montag 19 Uhr; doppelt verhindert `push_log`.
+  Live-Stand enthält dafür `tn`/`on` (Vereinsnamen). Privater VAPID-Schlüssel/Secret nie ins Repo.
+- Traffic (`js/services/traffic.js`): jedes Gerät zählt seine Supabase-Bytes (geschätzt) und meldet die Tagessumme
+  (`rpc/traffic_melden`); Admins sehen die Monatssumme im Admin-Bereich (`rpc/traffic_monat`, Migration 012).
 - Rundgänge (`js/ui/intro.js`): Einführung (`KEYS.intro2`) und „Punktevergabe erklärt“ (`KEYS.tourBook`, beim ersten
   „Punkte vergeben“). Je einmal pro Gerät; neue Fassung = neuer Schlüssel. Bilder: Screenshots als WebP in `assets/img/tut/`
   (600×676, Fenster 390×440 aufgenommen). Ändert sich die Oberfläche stark, die Bilder neu aufnehmen.

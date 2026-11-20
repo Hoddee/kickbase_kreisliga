@@ -17,6 +17,7 @@ import { initAdmin, startPasswordFlow } from './ui/admin.js';
 import { initFeel } from './ui/feel.js';
 import { initTabbar } from './ui/tabbar.js';
 import { initMvp } from './ui/mvp.js';
+import { startTraffic } from './services/traffic.js';
 import { loadRoster, loadSchedule } from './services/api.js';
 import { consumeRedirect, isLoggedIn, refreshAdminFlag, onAuthChange } from './services/auth.js';
 
@@ -92,6 +93,7 @@ if (isLoggedIn()) refreshAdminFlag();
 /* Live: eigenes Spiel senden, Spiele der anderen empfangen */
 startPublisher();
 startViewer();
+startTraffic();
 
 /* Sekundentakt für Uhr und Live-Status */
 setInterval(() => {

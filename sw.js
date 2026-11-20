@@ -5,7 +5,7 @@
    Bilder (Spielerfotos, Wappen): nur einmal laden, danach immer aus dem Cache – kein erneutes Herunterladen.
    Geänderte Fotos bekommen eine neue Adresse (?v=…), alte Einträge werden beim Versionswechsel aufgeräumt.
    Datenbank-Anfragen (REST/Auth) werden nie zwischengespeichert. */
-const VERSION = 'kl-v4.6.0';
+const VERSION = 'kl-v4.8.0';
 const APP = 'app-' + VERSION;
 const IMG = 'img-v3';
 const SHELL = [
@@ -15,7 +15,7 @@ const SHELL = [
   'js/data/actions.js', 'js/data/clubs.js', 'js/data/players.js', 'js/data/schedule.js', 'js/core/cutout.js', 'js/ui/start.js', 'js/ui/profile.js', 'js/ui/squad.js', 'js/ui/intro.js', 'js/ui/me.js', 'css/profile.css', 'css/sheet.css', 'js/ui/sheet.js', 'js/ui/match.js', 'js/core/correct.js', 'js/services/live.js', 'js/ui/watch.js',
   'js/core/game.js', 'js/core/icons.js', 'js/core/market.js', 'js/core/util.js',
   'js/services/api.js', 'js/services/auth.js',
-  'js/ui/admin.js', 'js/ui/feel.js', 'js/ui/tabbar.js', 'js/ui/mvp.js', 'css/brand.css', 'js/ui/goal.js', 'css/feel.css', 'js/ui/booking.js', 'js/ui/components.js', 'js/ui/hof.js', 'js/ui/live.js', 'js/ui/setup.js', 'js/ui/share.js',
+  'js/ui/admin.js', 'js/ui/feel.js', 'js/ui/tabbar.js', 'js/ui/mvp.js', 'js/ui/onehand.js', 'js/services/traffic.js', 'js/services/push.js', 'css/brand.css', 'js/ui/goal.js', 'css/feel.css', 'js/ui/booking.js', 'js/ui/components.js', 'js/ui/hof.js', 'js/ui/live.js', 'js/ui/setup.js', 'js/ui/share.js',
   'assets/fonts/inter-tight-latin-400-normal.woff2', 'assets/fonts/inter-tight-latin-500-normal.woff2',
   'assets/fonts/inter-tight-latin-600-normal.woff2', 'assets/fonts/inter-tight-latin-700-normal.woff2',
   'assets/fonts/saira-kl-var.woff2',
@@ -62,4 +62,23 @@ self.addEventListener('fetch', e => {
       return r;
     }).catch(() => caches.match(req, { ignoreSearch: true }).then(r => r || caches.match('index.html'))));
   }
+});
+
+/* Push-Benachrichtigungen (Edge Function „push“): anzeigen; Tipp öffnet die App bzw. den Live-Link */
+self.addEventListener('push', e => {
+  let m = {};
+  try { m = e.data ? e.data.json() : {}; } catch (er) { m = { title: e.data ? e.data.text() : '' }; }
+  e.waitUntil(self.registration.showNotification(m.title || 'Kickbase KL', {
+    body: m.body || '', tag: m.tag || undefined, icon: 'assets/icons/icon-192.png', badge: 'assets/icons/icon-192.png',
+    data: { url: m.url || self.registration.scope }
+  }));
+});
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  const url = (e.notification.data && e.notification.data.url) || self.registration.scope;
+  e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+    const c = list.find(x => x.url.startsWith(self.registration.scope));
+    if (c) return c.navigate(url).then(w => (w || c).focus()).catch(() => c.focus());
+    return self.clients.openWindow(url);
+  }));
 });

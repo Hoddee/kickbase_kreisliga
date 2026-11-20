@@ -5,10 +5,11 @@ import { PL, PLAYER_LIST, POS_NAME, POS_ORDER, STATUS_NAME, fullName } from '../
 import { CL, CLUB_LIST, LEAGUES, crestUrl } from '../data/clubs.js';
 import { TEAMS, allFixtures } from '../data/schedule.js';
 import { pad2 } from '../core/util.js';
-import { APP_VERSION, KEYS } from '../config.js';
+import { APP_VERSION, KEYS, SUPABASE_URL } from '../config.js';
 import { login, logout, signup, currentUser, isLoggedIn, isAdmin, myAccount, myPlayer, requestAccount, refreshAdminFlag, requestPasswordReset, updatePassword, onAuthChange } from '../services/auth.js';
 import { cutout } from '../core/cutout.js';
-import { loadRoster, updatePlayer, insertPlayer, uploadPhoto, games, loadAccounts, decideAccount, loadSchedule, saveFixture, deleteFixture } from '../services/api.js';
+import { pushSupported, pushState, pushOn, pushOff } from '../services/push.js';
+import { rest, loadRoster, updatePlayer, insertPlayer, uploadPhoto, games, loadAccounts, decideAccount, loadSchedule, saveFixture, deleteFixture } from '../services/api.js';
 import { openProfile } from './profile.js';
 import { showIntro, showBookingTour } from './intro.js';
 import { marketOf } from '../core/market.js';
@@ -193,6 +194,45 @@ function makeId(vn, n) {
   return id;
 }
 
+/* ---------- Supabase-Traffic (geschätzt, Summe aller Geräte diesen Monat) ---------- */
+const traffic = { at: 0, data: null, err: '' };
+const LIMIT_GB = 5;
+async function loadTraffic(force) {
+  if (!force && Date.now() - traffic.at < 300000) return;
+  traffic.at = Date.now();
+  try { const r = await rest('rpc/traffic_monat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' }); traffic.data = await r.json(); traffic.err = ''; }
+  catch (e) { traffic.data = null; traffic.err = e.status === 404 ? 'Migration 012 fehlt' : 'Nicht erreichbar'; }
+  const el = $('trafficCard'); if (el) el.outerHTML = trafficHtml();
+}
+function trafficHtml() {
+  const ref = (SUPABASE_URL.match(/https:\/\/([a-z0-9]+)\./) || [])[1];
+  const link = ref ? '<a class="lnk inline" href="https://supabase.com/dashboard/project/' + esc(ref) + '" target="_blank" rel="noopener">Supabase</a>' : '';
+  if (!traffic.data) return '<div class="card trf" id="trafficCard"><div class="trf-h"><b>Traffic</b>' + link + '</div><p class="muted small">' + esc(traffic.err || 'Lädt …') + '</p></div>';
+  const days = traffic.data, bytes = days.reduce((s, d) => s + Number(d.bytes || 0), 0), gb = bytes / 1e9, pct = Math.min(100, gb / LIMIT_GB * 100);
+  const devs = Math.max(0, ...days.map(d => d.geraete || 0)), month = new Date().toLocaleDateString('de-DE', { month: 'long' });
+  const fmtGb = v => (v < 0.1 ? (v * 1000).toFixed(0) + ' MB' : v.toFixed(2).replace('.', ',') + ' GB');
+  const max = Math.max(1, ...days.map(d => Number(d.bytes || 0)));
+  return '<div class="card trf' + (pct >= 70 ? ' warn' : '') + '" id="trafficCard"><div class="trf-h"><b>Traffic · ' + esc(month) + '</b>' + link + '</div>' +
+    '<div class="trf-v"><strong>≈ ' + fmtGb(gb) + '</strong><span>von ' + LIMIT_GB + ' GB · geschätzt · ' + devs + ' Geräte/Tag</span></div>' +
+    '<div class="trf-bar"><i style="width:' + pct.toFixed(1) + '%"></i></div>' +
+    '<div class="trf-days">' + days.map(d => '<i title="' + esc(String(d.tag)) + '" style="height:' + Math.max(6, Number(d.bytes || 0) / max * 100).toFixed(0) + '%"></i>').join('') + '</div></div>';
+}
+
+/* ---------- Benachrichtigungen (alle Nutzer) ---------- */
+const BELL = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>';
+let pushBusy = false;
+async function fillPush() {
+  const el = $('pushCard');
+  if (!el) return;
+  const st = await pushState();
+  if (st === 'none') { el.remove(); return; }
+  const btn = st === 'on' ? '<button type="button" class="btn" data-adm="push-off"' + (pushBusy ? ' disabled' : '') + '>Aus</button>'
+    : st === 'off' ? '<button type="button" class="btn primary" data-adm="push-on"' + (pushBusy ? ' disabled' : '') + '>An</button>'
+    : '<span class="pushc-s">' + (st === 'install' ? 'Nur in der installierten App' : 'In den Einstellungen blockiert') + '</span>';
+  el.innerHTML = '<span class="pushc-i">' + BELL + '</span><span class="pushc-t"><b>Benachrichtigungen</b><small>MVP-Stage · Live-Spiele</small></span>' + btn;
+  el.classList.toggle('on', st === 'on');
+}
+
 function adminHtml() {
   const u = currentUser();
   return '<div class="card acct"><div>' + ICON.user + '</div><div><b>' + esc(u && u.email ? u.email : 'Angemeldet') + '</b><small>Admin</small></div>' +
@@ -200,7 +240,7 @@ function adminHtml() {
     '<div class="tiles">' +
       '<button type="button" class="tile" data-adm="manual">' + ICON.plus + '<b>Spiel nachtragen</b></button>' +
       '<button type="button" class="tile" data-nav="hof">' + ICON.trophy + '<b>Spiele verwalten</b></button>' +
-    '</div>' + (myPlayer() && PL[myPlayer()] ? '<button type="button" class="pcard" data-adm="my-area">' + avatar(myPlayer()) + '<span><small>Mein Bereich</small><b>' + esc(fullName(PL[myPlayer()])) + '</b></span><span class="chev">›</span></button>' : '') +
+    '</div>' + trafficHtml() + (myPlayer() && PL[myPlayer()] ? '<button type="button" class="pcard" data-adm="my-area">' + avatar(myPlayer()) + '<span><small>Mein Bereich</small><b>' + esc(fullName(PL[myPlayer()])) + '</b></span><span class="chev">›</span></button>' : '') +
     accountsHtml() + scheduleHtml() +
     '<h2>Kader</h2>' +
     newPlayerHtml() +
@@ -214,8 +254,10 @@ export function render() {
   else if (!isLoggedIn()) h = loginHtml();
   else if (isAdmin()) h = adminHtml();
   else h = playerHtml();
-  $('adminBody').innerHTML = h + (!isLoggedIn() && readJson(KEYS.recorder, '') ? '<button type="button" class="lnk" data-adm="rname">Name ändern · ' + esc(readJson(KEYS.recorder, '')) + '</button>' : '') + '<button type="button" class="lnk" data-adm="intro">Einführung ansehen</button><button type="button" class="lnk" data-adm="tourbook">Punktevergabe erklärt</button><p class="appver">Version ' + APP_VERSION + '</p>';
+  $('adminBody').innerHTML = h + (!isLoggedIn() && readJson(KEYS.recorder, '') ? '<button type="button" class="lnk" data-adm="rname">Name ändern · ' + esc(readJson(KEYS.recorder, '')) + '</button>' : '') + (pushSupported() && !ui.passwordMode ? '<div class="card pushc" id="pushCard"></div>' : '') + '<button type="button" class="lnk" data-adm="intro">Einführung ansehen</button><button type="button" class="lnk" data-adm="tourbook">Punktevergabe erklärt</button><p class="appver">Version ' + APP_VERSION + '</p>';
   $('admTitle').textContent = isLoggedIn() && isAdmin() ? 'Admin' : 'Konto';
+  if (isLoggedIn() && isAdmin() && !ui.passwordMode) loadTraffic();
+  fillPush();
   applyTier(0);
 }
 
@@ -344,6 +386,12 @@ export function initAdmin() {
     else if (k === 'mode-register') { ui.mode = 'register'; ui.msg = ''; }
     else if (k === 'intro') { showIntro(); return; }
     else if (k === 'tourbook') { showBookingTour(); return; }
+    else if (k === 'push-on' || k === 'push-off') {
+      pushBusy = true; fillPush();
+      (k === 'push-on' ? pushOn() : pushOff()).then(ok => { if (k === 'push-on' && ok === false) toast('Nicht erlaubt'); else toast(k === 'push-on' ? 'Benachrichtigungen an' : 'Benachrichtigungen aus'); })
+        .catch(e => toast('Hat nicht geklappt: ' + e.message, 'bad')).finally(() => { pushBusy = false; fillPush(); });
+      return;
+    }
     else if (k === 'rname') { askName(() => render(), readJson(KEYS.recorder, '')); return; }
     else if (k === 'change-player') { ui.changePlayer = true; ui.msg = ''; }
     else if (k === 'change-cancel') ui.changePlayer = false;

@@ -5,7 +5,9 @@
    (WebSocket). Fällt die Verbindung weg, wird nachgeladen, bis sie wieder steht. */
 import { SUPABASE_URL, SUPABASE_KEY } from '../config.js';
 import { rest, num, str, okId, okFoto } from './api.js';
+import { countBytes } from './traffic.js';
 import { PL } from '../data/players.js';
+import { CL } from '../data/clubs.js';
 import {
   store, silentGoal, eachPlayer, isMulti, started, elapsed, total, score, isHome, teamOf, endLines, startLine, withMarkers
 } from '../core/game.js';
@@ -60,7 +62,7 @@ function snapshots() {
       v: 1, gid, i, n, p: id, nm: pl.n || id, vn: pl.vn || '', pf: P.match.pf || null, of: P.match.of || null,
       pos: P.pos, team: teamOf(P.match), opp: P.match.o, home: isHome(), us: sc.us, them: sc.them,
       t: total(), ended: !!S.ended, h2: !!S.h2, ht: !!S.ht, clock, rows: rows(),
-      by: S.by || null, byP: S.byP || null
+      by: S.by || null, byP: S.byP || null, tn: (CL[teamOf(P.match)] || {}).n || '', on: (CL[P.match.o] || {}).n || ''
     };
   });
   return out;
@@ -111,7 +113,7 @@ function cleanLive(d) {
     v: 1, gid: okId(d.gid), i: num(d.i), n: num(d.n, 1), p: okId(d.p), nm: str(d.nm, 40), vn: str(d.vn, 40), pf: okFoto(d.pf), of: okFoto(d.of),
     pos: str(d.pos, 4), team: okId(d.team), opp: okId(d.opp), home: !!d.home, us: num(d.us), them: num(d.them), t: num(d.t),
     ended: !!d.ended, h2: !!d.h2, ht: !!d.ht, clock: { el: num(c.el), run: !!c.run, at: num(c.at, Date.now()) },
-    by: str(d.by, 40) || null, byP: okId(d.byP),
+    by: str(d.by, 40) || null, byP: okId(d.byP), tn: str(d.tn, 40), on: str(d.on, 40),
     rows: (Array.isArray(d.rows) ? d.rows : []).slice(0, 400).filter(r => r && typeof r === 'object').map(r =>
       r.ht ? { ht: 1 } : r.sub ? { sub: { o: r.sub.o === 'out' ? 'out' : 'in', t: num(r.sub.t) } }
         : { p: r.p == null ? null : num(r.p), l: str(r.l), r: str(r.r, 8), id: typeof r.id === 'number' ? num(r.id) : str(String(r.id || ''), 12) })
@@ -145,6 +147,7 @@ function connect() {
     loadAll();
   };
   ws.onmessage = m => {
+    countBytes(typeof m.data === 'string' ? m.data.length : 0);
     let msg; try { msg = JSON.parse(m.data); } catch (e) { return; }
     if (msg.event !== 'postgres_changes' || !msg.payload || !msg.payload.data) return;
     const d = msg.payload.data;

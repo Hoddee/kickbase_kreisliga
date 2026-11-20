@@ -16,6 +16,7 @@ import { openSetup } from './setup.js';
 import { openGoal, closeGoal, initGoal } from './goal.js';
 import { shareLiveGame } from './watch.js';
 import { bookingTourSeen, showBookingTour } from './intro.js';
+import { initOneHand, renderPad, oneHandBtn } from './onehand.js';
 
 let tab = 'spiel';
 const confirm = { end: false, reset: false };
@@ -254,6 +255,7 @@ function refresh() {
       '<div class="rbm-a"><button type="button" class="btn danger" data-rb-del>Löschen</button><button type="button" class="btn" data-rb-x>Schließen</button></div></div>';
   }
   document.body.classList.toggle('multi', isMulti());
+  renderPad();
   renderSquadBar($('squadE'));
   if (isMulti()) document.body.style.setProperty('--sqh', $('squadE').offsetHeight + 'px');
 }
@@ -301,7 +303,7 @@ export function render() {
   const m = main();
   if (tab === 'spiel') m.innerHTML = S.manual ? manualGameHtml() : liveGameHtml();
   else if (tab === 'log') m.innerHTML = logHtml();
-  else m.innerHTML = '<div id="htBar">' + htBarHtml() + '</div>' + searchBox() + '<div id="actList">' + actListHtml() + '</div>';
+  else m.innerHTML = '<div id="htBar">' + htBarHtml() + '</div><div class="asrow">' + searchBox() + oneHandBtn() + '</div><div id="actList">' + actListHtml() + '</div>';
   document.querySelectorAll('[data-tab]').forEach(b => b.setAttribute('aria-selected', String(b.getAttribute('data-tab') === tab)));
   refresh();
 }
@@ -469,6 +471,7 @@ export function initBooking() {
     render
   });
   initGoal(() => { if (nav.current === 'edit') render(); });
+  initOneHand({ book: addEvent, tab: () => (nav.current === 'edit' ? tab : ''), onSwitch: () => render() });
   main().addEventListener('click', e => {
     const b = e.target.closest('[data-k],[data-do],[data-del]');
     if (!b) return;

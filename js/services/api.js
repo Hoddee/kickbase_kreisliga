@@ -6,6 +6,7 @@ import { CL } from '../data/clubs.js';
 import { applyMedia } from '../core/game.js';
 import { applySchedule } from '../data/schedule.js';
 import { readJson, writeJson } from '../core/util.js';
+import { countResponse } from './traffic.js';
 
 export async function rest(path, opt = {}) {
   const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 12000);
@@ -18,6 +19,7 @@ export async function rest(path, opt = {}) {
       const body = await r.json().catch(() => ({}));
       const e = new Error(body.message || 'HTTP ' + r.status); e.status = r.status; throw e;
     }
+    countResponse(r);
     return r;
   } finally { clearTimeout(timer); }
 }
