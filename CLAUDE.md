@@ -57,6 +57,8 @@ Erklärzeilen unter Optionen). Beschriftungen knapp halten; Erklärungen gehöre
 - Push (`js/services/push.js`, Schalter im Konto; `sw.js` zeigt an): Edge Function `supabase/functions/push` (README dort),
   ausgelöst vom Trigger auf `live_spiele` (nur Spieler `i = 0`) und per Cron Montag 19 Uhr; doppelt verhindert `push_log`.
   Live-Stand enthält dafür `tn`/`on` (Vereinsnamen). Privater VAPID-Schlüssel/Secret nie ins Repo.
+  Einmalige Frage „Benachrichtigungen“ (`askPush` in `intro.js`, `KEYS.pushAsk`): nur wenn Push geht (iPhone: Home-Bildschirm),
+  Erlaubnis noch offen, nach der Einführung und nicht während Spiel/Stage (wartet dann).
 - Traffic (`js/services/traffic.js`): jedes Gerät zählt seine Supabase-Bytes (geschätzt) und meldet die Tagessumme
   (`rpc/traffic_melden`); Admins sehen die Monatssumme im Admin-Bereich (`rpc/traffic_monat`, Migration 012).
 - Rundgänge (`js/ui/intro.js`): Einführung (`KEYS.intro3`) und „Punktevergabe erklärt“ (`KEYS.tourBook2`, beim ersten
@@ -73,6 +75,8 @@ Erklärzeilen unter Optionen). Beschriftungen knapp halten; Erklärungen gehöre
   `S.mit.locks` (uid → Gerät), Mitbucher sehen nur ihre Spieler (`S.mine`, `mineAt`), Tore (inkl. Tor-Assistent) darf jeder.
   „Übernehmen“ holt einen Spieler zurück. Prüfsummen über JSON mit sortierten Schlüsseln (Realtime sortiert um).
   Test: `tests/mitbuchen.js` (zwei Browser über echten Broadcast).
+- Spieler-Vergleich (`profile.js`, `state.cmp`/`state.cmpPick`): „Vergleichen“ in der Profil-Übersicht → Spieler wählen →
+  beide nebeneinander (Punkte, Ø, Form, bestes Spiel, Spiele, Tore, Vorlagen, Marktwert; Balken, Besserer hell). Nur aus `games.list`, kein Extra-Traffic.
 - Spiel-Detail: „Korrekturen (n)“ öffnet ein eigenes Blatt (Ansicht `corr`, Overlay über `match`).
   Admin: „Spiel löschen“ steht unauffällig unten im Korrektur-Modus (mit Rückfrage). „Eingetragen von …“ aus Spalte
   `erfasst_von` (Migration 011; angemeldet = Kontoname, sonst einmal „Dein Name“ abfragen, `KEYS.recorder`).
