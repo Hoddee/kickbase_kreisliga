@@ -7,7 +7,7 @@ import { crestUrl } from '../data/clubs.js';
 import { ICON } from '../core/icons.js';
 import { recordTeam, scoreText } from '../core/game.js';
 import { pickerGroups, pointsFor, wasSubbedIn, insertAction, recount, corrections, hasCorrections, settle, scoreBase, scoreOrig, onField, didPlay } from '../core/correct.js';
-import { games, loadEvents, cachedEvents, updateGame, rememberEvents } from '../services/api.js';
+import { games, loadEvents, cachedEvents, updateGame, rememberEvents, deleteGame, forgetEvents } from '../services/api.js';
 import { canManage, isAdmin } from '../services/auth.js';
 import { registerView, show, back, nav } from '../router.js';
 import { bindSheet } from './sheet.js';
@@ -17,7 +17,7 @@ import { openProfile } from './profile.js';
 
 const state = { uid: null };
 /* Korrektur-Modus: Entwurf der Aktionen, Auswahl zum Nachtragen */
-const fix = { on: false, ev: null, pick: false, grp: 0, min: '', busy: false, base: null, orig: null, us: 0, them: 0 };
+const fix = { on: false, ev: null, pick: false, grp: 0, min: '', busy: false, base: null, orig: null, us: 0, them: 0, del: false };
 /* Nach jeder Änderung: Ergebnis aus den Tor-Aktionen zählen und abhängige Boni nachziehen */
 function resettle() { const r = settle(fix.ev, rec(), fix.base, fix.orig); fix.ev = r.ev; fix.us = r.us; fix.them = r.them; }
 const rec = () => (games.list || []).find(g => g.uid === state.uid);
@@ -58,14 +58,33 @@ function fixHtml(g) {
   h += '<div class="card fixscore"><div class="scrow"><img src="' + esc(crestUrl(mine)) + '" alt="">' + step('tg', fix.us) + '<i>:</i>' + step('cg', fix.them) + '<img src="' + esc(crestUrl(g.opp)) + '" alt=""></div>' +
     '<label class="nf"><span>Minute für Nachträge</span><input class="fi" id="fixMin" type="number" inputmode="numeric" min="1" max="130" placeholder="leer = ohne Minute" value="' + esc(fix.min) + '"></label>' +
     '</div>';
-  if (!fix.pick) return h + '<button type="button" class="add-row" data-mt="fpick"><span class="plus">+</span><span>Aktion nachtragen<small>Vergessen oder falsch gebucht</small></span></button>';
+  if (!fix.pick) return h + '<button type="button" class="add-row" data-mt="fpick"><span class="plus">+</span><span>Aktion nachtragen<small>Vergessen oder falsch gebucht</small></span></button>' + delHtml();
   const groups = pickerGroups(g.pos), gr = groups[fix.grp] || groups[0], sub = wasSubbedIn(fix.ev);
   h += '<div class="card fixpick"><div class="fxg">' + groups.map((x, i) => '<button type="button" data-mt="fg:' + i + '" aria-pressed="' + (x === gr) + '">' + esc(x.t) + '</button>').join('') + '</div>' +
     '<div class="fxa">' + gr.a.map(([k, l, v]) => { const p = pointsFor(v, g.pos, sub);
       return '<button type="button" data-mt="fa:' + esc(k) + '"><span>' + esc(l) + '</span><b class="' + cls(p) + '">' + fmt(p) + '</b></button>'; }).join('') + '</div>' +
     '<div class="fl">Freie Korrektur</div><div class="fxf"><input class="fi" id="fixLbl" type="text" maxlength="40" placeholder="Grund"><input class="fi" id="fixPts" type="number" inputmode="numeric" placeholder="±"><button type="button" class="btn" data-mt="ffree">Dazu</button></div>' +
     '<button type="button" class="btn full ghost" data-mt="fpick-x">Fertig</button></div>';
-  return h;
+  return h + delHtml();
+}
+/* Spiel löschen: nur Admin, unauffällig ganz unten im Korrektur-Modus, mit Rückfrage */
+function delHtml() {
+  if (!isAdmin()) return '';
+  return '<div class="fix-del">' + (fix.del
+    ? '<b>Spiel endgültig löschen?</b><div class="duo"><button type="button" class="btn danger" data-mt="del-yes"' + (fix.busy ? ' disabled' : '') + '>Löschen</button><button type="button" class="btn" data-mt="del-no">Abbrechen</button></div>'
+    : '<button type="button" class="lnk" data-mt="del">Spiel löschen</button>') + '</div>';
+}
+async function removeGame() {
+  const uid = state.uid;
+  fix.busy = true; render(true);
+  try {
+    await deleteGame(uid);
+    games.list = (games.list || []).filter(x => x.uid !== uid);
+    forgetEvents(uid);
+    fix.on = false; fix.ev = null; fix.del = false; fix.busy = false;
+    toast('Spiel gelöscht');
+    back();
+  } catch (e) { fix.busy = false; fix.del = false; toast('Löschen fehlgeschlagen: ' + e.message, 'bad'); render(true); }
 }
 
 function html() {
@@ -84,7 +103,7 @@ function html() {
   return '<section class="mhero"><div class="pphoto"' + go + '><img src="' + esc(photoUrl(g.player)) + '" alt=""></div>' +
     '<div class="mh-t"><span' + go + '>' + esc(p.n) + '</span><b>' + pts + '</b><div class="mh-s"><img src="' + esc(crestUrl(l)) + '" alt=""><div><strong>' + score + '</strong><small>Endstand</small></div><img src="' + esc(crestUrl(r)) + '" alt=""></div></div></section>' +
     '<div class="pbody">' + (fix.on ? fixHtml(g) : '') +
-    '<ul class="rows mrows' + (fix.on ? ' fixing' : '') + '">' + (ev ? (fix.on ? '' : corrHtml(ev)) + rowsHtml(ev, g) : '<li class="sk-wrap">' + skeleton(5, true) + '</li>') + '</ul>' + tools + '</div>';
+    '<ul class="rows mrows' + (fix.on ? ' fixing' : '') + '">' + (ev ? (fix.on ? '' : corrHtml(ev)) + rowsHtml(ev, g) : '<li class="sk-wrap">' + skeleton(5, true) + '</li>') + '</ul>' + tools + (g.erfasst_von && !fix.on ? '<p class="mby">Eingetragen von ' + esc(g.erfasst_von) + '</p>' : '') + '</div>';
 }
 
 export function render(keep) {
@@ -156,7 +175,7 @@ export function initMatch() {
     /* Profil legt sich über das Spiel-Blatt; „Zurück“ dort führt wieder hierher */
     if (k === 'prof') { if (g) openProfile(g.player); return; }
     if (k === 'corr') { show('corr'); return; }
-    if (k === 'fix') { fix.on = true; fix.ev = (cachedEvents(state.uid) || []).slice(); fix.base = scoreBase(g, fix.ev); fix.orig = scoreOrig(fix.base, fix.ev); fix.pick = false; fix.min = ''; resettle(); render(true); return; }
+    if (k === 'fix') { fix.del = false; fix.on = true; fix.ev = (cachedEvents(state.uid) || []).slice(); fix.base = scoreBase(g, fix.ev); fix.orig = scoreOrig(fix.base, fix.ev); fix.pick = false; fix.min = ''; resettle(); render(true); return; }
     /* Ergebnis: + bucht ein Tor nach, − nimmt das letzte Tor dieser Seite heraus */
     if (k.startsWith('sc:')) {
       const [, key, dir] = k.split(':');
@@ -170,6 +189,9 @@ export function initMatch() {
       render(true); return;
     }
     if (k === 'fpick') { fix.pick = true; render(true); return; }
+    if (k === 'del') { fix.del = true; render(true); return; }
+    if (k === 'del-no') { fix.del = false; render(true); return; }
+    if (k === 'del-yes') { if (!fix.busy) removeGame(); return; }
     if (k === 'fpick-x') { fix.pick = false; render(true); return; }
     if (k === 'fsave') { if (!fix.busy) saveFix(); return; }
     if (k.startsWith('fg:')) { fix.grp = +k.slice(3); render(true); return; }

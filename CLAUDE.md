@@ -55,9 +55,14 @@ Erklärzeilen unter Optionen). Beschriftungen knapp halten; Erklärungen gehöre
   „Punkte vergeben“). Je einmal pro Gerät; neue Fassung = neuer Schlüssel. Bilder: Screenshots als WebP in `assets/img/tut/`
   (600×676, Fenster 390×440 aufgenommen). Ändert sich die Oberfläche stark, die Bilder neu aufnehmen.
 - Spiel-Detail: „Korrekturen (n)“ öffnet ein eigenes Blatt (Ansicht `corr`, Overlay über `match`).
+  Admin: „Spiel löschen“ steht unauffällig unten im Korrektur-Modus (mit Rückfrage). „Eingetragen von …“ aus Spalte
+  `erfasst_von` (Migration 011; angemeldet = Kontoname, sonst einmal „Dein Name“ abfragen, `KEYS.recorder`).
+- Hall of Fame: Reiter Übersicht (Top-3-Ranglisten), Tabelle, MVP, Rekorde, Alle Spiele (je 30 nachladen).
+  Lädt beim Öffnen nur, wenn noch keine Daten da sind (Supabase-Traffic) – neu laden per Ziehen.
 - Spieltag / MVP-Stage (`js/ui/mvp.js`, Ansicht `mvp`): Spieltag = Woche Mo–So (Gerätezeit), bestes Spiel je Spieler zählt.
-  Sonntag 19:00 wird er „gelauncht“: Stage mit Top 3 öffnet sich einmal von selbst (`KEYS.mvpSeen` = Spieltag-ID),
-  davor zeigt die Liga den vorigen Spieltag plus Countdown. Spieltag-Nummer über `ANCHOR` (09.11.2026 = 13.) + Wochen mit
+  Montag danach 19:00 wird er „gelauncht“: Stage mit Top 3 öffnet sich einmal von selbst (`KEYS.mvpSeen` = Spieltag-ID),
+  davor zeigt die Liga den vorigen Spieltag plus Countdown. Nur Spieltage mit mind. 3 verschiedenen Spielern zählen
+  (`MIN_PLAYERS`); MVP-Verlauf und „Meiste MVP-Titel“ im Reiter MVP der Hall of Fame. Spieltag-Nummer über `ANCHOR` (09.11.2026 = 13.) + Wochen mit
   Spielen im Spielplan – zum Saisonwechsel anpassen. Klassen der Stage immer mit `mvp-` (`.go` gab es schon → Kollision).
 - Punktevergabe: Leiste „Zuletzt gebucht“ unten (letzte 3, antippen = löschen / anderem Spieler geben), Halbzeit über
   `S.ht` (Halbzeitpfiff → „2. Halbzeit anpfeifen“, Hinweisleiste in allen Reitern ab 45’/90’).

@@ -84,7 +84,8 @@ async function saveToCloud() {
   save.busy = true; save.error = ''; save.confirm = false; render();
   try {
     /* Bei mehreren Spielern: jeden noch nicht gespeicherten einzeln speichern */
-    const recs = eachPlayer(i => (store.S.saved ? null : { i, row: gameRecord(SEASON), m: matchEntry().m })).filter(Boolean);
+    const by = S.by || null;
+    const recs = eachPlayer(i => (store.S.saved ? null : { i, row: Object.assign(gameRecord(SEASON), by ? { erfasst_von: by } : {}), m: matchEntry().m })).filter(Boolean);
     for (const r of recs) {
       /* Ohne Einsatzminuten gibt es kein Spiel – nur abhaken, damit die Anzeige stimmt */
       if (r.m > 0 || S.manual) await insertGame(r.row);

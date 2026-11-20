@@ -191,12 +191,14 @@ body.ended .cta button { background: rgba(19, 20, 23, .88); color: var(--ink); b
 /* ---------- Schrift wie KB Pitch ---------- */
 /* Überschriften und große Namen: schmal (88 %), eng gesetzt */
 #startBody > h2, #kaderBody h2, #hofBody > h2, #meBody h2, #adminBody h2, .lvh .lv-live,
-.lh b, .pf h3, .pmini b, .lv-n b, .lv-gone b, .auth h3, .sheet h3, .shead, .gh .gname, .pnn, {}
+.lh b, .pf h3, .pmini b, .lv-n b, .lv-gone b, .auth h3, .sheet h3, .shead, .gh .gname, .pnn {
+  font-stretch: 88%; letter-spacing: -.02em;
+}
 #startBody > h2, #kaderBody h2, #hofBody > h2, #meBody h2, #adminBody h2, .lvh .lv-live { font-size: 28px; }
 .pnn { font-size: clamp(46px, 16vw, 70px); }
 /* Zahlen in normaler Breite, nicht ganz so eng wie früher bei Oxanium */
 .num, .gh .gbig, .pw-v, .mh-t > b { letter-spacing: -.015em; }
-/* Spielernamen in Listen wie bei Kickbase in der Textschrift (Großbuchstaben, nicht fett) */
+/* Spielernamen in Listen wie bei Kickbase in der Textschrift */
 .prow b, .gi b { font: 600 16px/1.2 var(--font-body); letter-spacing: 0; text-transform: none; }
 
 /* Korrekturen-Blatt: etwas tiefer, damit das Spiel dahinter sichtbar bleibt */
@@ -318,3 +320,45 @@ body.ended .cta button { background: rgba(19, 20, 23, .88); color: var(--ink); b
 .mvp-head h1 span { margin-top: 4px; font-size: 17px; }
 .mvp-cta { margin-top: 10px; }
 .mp-ph { height: 13vh; } .r1 .mp-ph { height: 19vh; }
+
+/* ---------- Hall of Fame (Übersicht mit Ranglisten) ---------- */
+.htabs { display: flex; margin: 4px -16px 12px; padding: 0 10px; border-bottom: 1px solid var(--line) !important; }
+.htabs button { flex: none; padding: 12px 8px !important; border-bottom: 2px solid transparent !important; }
+.htabs button[aria-pressed="true"] { border-bottom-color: var(--ink) !important; }
+.hb-card { margin: 0 0 14px; padding: 14px 14px 6px; border-radius: 16px; background: var(--surface); }
+.hb-h { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 4px; }
+.hb-h h3 { margin: 0; font: 800 22px/1 var(--font-head); font-stretch: 88%; letter-spacing: -.02em; text-transform: uppercase; color: #f4f6f9; }
+.hb-more { border: 0; background: none; padding: 6px 0 6px 10px; color: var(--muted); font: 600 12px var(--font-body); letter-spacing: .1em; text-transform: uppercase; }
+.hb-list { list-style: none; margin: 0; padding: 0; }
+.hb-list li + li { border-top: 1px solid var(--line); }
+.hb-row { display: grid; grid-template-columns: 30px 40px minmax(0, 1fr) auto; align-items: center; gap: 10px; width: 100%; padding: 10px 0; border: 0; background: none; color: var(--ink); text-align: left; }
+.hb-row .hav { width: 40px; height: 40px; border-radius: 10px; }
+.hb-n { min-width: 0; }
+.hb-n b { display: block; font: 600 15px/1.2 var(--font-body); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hb-n small { display: flex; align-items: center; gap: 6px; margin-top: 3px; font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; }
+.hb-n small i { font-style: normal; font-weight: 600; }
+.hb-v { font: 800 20px/1 var(--font-display); color: var(--ct, var(--ink)); white-space: nowrap; }
+.hb-mvp { margin-bottom: 14px; }
+.hb-mvp .pw-k { color: #E1BE38; }
+.hb-sort { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.hb-sort button { min-height: 36px; padding: 0 14px; border-radius: 18px; border: 1px solid rgba(222, 228, 236, .18); background: none; color: var(--muted); font: 600 12px var(--font-body); letter-spacing: .06em; text-transform: uppercase; }
+.hb-sort button[aria-pressed="true"] { border-color: var(--ink); color: #fff; }
+.hb-sort span { margin-left: auto; font-size: 12.5px; color: var(--muted2); }
+.hb-load { margin-top: 14px; }
+.mdc-t { margin: -2px 0 12px; font: 800 20px/1 var(--font-head); font-stretch: 88%; letter-spacing: -.02em; text-transform: uppercase; color: #f4f6f9; }
+#hofBody .mdc { margin-bottom: 12px; }
+
+/* Ankündigung MVP-Stage */
+.md-news { display: flex; align-items: center; gap: 10px; margin: -2px 0 12px; padding: 12px 6px 12px 14px; border-radius: 12px; border: 1px solid rgba(225, 190, 56, .4); background: rgba(225, 190, 56, .08); }
+.md-news-k { flex: none; padding: 3px 7px; border-radius: 5px; background: #E1BE38; color: #1f1600; font: 800 10.5px var(--font-body); letter-spacing: .1em; text-transform: uppercase; }
+.md-news b { flex: 1; font: 600 14px/1.3 var(--font-body); }
+.md-news-x { flex: none; width: 40px; height: 40px; border: 0; background: none; color: var(--muted); font: 300 26px/1 var(--font-body); }
+/* Spiel löschen (Korrektur-Modus) und Eintrager */
+.fix-del { margin: 22px 0 6px; text-align: center; }
+.fix-del .lnk { color: var(--muted2); font-size: 13px; }
+.fix-del b { display: block; margin-bottom: 10px; font: 600 14px var(--font-body); }
+.mby { margin: 18px 0 0; text-align: center; color: var(--muted2); font-size: 12.5px; }
+.sheet .fi { margin-top: 4px; }
+.htabs button { border: 0 !important; border-bottom: 2px solid transparent !important; border-radius: 0 !important; outline-offset: -2px;
+  padding: 12px 7px !important; font-size: 12px !important; letter-spacing: .05em !important; }
+.htabs button[aria-pressed="true"] { border-bottom-color: var(--ink) !important; }

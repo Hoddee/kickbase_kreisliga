@@ -12,8 +12,9 @@ import { ICON } from '../core/icons.js';
 import { avatar, nameWithStatus, rowLi, rowsFromRecord, whistleLi, areaBars, gameRow, skeleton } from './components.js';
 import { registerView, show, back as goBack, nav } from '../router.js';
 import { openMatch } from './match.js';
+import { history, podiumCard } from './mvp.js';
 
-const ui = { tab: 'best', league: 'ALL', returnTo: null, player: null, game: null, eventsError: false, edit: false, confirmDelete: false, busy: false };
+const ui = { tab: 'ov', league: 'ALL', sort: 'new', more: 30, returnTo: null, player: null, game: null, eventsError: false, edit: false, confirmDelete: false, busy: false };
 
 const leagueOf = id => CL[PL[id].c].lg;
 const inLeague = g => ui.league === 'ALL' || (CL[recordTeam(g)] || {}).lg === ui.league;
@@ -57,6 +58,8 @@ function records(list) {
   const cards = [];
   const best = list.slice().sort((a, b) => b.points - a.points)[0];
   if (best) cards.push(['Meiste Punkte in einem Spiel', best.player, best.points + ' Pkt.', 'g:' + best.uid, best.points]);
+  const worst = list.slice().sort((a, b) => a.points - b.points)[0];
+  if (worst && worst !== best) cards.push(['Schlechtestes Spiel', worst.player, worst.points + ' Pkt.', 'g:' + worst.uid, worst.points]);
   const per = new Map();
   for (const g of list) {
     const a = per.get(g.player) || { n: 0, sum: 0, goals: 0, assists: 0, clean: 0 };
@@ -72,7 +75,9 @@ function records(list) {
   const add = (title, entry, metric, unit) => { if (entry) cards.push([title, entry[0], metric(entry[1]) + unit, 'p:' + entry[0], null]); };
   const avg = a => Math.round(a.sum / a.n);
   add('Meiste Saisonpunkte', leader(a => a.sum), a => a.sum, ' Pkt.');
-  add('Bester Schnitt (ab 2 Spielen)', leader(avg, a => a.n >= 2), avg, ' Ø');
+  add('Bester Schnitt', leader(avg, a => a.n >= 2), avg, ' Ø');
+  const low = [...per].filter(([, a]) => a.n >= 2).sort((x, y) => avg(x[1]) - avg(y[1]))[0];
+  if (low) cards.push(['Schlechtester Schnitt', low[0], avg(low[1]) + ' Ø', 'p:' + low[0], avg(low[1])]);
   add('Meiste Tore', leader(a => a.goals), a => a.goals, '');
   add('Meiste Vorlagen', leader(a => a.assists), a => a.assists, '');
   add('Meiste Zu-null-Spiele', leader(a => a.clean), a => a.clean, '');
@@ -137,17 +142,75 @@ function gameHtml() {
 }
 
 /* ---------- Übersicht ---------- */
+const TABS = [['ov', 'Übersicht'], ['players', 'Tabelle'], ['mvp', 'MVP'], ['records', 'Rekorde'], ['all', 'Alle Spiele']];
+const more = (tab, sort) => '<button type="button" class="hb-more" data-hof="go:' + tab + (sort ? ':' + sort : '') + '">Alle ›</button>';
+/* Kurze Rangliste (Top 3) wie bei Kickbase: Titel, drei Zeilen, „Alle“ */
+function board(title, rows, link) {
+  if (!rows.length) return '';
+  return '<section class="hb-card"><div class="hb-h"><h3>' + esc(title) + '</h3>' + (link || '') + '</div><ol class="hb-list">' + rows.map((x, i) =>
+    '<li><button type="button" class="hb-row tc"' + (x.tier != null ? ' data-tier="' + tierOf(x.tier) + '"' : '') + ' ' + x.link + '><span class="rk' + (i < 3 ? ' r' + (i + 1) : '') + '">' + (i + 1) + '</span>' + avatar(x.id) +
+    '<span class="hb-n"><b>' + nameWithStatus(x.id) + '</b>' + (x.sub ? '<small>' + x.sub + '</small>' : '') + '</span><span class="hb-v">' + esc(x.v) + '</span></button></li>').join('') + '</ol></section>';
+}
+/* Kennzahlen je Spieler (für die Ranglisten) */
+function perPlayer(list) {
+  const per = new Map();
+  for (const g of list) {
+    const a = per.get(g.player) || { id: g.player, n: 0, sum: 0, goals: 0, assists: 0, games: [] };
+    a.n++; a.sum += g.points; a.goals += g.goals || 0; a.assists += g.assists || 0; a.games.push(g);
+    per.set(g.player, a);
+  }
+  return [...per.values()];
+}
+const top3 = (arr, key, min = 1) => arr.filter(a => key(a) >= min).sort((x, y) => key(y) - key(x)).slice(0, 3);
+function overview(list) {
+  const pp = perPlayer(list), mvps = history();
+  const last = mvps[0], win = last && last.list[0];
+  let h = '';
+  if (win && PL[win.player]) {
+    h += '<button type="button" class="potw tc hb-mvp" data-tier="' + tierOf(win.points) + '" data-md="stage:' + esc(last.id) + '"><img class="pw-ph" src="' + esc(photoUrl(win.player)) + '" alt="">' +
+      '<div class="pw-tx"><span class="pw-k">MVP · ' + esc(last.title) + '</span><b class="pw-n">' + nameWithStatus(win.player) + '</b><span class="pw-v">' + win.points + '</span>' +
+      '<span class="pw-m">▶ MVP-Stage</span></div></button>';
+  } else h += potw(list);
+  /* In Form: Schnitt der letzten 3 Spiele (ab 2 Spielen) */
+  const form = pp.filter(a => a.n >= 2).map(a => { const l = byDate(a.games).slice(-3); return Object.assign({}, a, { f: Math.round(l.reduce((s2, g) => s2 + g.points, 0) / l.length) }); });
+  const mws = PLAYER_LIST.filter(p => p.active !== false && (ui.league === 'ALL' || leagueOf(p.id) === ui.league)).map(p => ({ id: p.id, mw: marketOf(p.id, games.list) }));
+  h += board('Punktekönig', top3(pp, a => a.sum, -1e9).map(a => ({ id: a.id, v: a.sum, sub: a.n + ' Spiele · Ø ' + Math.round(a.sum / a.n), link: 'data-open="p:' + esc(a.id) + '"', tier: Math.round(a.sum / a.n) })), more('players'));
+  h += board('Beste Spiele', list.slice().sort((a, b) => b.points - a.points).slice(0, 3).map(g => ({ id: g.player, v: g.points, sub: dateShort(g.played_at) + ' · ' + scoreText(g, g.home), link: 'data-hof="g:' + esc(g.uid) + '"', tier: g.points })), more('all', 'pts'));
+  h += board('In Form', form.sort((x, y) => y.f - x.f).slice(0, 3).map(a => ({ id: a.id, v: 'Ø ' + a.f, sub: 'letzte ' + Math.min(3, a.n) + ' Spiele ' + formDots(a.id), link: 'data-open="p:' + esc(a.id) + '"', tier: a.f })));
+  h += board('Torjäger', top3(pp, a => a.goals).map(a => ({ id: a.id, v: a.goals, sub: a.n + ' Spiele', link: 'data-open="p:' + esc(a.id) + '"' })));
+  h += board('Vorlagen', top3(pp, a => a.assists).map(a => ({ id: a.id, v: a.assists, sub: a.n + ' Spiele', link: 'data-open="p:' + esc(a.id) + '"' })));
+  h += board('Marktwert', mws.sort((x, y) => y.mw.v - x.mw.v).slice(0, 3).map(x => ({ id: x.id, v: eur(x.mw.v), sub: x.mw.last ? '<i class="' + trendClass(x.mw.last) + '">' + signedEur(x.mw.last) + '</i>' : '', link: 'data-open="p:' + esc(x.id) + '"' })));
+  h += board('Neueste Spiele', list.slice(0, 3).map(g => ({ id: g.player, v: g.points, sub: dateShort(g.played_at) + ' · ' + scoreText(g, g.home), link: 'data-hof="g:' + esc(g.uid) + '"', tier: g.points })), more('all', 'new'));
+  return h;
+}
+/* MVP-Verlauf: alle vorgestellten Spieltage, dazu wer am häufigsten MVP war */
+function mvpTab() {
+  const hist = history();
+  if (!hist.length) return '<p class="hmsg">Noch keine MVP-Stage.</p>';
+  const wins = new Map();
+  for (const md of hist) { const w = md.list[0]; if (w) wins.set(w.player, (wins.get(w.player) || 0) + 1); }
+  const kings = [...wins].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([id, n]) => ({ id, v: n + '×', sub: n === 1 ? 'MVP' : 'MVP-Titel', link: 'data-open="p:' + esc(id) + '"' }));
+  return board('Meiste MVP-Titel', kings) + hist.map(md => podiumCard(md, false)).join('');
+}
+/* Alle Spiele: nach Datum oder Punkten, in Etappen nachladen */
+function allTab(list) {
+  const sorted = ui.sort === 'pts' ? list.slice().sort((a, b) => b.points - a.points) : list;
+  return '<div class="hb-sort">' + [['new', 'Neueste'], ['pts', 'Punkte']].map(([k, t]) => '<button type="button" data-hof="s:' + k + '" aria-pressed="' + (ui.sort === k) + '">' + t + '</button>').join('') +
+    '<span>' + list.length + ' Spiele</span></div><ul class="glist">' + sorted.slice(0, ui.more).map((g, i) => gameRow(g, ui.sort === 'pts' ? i + 1 : 0)).join('') + '</ul>' +
+    (sorted.length > ui.more ? '<button type="button" class="btn full hb-load" data-hof="more">Mehr laden</button>' : '');
+}
 function overviewHtml() {
-  let h = '<div class="seg full htabs">' + [['best', 'Top'], ['players', 'Tabelle'], ['new', 'Neueste'], ['records', 'Rekorde']].map(([k, t]) =>
-    '<button type="button" data-hof="t:' + k + '" aria-pressed="' + (ui.tab === k) + '">' + t + '</button>').join('') + '</div>' +
-    '<div class="lgs">' + [['ALL', 'Alle'], ['A2', 'Kreisliga A2'], ['B2', 'Kreisliga B2'], ['B5', 'B5']].map(([k, t]) =>
-      '<button type="button" data-hof="l:' + k + '" aria-pressed="' + (ui.league === k) + '">' + t + '</button>').join('') + '</div>';
+  let h = '<div class="htabs" role="tablist">' + TABS.map(([k, t]) =>
+    '<button type="button" role="tab" data-hof="t:' + k + '" aria-pressed="' + (ui.tab === k) + '">' + t + '</button>').join('') + '</div>' +
+    (ui.tab === 'mvp' ? '' : '<div class="lgs">' + [['ALL', 'Alle'], ['A2', 'Kreisliga A2'], ['B2', 'Kreisliga B2'], ['B5', 'B5']].map(([k, t]) =>
+      '<button type="button" data-hof="l:' + k + '" aria-pressed="' + (ui.league === k) + '">' + t + '</button>').join('') + '</div>');
   if (games.busy && !games.list) return h + skeleton(6);
   if (!games.list) return h + '<p class="hmsg">Keine Verbindung.</p><button type="button" class="btn full" data-hof="reload">Nochmal versuchen</button>';
+  if (ui.tab === 'mvp') return h + mvpTab();
   const list = games.list.filter(inLeague);
   if (!list.length) return h + '<p class="hmsg">Noch keine Spiele gespeichert.</p>';
-  if (ui.tab === 'best') return h + potw(list) + '<ul class="glist">' + list.slice().sort((a, b) => b.points - a.points).slice(0, 30).map((g, i) => gameRow(g, i + 1)).join('') + '</ul>';
-  if (ui.tab === 'new') return h + potw(list) + '<ul class="glist">' + list.slice(0, 40).map(g => gameRow(g, 0)).join('') + '</ul>';
+  if (ui.tab === 'ov') return h + overview(list);
+  if (ui.tab === 'all') return h + allTab(list);
   if (ui.tab === 'records') return h + records(list);
   return h + table(list);
 }
@@ -210,7 +273,8 @@ function hofBack() {
 }
 
 export function initHof() {
-  registerView('hof', { elements: ['hof'], render, back: hofBack, enter: () => { reload(); } });
+  /* Beim Öffnen nur laden, wenn noch nichts da ist – neu laden per Ziehen oder Knopf (spart Supabase-Traffic) */
+  registerView('hof', { elements: ['hof'], render, back: hofBack, enter: () => { if (!games.list) loadGames().then(() => { if (nav.current === 'hof') render(); }); } });
   $('hof').addEventListener('click', e => {
     const b = e.target.closest('[data-hof]');
     if (!b) return;
@@ -223,7 +287,10 @@ export function initHof() {
     else if (k === 'edit-cancel') ui.edit = false;
     else if (k === 'del') ui.confirmDelete = true;
     else if (k === 'del-yes') { remove(); return; }
-    else if (k.startsWith('t:')) ui.tab = v;
+    else if (k.startsWith('t:')) { ui.tab = v; ui.more = 30; window.scrollTo(0, 0); }
+    else if (k.startsWith('go:')) { const [, t, so] = k.split(':'); ui.tab = t; if (so) ui.sort = so; ui.more = 30; window.scrollTo(0, 0); }
+    else if (k.startsWith('s:')) { ui.sort = v; ui.more = 30; }
+    else if (k === 'more') ui.more += 30;
     else if (k.startsWith('l:')) ui.league = v;
     render();
   });
