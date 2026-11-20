@@ -8,7 +8,7 @@ import { initSetup } from './ui/setup.js';
 import { initHof, resetHof, openHofGame } from './ui/hof.js';
 import { initStart } from './ui/start.js';
 import { initProfile, openProfile } from './ui/profile.js';
-import { showIntro, introSeen } from './ui/intro.js';
+import { showIntro, introSeen, askPush } from './ui/intro.js';
 import { initMe } from './ui/me.js';
 import { initMatch, openMatch } from './ui/match.js';
 import { initWatch, tickLive, openLiveLink } from './ui/watch.js';
@@ -83,6 +83,7 @@ const cssReady = () => Promise.all([...document.querySelectorAll('link[rel="styl
 Promise.all([cssReady(), new Promise(r => setTimeout(r, Math.max(0, 500 - performance.now())))]).then(() => {
   if (splash) { splash.classList.add('gone'); setTimeout(() => splash.remove(), 400); }
   if (!introSeen() && !(redirect && !redirect.error)) setTimeout(showIntro, 250);
+  else setTimeout(askPush, 2500);
 });
 
 /* Kader (Status, Positionen, Marktwerte) aus der Datenbank holen */

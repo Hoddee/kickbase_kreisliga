@@ -3,20 +3,20 @@
    Leistung: Balken je Spiel (gespielt + kommend), Antippen öffnet das Spiel-Detail.
    Marktwert: große Kurve (3M/1J), Antippen zeigt den Wert an einem Tag. */
 import { $, esc, eur, cleanSheet, trendClass, applyTier, tierOf, pad2 } from '../core/util.js';
-import { PL, POS_NAME, POS_SHORT, STATUS_NAME, photoUrl } from '../data/players.js';
+import { PL, PLAYER_LIST, POS_NAME, POS_SHORT, STATUS_NAME, photoUrl } from '../data/players.js';
 import { CL, crestUrl } from '../data/clubs.js';
 import { upcomingFixtures, pastFixtures } from '../data/schedule.js';
 import { recordTeam, scoreText } from '../core/game.js';
 import { marketOf, byDate } from '../core/market.js';
 import { statusIcon } from '../core/icons.js';
 import { games, loadGames, loadPlayerEvents } from '../services/api.js';
-import { profileChart, scrollToCurrent, playerStats, skeleton } from './components.js';
+import { profileChart, scrollToCurrent, playerStats, skeleton, playerRow } from './components.js';
 import { registerView, show, back, nav } from '../router.js';
 import { SEASON } from '../config.js';
 import { requestNewGame } from './start.js';
 import { bindSheet } from './sheet.js';
 
-const state = { id: null, tab: 'ov', range: '3M', pick: null, ev: null };
+const state = { id: null, tab: 'ov', range: '3M', pick: null, ev: null, cmp: null, cmpPick: false };
 const TABS = [['ov', 'Übersicht'], ['perf', 'Leistung'], ['mw', 'Marktwert']];
 const TAB_ICON = {
   ov: '<svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/></svg>',
@@ -28,6 +28,7 @@ const TAB_ICON = {
 export function openProfile(id, tab = 'ov') {
   if (!PL[id]) return;
   if (state.id !== id) { state.ev = null; state.pick = null; }
+  state.cmp = null; state.cmpPick = false;
   state.id = id; state.tab = tab;
   show('profile');
   if (!games.list && !games.busy) loadGames().then(() => { if (nav.current === 'profile') render(); });
@@ -63,7 +64,8 @@ function overview(p, id, played, mw) {
     cell(st.sum.toLocaleString('de-DE'), 'Punkte') + cell('×' + (keeper ? clean : goals), keeper ? 'Zu Null' : 'Tore') +
     cell(st.avg != null ? st.avg : '–', 'Ø Punkte') + cell('×' + (keeper ? (evs ? count(evs, ['pgt']) : '–') : ast), keeper ? '11m gehalten' : 'Vorlagen') + '</div></div>' +
     '<div class="kb-box"><i class="kb-arr ' + trendClass(mw.last) + '" aria-hidden="true">' + (mw.last < 0 ? '↘' : '↗') + '</i><div class="kb-g one">' +
-    cell(eur(mw.v), 'Marktwert') + cell('<em class="' + trendClass(mw.last) + '">' + shortEur(mw.last) + '</em>', 'letztes Spiel') + '</div></div></div>';
+    cell(eur(mw.v), 'Marktwert') + cell('<em class="' + trendClass(mw.last) + '">' + shortEur(mw.last) + '</em>', 'letztes Spiel') + '</div></div></div>' +
+    '<button type="button" class="cmp-go" data-pf="cmp"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4 3 8l4 4M3 8h13M17 20l4-4-4-4M21 16H8"/></svg>Vergleichen</button>';
 
   /* Einsätze / Startelf / Minuten */
   const teamPlayed = pastFixtures(p.c, 99).length || played.length;
@@ -84,6 +86,47 @@ function overview(p, id, played, mw) {
   const yel = evs ? count(evs, ['yel']) : 0, red = evs ? count(evs, ['yel2', 'red']) : 0;
   h += '<div class="kbst"><div><i class="kb-ok ' + (fit ? 'fit' : p.status) + '" aria-hidden="true">' + (fit ? '✓' : '+') + '</i><b>' + (fit ? 'Fit' : STATUS_NAME[p.status]) + '</b>' +
     (p.info ? '<small>' + esc(p.info) + '</small>' : '') + '</div><div class="kb-cards"><span><i class="cy"></i>×' + yel + '</span><span><i class="cr"></i>×' + red + '</span></div></div>';
+  return h;
+}
+
+/* ---------- Vergleich mit einem anderen Spieler ---------- */
+function statsOf(id) {
+  const played = byDate((games.list || []).filter(g => g.player === id)), st = playerStats(id), mw = marketOf(id, games.list || []);
+  const last5 = played.slice(-5);
+  return {
+    played, mw: mw.v, sum: st.sum, avg: st.avg, n: played.length,
+    goals: played.reduce((s, g) => s + (g.goals || 0), 0), ast: played.reduce((s, g) => s + (g.assists || 0), 0),
+    form: last5.length ? Math.round(last5.reduce((s, g) => s + g.points, 0) / last5.length) : null,
+    best: played.length ? Math.max(...played.map(g => g.points)) : null
+  };
+}
+function cmpPicker() {
+  const me = PL[state.id], ok = p => p.id !== state.id && p.active !== false && !p.guest;
+  const withGames = id => (games.list || []).some(g => g.player === id);
+  const list = PLAYER_LIST.filter(ok).sort((a, b) => (withGames(b.id) - withGames(a.id)) || ((b.c === me.c) - (a.c === me.c)) || playerStats(b.id).sum - playerStats(a.id).sum);
+  return '<div class="cmp-top"><button type="button" class="cmp-x" data-pf="cmp-x" aria-label="Zurück">‹</button><b>' + esc(me.n) + ' vergleichen mit</b></div>' +
+    '<div class="plist">' + list.map(p => playerRow(p, 'data-pf="cmpp:' + esc(p.id) + '"', '')).join('') + '</div>';
+}
+function compare() {
+  const a = state.id, b = state.cmp, A = statsOf(a), B = statsOf(b);
+  const side = (id, cls) => '<button type="button" class="cmp-pl ' + cls + '"' + (cls === 'r' ? ' data-pf="cmp-open"' : '') + '><img src="' + esc(photoUrl(id)) + '" alt=""><span>' + (PL[id].vn ? '<small>' + esc(PL[id].vn) + '</small>' : '') + '<b>' + esc(PL[id].n) + '</b></span></button>';
+  let h = '<div class="cmp-top"><button type="button" class="cmp-x" data-pf="cmp-x" aria-label="Zurück">‹</button><b>Vergleich</b><button type="button" class="lnk inline" data-pf="cmp">Wechseln</button></div>' +
+    '<div class="cmp-head">' + side(a, 'l') + '<i class="cmp-vs">VS</i>' + side(b, 'r') + '</div>';
+  /* [Name, Wert links, Wert rechts, Anzeige] – Balken zeigt den Anteil, der Bessere ist hell */
+  const rows = [['Punkte', A.sum, B.sum], ['Ø Punkte', A.avg, B.avg], ['Form (letzte 5)', A.form, B.form], ['Bestes Spiel', A.best, B.best],
+    ['Spiele', A.n, B.n], ['Tore', A.goals, B.goals], ['Vorlagen', A.ast, B.ast], ['Marktwert', A.mw, B.mw, v => shortEur(v).replace(/^\+/, '')]];
+  let wa = 0, wb = 0;
+  h += '<div class="cmp-rows">' + rows.map(([l, x, y, f]) => {
+    const nx = x == null ? 0 : x, ny = y == null ? 0 : y, tot = Math.abs(nx) + Math.abs(ny), pl = tot ? Math.round(Math.abs(nx) / tot * 100) : 50;
+    const win = nx === ny ? 0 : nx > ny ? 1 : 2; if (win === 1) wa++; if (win === 2) wb++;
+    const v = z => (z == null ? '–' : f ? f(z) : z.toLocaleString('de-DE'));
+    return '<div class="cmp-row"><span class="cmp-l"><b class="' + (win === 1 ? 'on' : '') + '">' + v(x) + '</b><small>' + esc(l) + '</small><b class="' + (win === 2 ? 'on' : '') + '">' + v(y) + '</b></span>' +
+      '<span class="cmp-bar"><i class="' + (win === 1 ? 'on' : '') + '" style="width:' + pl + '%"></i><i class="' + (win === 2 ? 'on' : '') + '" style="width:' + (100 - pl) + '%"></i></span></div>';
+  }).join('') + '</div>';
+  /* Formkurve: letzte 5 Spiele beider Spieler */
+  const dash = l => '<div class="fdash">' + [0, 1, 2, 3, 4].map(i => { const g = l[l.length - 5 + i]; return '<i' + (g ? ' data-tier="' + tierOf(g.points) + '"' : '') + '></i>'; }).join('') + '</div>';
+  h += '<div class="cmp-form">' + dash(A.played) + '<small>Form</small>' + dash(B.played) + '</div>';
+  h += '<div class="cmp-sum">' + (wa === wb ? 'Unentschieden ' + wa + ':' + wb : esc(PL[wa > wb ? a : b].n) + ' gewinnt ' + Math.max(wa, wb) + ':' + Math.min(wa, wb)) + '</div>';
   return h;
 }
 
@@ -130,6 +173,8 @@ function html() {
   if (!p) return '';
   const c = CL[p.c], played = byDate((games.list || []).filter(g => g.player === id)), mw = marketOf(id, games.list || []);
   let h = '';
+  if (state.cmpPick) return cmpPicker();
+  if (state.cmp && PL[state.cmp]) return compare();
   if (state.tab === 'ov') h += hero(p, id, mw) + '<div class="pbody">' + clubRow(c) + overview(p, id, played, mw) + '</div>';
   else h += '<div class="pbody">' + miniHead(p) + (state.tab === 'perf' ? performance(id, played, p) : marketTab(id, played, mw)) + '</div>';
   if (games.busy && !games.list) h += skeleton(3);
@@ -154,14 +199,18 @@ export function initProfile() {
   /* Kompakter Kopf erscheint, sobald das Foto aus dem Bild gescrollt ist */
   scroller.addEventListener('scroll', () => {
     const h = scroller.querySelector('.phero');
-    $('profileMini').classList.toggle('on', state.tab === 'ov' && !!h && scroller.scrollTop > h.offsetHeight - 110);
+    $('profileMini').classList.toggle('on', state.tab === 'ov' && !state.cmp && !state.cmpPick && !!h && scroller.scrollTop > h.offsetHeight - 110);
   }, { passive: true });
   $('profile').addEventListener('click', e => {
     const b = e.target.closest('[data-pf]');
     if (!b) return;
     const k = b.getAttribute('data-pf');
     if (k === 'play') requestNewGame({ player: state.id });
-    else if (k.startsWith('t:')) { state.tab = k.slice(2); state.pick = null; scroller.scrollTop = 0; render(); }
+    else if (k === 'cmp') { state.cmpPick = true; scroller.scrollTop = 0; render(); }
+    else if (k === 'cmp-x') { if (state.cmpPick && state.cmp) state.cmpPick = false; else { state.cmpPick = false; state.cmp = null; } scroller.scrollTop = 0; render(); }
+    else if (k.startsWith('cmpp:')) { state.cmp = k.slice(5); state.cmpPick = false; scroller.scrollTop = 0; render(); }
+    else if (k === 'cmp-open') openProfile(state.cmp);
+    else if (k.startsWith('t:')) { state.tab = k.slice(2); state.pick = null; state.cmp = null; state.cmpPick = false; scroller.scrollTop = 0; render(); }
     else if (k.startsWith('r:')) { state.range = k.slice(2); state.pick = null; render(); }
     else if (k === 'mwchart') {
       const r = b.getBoundingClientRect(), x = (e.clientX - r.left) / r.width;

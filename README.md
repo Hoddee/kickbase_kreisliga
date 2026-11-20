@@ -17,7 +17,7 @@ Live-Ticker für Zuschauer. Installierbar als App (Home-Bildschirm).
 - **Ein-Hand-Modus:** sechs große Kacheln im Daumenbereich.
 - **Tor-Assistent:** nach dem Team-Tor in Schritten Torschütze → Vorlage (mit Extras) → Einleitung, beim Gegentor der Verursacher.
 - **Nachtrag:** Spiele nachträglich mit Minuten und Ergebnis eintragen.
-- **Profil:** Punkte pro Spiel, Marktwert-Verlauf, Form, Erfolge; Spiel-Detail mit allen Aktionen und Korrekturen.
+- **Profil:** Punkte pro Spiel, Marktwert-Verlauf, Form, Erfolge, Vergleich mit einem anderen Spieler; Spiel-Detail mit allen Aktionen und Korrekturen.
 - **Hall of Fame / Ranking:** Top-Spiele, Tabelle, Neueste, Rekorde.
 - **Live:** Zuschauer sehen jede Aktion sofort (Supabase Realtime), Live-Link `?live=<Spiel-ID>` zum Teilen.
 - **Teilen:** Spielerkarte und Team-Bild als Bild.

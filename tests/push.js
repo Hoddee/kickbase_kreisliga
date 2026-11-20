@@ -11,7 +11,7 @@ const { chromium, devices } = require('playwright');
     PushManager.prototype.getSubscription = async () => sub;
     PushManager.prototype.subscribe = async () => (sub = { endpoint: 'https://push.example/abc', toJSON() { return { endpoint: this.endpoint, keys: { p256dh: 'k', auth: 'a' } }; }, unsubscribe: async () => { sub = null; return true; } });
   });
-  await ctx.addInitScript(() => { for (const k of ['kl-intro-v1', 'kl-intro-v2', 'kl-intro-v3', 'kl-tour-book-v2', 'kl-tour-book-v1', 'kl-mvp-news']) localStorage.setItem(k, 'true'); localStorage.setItem('kl-mvp-seen', JSON.stringify('x')); localStorage.setItem('kl-recorder', JSON.stringify('Test')); });
+  await ctx.addInitScript(() => { for (const k of ['kl-intro-v1', 'kl-intro-v2', 'kl-intro-v3', 'kl-tour-book-v2', 'kl-tour-book-v1', 'kl-mvp-news']) localStorage.setItem(k, 'true'); localStorage.setItem('kl-mvp-seen', JSON.stringify('x')); localStorage.setItem('kl-recorder', JSON.stringify('Test')); localStorage.setItem('kl-push-ask', 'true'); });
   const calls = [], liveBodies = [];
   await ctx.route(/supabase\.co/, r => { const q = r.request(), u = q.url();
     if (u.includes('rpc/push_')) { calls.push(u.split('rpc/')[1] + ' ' + Object.keys(JSON.parse(q.postData())).join(',')); return r.fulfill({ status: 204, body: '' }); }

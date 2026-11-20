@@ -508,3 +508,42 @@ body.onehand #quick { display: none !important; }
 .tour-crew em { display: flex; font-style: normal; }
 .tour-crew em img { width: 30px !important; height: 30px !important; border-radius: 50%; object-fit: cover; object-position: top; background: #2a2b30; box-shadow: 0 0 0 2px rgba(19, 20, 23, .95); }
 .tour-crew em img + img { margin-left: -9px; }
+
+/* ---------- Spieler-Vergleich (Profil) ---------- */
+.cmp-go { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 46px; margin: 12px 0 4px; border-radius: 12px; border: 1px solid var(--line);
+  background: var(--surface); color: var(--ink); font: 700 13px var(--font-body); letter-spacing: .1em; text-transform: uppercase; }
+.cmp-go svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.cmp-top { display: grid; grid-template-columns: 40px 1fr auto; align-items: center; gap: 6px; min-height: 48px; margin: 4px 0 8px; }
+.cmp-top b { font: 700 13px var(--font-body); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.cmp-x { width: 40px; height: 40px; border: 0; border-radius: 50%; background: var(--surface); color: var(--ink); font-size: 26px; line-height: 1; }
+.cmp-head { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; }
+.cmp-pl { position: relative; display: block; padding: 0; aspect-ratio: 3 / 3.6; overflow: hidden; border-radius: 18px; border: 1px solid var(--line);
+  background: radial-gradient(90% 70% at 50% 25%, #2a2c33, #16171b); color: var(--ink); text-align: left; }
+.cmp-pl img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top; }
+.cmp-pl::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(19, 20, 23, 0) 50%, rgba(19, 20, 23, .92)); }
+.cmp-pl span { position: absolute; z-index: 1; left: 12px; right: 12px; bottom: 10px; display: grid; }
+.cmp-pl.r span { text-align: right; }
+.cmp-pl small { color: var(--muted); font: 500 12px var(--font-body); }
+.cmp-pl b { font: 800 22px/1 var(--font-head); font-stretch: 88%; letter-spacing: -.02em; text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cmp-vs { position: absolute; z-index: 2; left: 50%; top: 42%; transform: translate(-50%, -50%); display: grid; place-items: center; width: 46px; height: 46px; border-radius: 50%;
+  background: var(--ink); color: var(--on-acc); font: 800 15px var(--font-head); font-style: normal; box-shadow: 0 0 0 5px var(--bg); }
+.cmp-rows { display: grid; gap: 14px; }
+.cmp-l { display: grid; grid-template-columns: 1fr auto 1fr; align-items: baseline; gap: 8px; margin-bottom: 6px; }
+.cmp-l small { color: var(--muted); font: 600 11.5px var(--font-body); letter-spacing: .08em; text-transform: uppercase; text-align: center; }
+.cmp-l b { font: 800 19px var(--font-display); color: var(--muted2); }
+.cmp-l b:last-child { text-align: right; }
+.cmp-l b.on { color: var(--ink); }
+.cmp-bar { display: flex; gap: 4px; height: 6px; }
+.cmp-bar i { display: block; min-width: 6px; border-radius: 3px; background: rgba(222, 228, 236, .14); transition: width .5s cubic-bezier(.2, .8, .2, 1); }
+.cmp-bar i.on { background: var(--ink); }
+.cmp-form { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px; margin: 22px 0 0; }
+.cmp-form .fdash { margin: 0; }
+.cmp-form small { color: var(--muted); font: 600 11.5px var(--font-body); letter-spacing: .08em; text-transform: uppercase; }
+.cmp-sum { margin: 22px 0 8px; padding: 14px; border-radius: 14px; background: var(--surface); text-align: center; font: 800 18px var(--font-head); font-stretch: 88%; letter-spacing: -.01em; text-transform: uppercase; }
+/* Einmalige Frage nach Benachrichtigungen */
+.pask { text-align: center; display: grid; gap: 10px; }
+.pask-i { justify-self: center; display: grid; place-items: center; width: 62px; height: 62px; margin-top: 6px; border-radius: 50%; background: var(--raised); }
+.pask-i svg { width: 28px; height: 28px; fill: none; stroke: var(--ink); stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.pask h3 { margin: 4px 0 0; }
+.pask p { margin: 0 0 8px; color: var(--muted); font-size: 15px; }
+.pask .btn { min-height: 52px; }

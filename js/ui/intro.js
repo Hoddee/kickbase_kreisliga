@@ -3,7 +3,9 @@
    - Punktevergabe erklärt: beim ersten Öffnen von „Punkte vergeben“ nach dem Spielstart
    Bilder: Screenshots der App und Fotos von uns (f-*), gemischt. Jeder Rundgang erscheint pro Gerät genau einmal (Schlüssel in KEYS). Neue Version eines Rundgangs = neuer Schlüssel,
    dann sieht ihn jeder noch einmal. Bilder liegen im Repo (assets/img/tut, WebP) – kein Supabase-Traffic. */
-import { readJson, writeJson, esc, fmt, cls, setNum, reducedMotion } from '../core/util.js';
+import { readJson, writeJson, esc, fmt, cls, setNum, reducedMotion, toast } from '../core/util.js';
+import { pushState, pushOn } from '../services/push.js';
+import { nav } from '../router.js';
 import { PL, photoUrl } from '../data/players.js';
 import { ACT } from '../core/game.js';
 import { qrSvg } from '../core/qr.js';
@@ -33,7 +35,7 @@ const BOOK = [
 
 export const introSeen = () => !!readJson(KEYS.intro3, false);
 export const bookingTourSeen = () => !!readJson(KEYS.tourBook2, false);
-export const showIntro = () => tour(APP, KEYS.intro3, 'Einführung', 'Los geht’s');
+export const showIntro = () => tour(APP, KEYS.intro3, 'Einführung', 'Los geht’s', () => setTimeout(askPush, 700));
 export const showBookingTour = () => tour(BOOK, KEYS.tourBook2, 'Punktevergabe erklärt', 'Verstanden');
 
 /* Punkte einer Aktion aus der Punktetabelle (Stürmer, sonst Mittelfeld) */
@@ -79,7 +81,7 @@ function visual(sl) {
 }
 
 
-function tour(slides, key, label, doneLabel) {
+function tour(slides, key, label, doneLabel, onDone) {
   if (document.getElementById('tour')) return;
   let i = 0;
   const el = document.createElement('div');
@@ -102,7 +104,7 @@ function tour(slides, key, label, doneLabel) {
     next.textContent = last ? doneLabel : 'Weiter';
     next.dataset.tr = last ? 'done' : 'next';
   };
-  const close = () => { writeJson(key, true); el.classList.add('gone'); setTimeout(() => el.remove(), 250); };
+  const close = () => { writeJson(key, true); el.classList.add('gone'); setTimeout(() => { el.remove(); if (onDone) onDone(); }, 250); };
   const go = n => { if (n < 0 || n >= slides.length || n === i) return; const d = n > i ? 1 : -1; i = n; draw(d); };
   el.addEventListener('click', e => {
     const b = e.target.closest('[data-tr]');
@@ -123,4 +125,31 @@ function tour(slides, key, label, doneLabel) {
   draw(0);
   /* Fokus aufs Fenster (Tastatur/VoiceOver), ohne dass ein Knopf einen Fokusrahmen bekommt */
   el.tabIndex = -1; el.focus();
+}
+
+/* Einmal pro Gerät fragen, ob Benachrichtigungen an sollen – nur wo Push geht (iPhone: App vom Home-Bildschirm),
+   noch nicht entschieden und gerade nichts anderes offen (Einführung, Blatt, Punktevergabe, MVP-Stage). */
+const BELL = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>';
+let askTries = 0;
+export async function askPush() {
+  if (readJson(KEYS.pushAsk, false) || !introSeen()) return;
+  /* Gerade etwas anderes offen: später nochmal versuchen */
+  if (document.getElementById('tour') || document.querySelector('.sheet-bg') || ['edit', 'home', 'mvp', 'setup'].includes(nav.current)) {
+    if (++askTries < 30) setTimeout(askPush, 8000);
+    return;
+  }
+  if (typeof Notification === 'undefined' || Notification.permission !== 'default' || (await pushState()) !== 'off') return;
+  const el = document.createElement('div');
+  el.className = 'sheet-bg';
+  el.innerHTML = '<div class="sheet pask" role="dialog" aria-modal="true" aria-labelledby="paT"><span class="pask-i">' + BELL + '</span><h3 id="paT">Benachrichtigungen</h3>' +
+    '<p>Live-Spiele und MVP-Stage</p><button type="button" class="btn primary full" data-pa="on">Aktivieren</button><button type="button" class="btn full ghost" data-pa="no">Nicht jetzt</button></div>';
+  const done = () => { writeJson(KEYS.pushAsk, true); el.remove(); };
+  el.addEventListener('click', async e => {
+    if (e.target === el) { done(); return; }
+    const b = e.target.closest('[data-pa]');
+    if (!b) return;
+    done();
+    if (b.dataset.pa === 'on') { try { if (await pushOn()) toast('Benachrichtigungen an'); } catch (err) { toast('Hat nicht geklappt', 'bad'); } }
+  });
+  document.body.appendChild(el);
 }
