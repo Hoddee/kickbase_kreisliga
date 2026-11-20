@@ -96,6 +96,10 @@ Tabellen: `spiele` (gespeicherte Spiele inkl. `events` jsonb), `kader`, `admins`
 - Foto-Upload ohne `x-upsert` (das verlangt zusätzliche Storage-Rechte und scheiterte mit einer RLS-Meldung):
   jedes Foto bekommt einen eigenen Dateinamen.
 - Lesen geht anonym per REST (`apikey` = Publishable Key) – gut zum Nachprüfen echter Daten. Schreiben/SQL nur über den Nutzer.
+- **Speichern ohne Anmeldung bleibt bewusst erlaubt** (Entscheidung des Nutzers, Nov. 2026) – erst bei echtem Missbrauch
+  einschränken, nicht ungefragt vorschlagen. Schutz vor eingeschleustem Code: Daten aus `spiele` und `live_spiele` werden beim
+  Laden geprüft (`cleanGame`/`cleanEvents` in `api.js`, `cleanLive` in `live.js`: Zahlen erzwingen, IDs prüfen), `fmt()` macht
+  immer eine Zahl, Texte immer mit `esc()`. Neue Felder aus der DB dort mit aufnehmen.
 - Bild-Traffic sparsam halten (Supabase-Limit): feste Bilder liegen im Repo unter `assets/img` als WebP
   (`p/` Spielerfotos 600×830, `p/s/` Vorschau 128 px, `c/` Wappen). Neue Spieler-ID dann in `LOCAL_PHOTOS`
   (`js/data/players.js`) eintragen und in der DB `foto` auf NULL lassen. Wird ein vorhandenes Bild ersetzt, `IMG` in `sw.js` hochzählen.
@@ -120,9 +124,6 @@ Tabellen: `spiele` (gespeicherte Spiele inkl. `events` jsonb), `kader`, `admins`
   was getestet ist und ob eine Migration auszuführen ist.
 
 ## Offene Punkte (Stand 19.11.2026)
-- Sicherheit: Punktwerte aus der DB werden teils ohne `esc()` angezeigt (`fmt(...)` in `components.js` u. a.) –
-  ein präpariertes Spiel könnte Code einschleusen. `spiele` nimmt anonyme Einträge ungeprüft an (Punkte bis 3000,
-  Größe von `events` unbegrenzt). Entscheidung offen, ob Speichern ohne Anmeldung bleiben soll.
 - Supabase: Cached Egress (Gratis 5 GB/Monat) war im Okt./Nov. überschritten (Bilder aus dem Storage, inzwischen behoben).
   Grace Period bis 08.12.2026; danach gibt es beim nächsten Überschreiten **keine** Schonfrist mehr (sofort 402).
   Bild- und Abfrage-Traffic deshalb weiter sparsam halten.

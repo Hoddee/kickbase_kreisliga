@@ -4,7 +4,8 @@ export const $ = id => document.getElementById(id);
 export function esc(s) {
   return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 }
-export const fmt = n => (n > 0 ? '+' + n : String(n));
+/* Punkte mit Vorzeichen – immer als Zahl, damit nie fremder Text in die Seite gelangt */
+export const fmt = v => { const n = Number(v) || 0; return n > 0 ? '+' + n : String(n); };
 export const cls = n => (n < 0 ? 'neg' : n === 0 ? 'zero' : n >= 15 ? 'hi' : 'pos');
 export const tierOf = n => (n < 0 ? 'red' : n < 100 ? 'orange' : n < 200 ? 'lime' : n < 400 ? 'emerald' : 'gold');
 export const pad2 = n => (n < 10 ? '0' : '') + n;

@@ -4,7 +4,7 @@
    Empfangen: Alle anderen holen die Liste einmal und bekommen Änderungen danach sofort über Supabase Realtime
    (WebSocket). Fällt die Verbindung weg, wird nachgeladen, bis sie wieder steht. */
 import { SUPABASE_URL, SUPABASE_KEY } from '../config.js';
-import { rest } from './api.js';
+import { rest, num, str, okId, okFoto } from './api.js';
 import { PL } from '../data/players.js';
 import {
   store, silentGoal, eachPlayer, isMulti, started, elapsed, total, score, isHome, teamOf, endLines, startLine, withMarkers
@@ -103,8 +103,21 @@ const listeners = new Set();
 export const onLive = fn => { listeners.add(fn); return () => listeners.delete(fn); };
 const emit = (ev) => { for (const fn of listeners) try { fn(ev); } catch (e) {} };
 
-const fresh = r => r && r.data && r.data.v === 1 && Date.now() - new Date(r.updated_at || Date.now()).getTime() < MAX_AGE;
-function apply(r) { if (fresh(r)) live.map.set(r.uid, { data: r.data, at: Date.now() }); }
+const fresh = r => r && okId(r.uid) && r.data && r.data.v === 1 && Date.now() - new Date(r.updated_at || Date.now()).getTime() < MAX_AGE;
+/* Live-Stände schreibt jedes Gerät mit Schlüssel – vor der Anzeige auf Zahlen und gültige IDs bringen (Texte escapt die Anzeige) */
+function cleanLive(d) {
+  const c = d.clock || {};
+  return {
+    v: 1, gid: okId(d.gid), i: num(d.i), n: num(d.n, 1), p: okId(d.p), nm: str(d.nm, 40), vn: str(d.vn, 40), pf: okFoto(d.pf), of: okFoto(d.of),
+    pos: str(d.pos, 4), team: okId(d.team), opp: okId(d.opp), home: !!d.home, us: num(d.us), them: num(d.them), t: num(d.t),
+    ended: !!d.ended, h2: !!d.h2, ht: !!d.ht, clock: { el: num(c.el), run: !!c.run, at: num(c.at, Date.now()) },
+    by: str(d.by, 40) || null, byP: okId(d.byP),
+    rows: (Array.isArray(d.rows) ? d.rows : []).slice(0, 400).filter(r => r && typeof r === 'object').map(r =>
+      r.ht ? { ht: 1 } : r.sub ? { sub: { o: r.sub.o === 'out' ? 'out' : 'in', t: num(r.sub.t) } }
+        : { p: r.p == null ? null : num(r.p), l: str(r.l), r: str(r.r, 8), id: typeof r.id === 'number' ? num(r.id) : str(String(r.id || ''), 12) })
+  };
+}
+function apply(r) { if (fresh(r)) live.map.set(r.uid, { data: cleanLive(r.data), at: Date.now() }); }
 
 async function loadAll() {
   try {
