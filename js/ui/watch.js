@@ -8,7 +8,7 @@ import { live, onLive, ownLive, liveStatus } from '../services/live.js';
 import { games, loadGames } from '../services/api.js';
 import { registerView, show, back, nav, rerender } from '../router.js';
 import { bindSheet } from './sheet.js';
-import { rowLi, whistleLi } from './components.js';
+import { rowLi, whistleLi, reporterHtml } from './components.js';
 import { openMatch } from './match.js';
 
 const state = { uid: null, seen: new Set(), ended: null };
@@ -61,7 +61,7 @@ function html() {
   return '<section class="mhero"><div class="pphoto"><img src="' + esc(photo(d)) + '" alt=""></div>' +
     '<div class="mh-t"><span>' + esc(d.nm) + '</span><b>' + d.t + '</b><div class="mh-s"><img src="' + esc(s.l) + '" alt=""><div><strong>' + s.score + '</strong>' +
     '<small class="lv-st' + (d.ended ? '' : ' on') + '" data-lmin="' + esc(state.uid) + '">' + esc(liveStatus(d)) + '</small></div><img src="' + esc(s.r) + '" alt=""></div></div></section>' +
-    '<div class="pbody">' + sw + (d.ended ? '' : '<button type="button" class="btn full lvshare" data-lw="share">Live-Link teilen</button>') + '<ul class="rows mrows">' + rows.map(rowLi).join('') + whistleLi() + '</ul></div>';
+    '<div class="pbody">' + sw + reporterHtml(d.by, d.byP, !d.ended) + (d.ended ? '' : '<button type="button" class="btn full lvshare" data-lw="share">Live-Link teilen</button>') + '<ul class="rows mrows">' + rows.map(rowLi).join('') + whistleLi() + '</ul></div>';
 }
 function render(keep) {
   const sc = $('watchScroll'), top = sc.scrollTop, x = live.map.get(state.uid);

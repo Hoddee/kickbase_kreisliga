@@ -362,3 +362,17 @@ body.ended .cta button { background: rgba(19, 20, 23, .88); color: var(--ink); b
 .htabs button { border: 0 !important; border-bottom: 2px solid transparent !important; border-radius: 0 !important; outline-offset: -2px;
   padding: 12px 7px !important; font-size: 12px !important; letter-spacing: .05em !important; }
 .htabs button[aria-pressed="true"] { border-bottom-color: var(--ink) !important; }
+
+/* Wer trägt ein (Live-Ansicht, Spiel-Detail) */
+.kl-rep { display: flex; align-items: center; gap: 12px; margin: 14px 0 12px; padding: 10px 14px 10px 10px; border-radius: 14px; background: var(--surface); color: var(--ink); }
+.kl-rep[role="button"] { cursor: pointer; }
+.kl-rep .hav, .kl-rep-i { flex: none; width: 46px; height: 46px; border-radius: 12px; }
+.kl-rep-i { display: grid; place-items: center; background: var(--raised); font: 800 17px var(--font-display); color: var(--muted); }
+.kl-rep-t { flex: 1; min-width: 0; }
+.kl-rep-t small { display: block; font: 600 10.5px var(--font-body); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.kl-rep-t b { display: block; margin-top: 2px; font: 600 16px/1.2 var(--font-body); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kl-rep.live { border: 1px solid rgba(var(--live-rgb), .28); }
+.kl-rep.live small { color: #ff6b61; }
+.kl-rep-dot { flex: none; width: 9px; height: 9px; margin-right: 4px; border-radius: 50%; background: var(--live); animation: kbpulse 1.4s ease-in-out infinite; }
+.mrows + .kl-rep, .mtools + .kl-rep { margin-top: 18px; }
+@media (prefers-reduced-motion: reduce) { .kl-rep-dot { animation: none; } }
