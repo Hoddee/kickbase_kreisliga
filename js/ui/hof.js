@@ -6,7 +6,7 @@ import { CL, CLUB_LIST, LEAGUES, crestUrl } from '../data/clubs.js';
 import { TEAMS } from '../data/schedule.js';
 import { CAT, scoreText, recordTeam } from '../core/game.js';
 import { marketOf, byDate } from '../core/market.js';
-import { games, loadGames, loadEvents, cachedEvents, forgetEvents, updateGame, deleteGame } from '../services/api.js';
+import { games, loadGames, loadEvents, cachedEvents, forgetEvents, updateGame, deleteGame, loadAllEvents } from '../services/api.js';
 import { isAdmin, canManage } from '../services/auth.js';
 import { ICON } from '../core/icons.js';
 import { avatar, nameWithStatus, rowLi, rowsFromRecord, whistleLi, areaBars, gameRow, skeleton } from './components.js';
@@ -180,9 +180,44 @@ function overview(list) {
   h += board('Torjäger', top3(pp, a => a.goals).map(a => ({ id: a.id, v: a.goals, sub: a.n + ' Spiele', link: 'data-open="p:' + esc(a.id) + '"' })));
   h += board('Vorlagen', top3(pp, a => a.assists).map(a => ({ id: a.id, v: a.assists, sub: a.n + ' Spiele', link: 'data-open="p:' + esc(a.id) + '"' })));
   h += board('Marktwert', mws.sort((x, y) => y.mw.v - x.mw.v).slice(0, 3).map(x => ({ id: x.id, v: eur(x.mw.v), sub: x.mw.last ? '<i class="' + trendClass(x.mw.last) + '">' + signedEur(x.mw.last) + '</i>' : '', link: 'data-open="p:' + esc(x.id) + '"' })));
+  h += '<button type="button" class="btn full hb-stats" data-hof="t:stats"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Detaillierte Statistiken</button>';
   h += board('Neueste Spiele', list.slice(0, 3).map(g => ({ id: g.player, v: g.points, sub: dateShort(g.played_at) + ' · ' + scoreText(g, g.home), link: 'data-hof="g:' + esc(g.uid) + '"', tier: g.points })), more('all', 'new'));
   return h;
 }
+/* ---------- Detaillierte Statistiken: Ranglisten je Aktion (aus allen gespeicherten Aktionen) ---------- */
+const STATS = [
+  ['Torschüsse aufs Tor', ['sot']], ['Großchancen kreiert', ['bcc']], ['Ballgewinne', ['icpt']], ['Gewonnene Zweikämpfe', ['duel', 'aerw', 'contest']],
+  ['Pässe ins letzte Drittel', ['pf3']], ['Flanken', ['cross']], ['Geklärt', ['clri', 'clro', 'line']], ['Schüsse geblockt', ['blk6', 'blk16', 'blko']],
+  ['Paraden', ['sv', 'shh', 'bcs']], ['Ballverluste', ['poss', 'lost']], ['Fouls', ['foul', 'danger']], ['Karten', ['yel', 'yel2']]
+];
+const statsUi = { busy: false, err: false, pick: '' };
+function statCounts(list, keys) {
+  const ks = new Set(keys), per = new Map();
+  for (const g of list) {
+    const ev = cachedEvents(g.uid);
+    if (!ev) continue;
+    const n = ev.filter(e => ks.has(e.k) && !e.x).length, a = per.get(g.player) || { id: g.player, n: 0, games: 0 };
+    a.n += n; a.games++; per.set(g.player, a);
+  }
+  return [...per.values()].filter(a => a.n > 0).sort((x, y) => y.n - x.n || x.games - y.games);
+}
+const statRows = (arr, k) => arr.slice(0, k).map(a => ({ id: a.id, v: a.n, sub: a.games + (a.games === 1 ? ' Spiel' : ' Spiele') + ' · Ø ' + (a.n / a.games).toFixed(1).replace('.', ','), link: 'data-open="p:' + esc(a.id) + '"' }));
+function statsTab(list) {
+  const back = '<button type="button" class="back hb-back" data-hof="t:ov"><b aria-hidden="true">‹</b>Übersicht</button>';
+  if (!list.every(g => cachedEvents(g.uid))) {
+    if (!statsUi.busy && !statsUi.err) { statsUi.busy = true; loadAllEvents().then(() => { statsUi.busy = false; if (nav.current === 'hof') render(); }, () => { statsUi.busy = false; statsUi.err = true; if (nav.current === 'hof') render(); }); }
+    return back + (statsUi.err ? '<p class="hmsg">Keine Verbindung.</p><button type="button" class="btn full" data-hof="stats-retry">Nochmal versuchen</button>' : skeleton(6));
+  }
+  /* Beliebige Aktion wählen: alle, die in den Spielen vorkommen */
+  const seen = new Map();
+  for (const g of list) for (const e of cachedEvents(g.uid)) if (e.k && e.l && !e.x && !['auto', 'sub', 'ht', 'tg', 'cg', 'corr'].includes(e.k) && !seen.has(e.k)) seen.set(e.k, e.l);
+  const opts = [...seen].sort((a, b) => a[1].localeCompare(b[1], 'de'));
+  let h = back + '<h2 class="hb-st">Statistiken</h2><label class="hb-pick"><select class="fi" id="statPick" aria-label="Aktion wählen"><option value="">Aktion wählen …</option>' +
+    opts.map(([k, l]) => '<option value="' + esc(k) + '"' + (statsUi.pick === k ? ' selected' : '') + '>' + esc(l) + '</option>').join('') + '</select></label>';
+  if (statsUi.pick && seen.has(statsUi.pick)) h += board(seen.get(statsUi.pick), statRows(statCounts(list, [statsUi.pick]), 10));
+  return h + STATS.map(([t, keys]) => board(t, statRows(statCounts(list, keys), 3))).join('');
+}
+
 /* MVP-Verlauf: alle vorgestellten Spieltage, dazu wer am häufigsten MVP war */
 function mvpTab() {
   const hist = history();
@@ -210,6 +245,7 @@ function overviewHtml() {
   const list = games.list.filter(inLeague);
   if (!list.length) return h + '<p class="hmsg">Noch keine Spiele gespeichert.</p>';
   if (ui.tab === 'ov') return h + overview(list);
+  if (ui.tab === 'stats') return h + statsTab(list);
   if (ui.tab === 'all') return h + allTab(list);
   if (ui.tab === 'records') return h + records(list);
   return h + table(list);
@@ -291,9 +327,11 @@ export function initHof() {
     else if (k.startsWith('go:')) { const [, t, so] = k.split(':'); ui.tab = t; if (so) ui.sort = so; ui.more = 30; window.scrollTo(0, 0); }
     else if (k.startsWith('s:')) { ui.sort = v; ui.more = 30; }
     else if (k === 'more') ui.more += 30;
+    else if (k === 'stats-retry') statsUi.err = false;
     else if (k.startsWith('l:')) ui.league = v;
     render();
   });
+  $('hof').addEventListener('change', e => { if (e.target.id === 'statPick') { statsUi.pick = e.target.value; render(); } });
   $('hof').addEventListener('submit', e => {
     if (e.target.id === 'gameEdit') { e.preventDefault(); saveEdit(e.target); }
   });

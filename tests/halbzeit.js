@@ -1,0 +1,21 @@
+const L = require('./lib.js');
+(async () => {
+  const t = await L.setup(); const { p, c } = t;
+  await L.startGame(t, ['Klenk', 'Krauss']);
+  for (let i = 0; i < 46; i++) await c('[data-do="m+1"]');
+  await p.waitForTimeout(200);
+  console.log('Spiel-Reiter Knoepfe:', await p.$$eval('#editBody .card .btn', e => e.map(x => x.textContent)));
+  await c('.tabs [data-tab="att"]'); await p.waitForTimeout(1300);
+  console.log('Leiste Angriff:', await p.textContent('#htBar'));
+  await c('#htBar [data-do="ht"]'); await p.waitForTimeout(300);
+  console.log('nach Halbzeitpfiff:', await p.textContent('#htBar'), '| ht:', (await t.S()).ht, 'Uhr laeuft:', !!(await t.S()).clock.startedAt);
+  await p.screenshot({ path: 'out/ht1.png' });
+  await c('#htBar [data-do="half2"]'); await p.waitForTimeout(300);
+  const S = await t.S();
+  console.log('nach Anpfiff 2. HZ: h2', S.h2, 'ht', S.ht, 'Uhr', Math.round(S.clock.offset), 'laeuft', !!S.clock.startedAt, '| Leiste:', JSON.stringify(await p.textContent('#htBar')));
+  await c('.tabs [data-tab="spiel"]'); await p.waitForTimeout(200);
+  console.log('Spiel-Reiter in HZ2:', await p.$$eval('#editBody .card .btn', e => e.map(x => x.textContent)));
+  await c('[data-do="endq"]'); await p.waitForTimeout(300);
+  console.log('Abpfiff-Bestaetigung sichtbar:', await p.evaluate(() => !!document.querySelector('[data-do="end-yes"]')));
+  console.log('Fehler:', t.errs.length ? t.errs : 'keine'); await t.b.close();
+})();

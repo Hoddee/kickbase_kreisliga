@@ -106,6 +106,15 @@ export async function loadEvents(uid) {
   return ev;
 }
 export const cachedEvents = uid => eventCache.get(uid);
+/* Aktionen aller Spiele auf einmal (für die Detail-Statistiken) – klein (~7 KB bei 30 Spielen), einmal pro Sitzung */
+let allEventsP = null;
+export function loadAllEvents() {
+  if (!allEventsP) allEventsP = rest('spiele?select=uid,events&limit=2000').then(r => r.json()).then(d => {
+    for (const x of Array.isArray(d) ? d : []) if (x && okId(x.uid)) eventCache.set(x.uid, cleanEvents(x.events));
+    return true;
+  }).catch(e => { allEventsP = null; throw e; });
+  return allEventsP;
+}
 export const rememberEvents = (uid, ev) => { forgetEvents(uid); eventCache.set(uid, ev); };
 export const forgetEvents = uid => { playerEventCache.clear(); return uid ? eventCache.delete(uid) : eventCache.clear(); };
 
