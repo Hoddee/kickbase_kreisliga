@@ -60,7 +60,7 @@ Erklärzeilen unter Optionen). Beschriftungen knapp halten; Erklärungen gehöre
 - Traffic (`js/services/traffic.js`): jedes Gerät zählt seine Supabase-Bytes (geschätzt) und meldet die Tagessumme
   (`rpc/traffic_melden`); Admins sehen die Monatssumme im Admin-Bereich (`rpc/traffic_monat`, Migration 012).
 - Rundgänge (`js/ui/intro.js`): Einführung (`KEYS.intro3`) und „Punktevergabe erklärt“ (`KEYS.tourBook2`, beim ersten
-  „Punkte vergeben“). Je einmal pro Gerät; neue Fassung = neuer Schlüssel. Folien `{ s }` = Screenshot, `{ f, chips, top, tag, logo }` =
+  „Punkte vergeben“). Je einmal pro Gerät; neue Fassung = neuer Schlüssel. Folien `{ s }` = Screenshot, `{ f, chips, top, tag, qr, crew, logo }` =
   Foto von uns (`f-*.webp`) mit Punkte-Chips bzw. Spieler-Marke (`tag`: Aktionen fliegen hoch, Punkte zählen) – gesunder Mix, Screenshots wo die Bedienung gezeigt wird.
   Bilder als WebP in `assets/img/tut/` (600×676); Screenshots erzeugt `node tests/tools/tutorial-bilder.js` (Fenster 390×440,
   danach PNG → WebP, `V` in intro.js hochzählen). Ändert sich die Oberfläche stark, die Bilder neu aufnehmen.
@@ -104,6 +104,7 @@ Erklärzeilen unter Optionen). Beschriftungen knapp halten; Erklärungen gehöre
   `body.has-tabbar` / `body.tab-root` steuern Abstand unten und den ausgeblendeten Zurück-Knopf. Router-Hook: `onShow(fn)`.
   Waagerecht wischen wechselt zwischen Liga ⇄ Kader ⇄ Ranking ⇄ Ich (`initSwipe` in `tabbar.js`, nur bei `tab-root`);
   Leisten, die selbst waagerecht scrollen, und `[data-noswipe]` sind ausgenommen.
+- Untere Leiste: iOS löst `position: fixed` manchmal beim Scrollen (Leiste läuft mit) – `.tabbar` hat `translateZ(0)`, `keepFixed()` in `tabbar.js` setzt sie nach dem Scrollen neu, falls sie verrutscht ist.
 - `css/` – `theme.css` muss nach den Basis-CSS eingebunden sein (Reihenfolge der `<link>` zählt); neue CSS-Dateien in `index.html` und `sw.js` eintragen.
   Vor neuen Klassennamen per `grep` prüfen, dass es sie noch nicht gibt – Kollisionen haben schon die Startseite verbreitert.
 

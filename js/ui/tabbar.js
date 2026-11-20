@@ -109,8 +109,26 @@ function switchTab(k, noAnim) {
   show(target, { tab: true, noAnim: !!noAnim });
 }
 
+/* iOS-Safari (vor allem als App auf dem Home-Bildschirm) verliert manchmal beim Scrollen die feste Position der Leiste –
+   sie läuft dann mit dem Inhalt mit. Nach jedem Scrollen prüfen und die Leiste notfalls neu setzen lassen. */
+function keepFixed() {
+  const bar = $('tabbar');
+  let t = null;
+  const check = () => {
+    if (bar.hidden) return;
+    const r = bar.getBoundingClientRect(), vh = window.visualViewport ? window.visualViewport.height : innerHeight;
+    if (Math.abs(r.bottom - vh) > 3 && Math.abs(r.bottom - innerHeight) > 3) {
+      bar.style.display = 'none'; void bar.offsetHeight; bar.style.display = '';
+    }
+  };
+  window.addEventListener('scroll', () => { clearTimeout(t); t = setTimeout(check, 120); }, { passive: true });
+  window.addEventListener('resize', check);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') setTimeout(check, 60); });
+}
+
 export function initTabbar() {
   initSwipe();
+  keepFixed();
   onShow(v => updateTabbar(v));
   onAuthChange(() => updateTabbar());
   $('tabbar').addEventListener('click', e => {

@@ -6,7 +6,8 @@
 import { readJson, writeJson, esc, fmt, cls, setNum, reducedMotion } from '../core/util.js';
 import { PL, photoUrl } from '../data/players.js';
 import { ACT } from '../core/game.js';
-import { KEYS } from '../config.js';
+import { qrSvg } from '../core/qr.js';
+import { KEYS, APP_URL } from '../config.js';
 
 const IMG = 'assets/img/tut/', V = '.webp?v=3'; // neue Bilder: v hochzählen (der Service Worker hält Bilder sonst für immer)
 /* Folien: { s: Screenshot der App } oder { f: Foto von uns, chips: [[Aktion, Punkte]], inset: kleiner Screenshot, logo } */
@@ -26,7 +27,7 @@ const BOOK = [
   { s: 'b-vorlage', t: 'Vorlage mit Extras', x: 'Wer hat aufgelegt? Großchance, Flanke oder Pass des Todes geben extra Punkte. Alles freiwillig.' },
   { s: 'b-gegentor', t: 'Gegentor', x: 'Zuerst „Tor“ für den Gegner. Danach den Schuldigen wählen – wenn es einen gibt.' },
   { s: 'b-einhand', t: 'Ein-Hand-Modus', x: 'Hand-Symbol neben der Suche: sechs große Kacheln im Daumenbereich. Wischen wechselt den Spieler.' },
-  { f: 'f-team', chips: [['Du · Klenk, Krauss', 0], ['Max · Reule', 0]], t: 'Zusammen buchen', x: 'Bis zu 3 Handys scannen den QR-Code im Reiter Spiel. Jeder wählt seine Spieler – Tore darf jeder melden.' },
+  { f: 'f-team', qr: 1, crew: [['Ich', ['Klenk', 'Krauss']], ['Du', ['Reule', 'Sipala']]], t: 'Zusammen buchen', x: 'Bis zu 3 Handys scannen den QR-Code im Reiter Spiel. Jeder wählt seine Spieler – Tore darf jeder melden.' },
   { s: 'b-zuletzt', t: 'Vertippt? Kein Problem', x: 'Unten stehen die letzten Buchungen. Antippen: löschen oder einem anderen Spieler geben.' }
 ];
 
@@ -71,6 +72,9 @@ function visual(sl) {
     (sl.logo ? '<img class="tour-plogo" src="assets/icons/logo.svg" alt="Kickbase KL">' : '') +
     (sl.chips ? '<div class="tour-chips' + (sl.top ? ' top' : '') + '">' + sl.chips.map(([l, v], j) => '<span style="animation-delay:' + (0.25 + j * 0.22) + 's">' + esc(l) + chipPts(v) + '</span>').join('') + '</div>' : '') +
     (sl.tag ? '<div class="tour-tag"><img src="' + esc(photoUrl(sl.tag.p, true)) + '" alt=""><span><small>' + esc(PL[sl.tag.p].n) + '</small><b>0</b></span></div>' : '') +
+    (sl.qr ? '<div class="tour-qr">' + qrSvg(APP_URL) + '</div>' : '') +
+    (sl.crew ? '<div class="tour-chips">' + sl.crew.map(([n, ps], j) => '<span class="tour-crew" style="animation-delay:' + (0.25 + j * 0.22) + 's"><em>' +
+      ps.map(id => '<img src="' + esc(photoUrl(id, true)) + '" alt="">').join('') + '</em>' + esc(n) + '</span>').join('') + '</div>' : '') +
     (sl.inset ? '<div class="tour-inset"><img src="' + IMG + sl.inset + V + '" alt=""></div>' : '') + '</div>';
 }
 
