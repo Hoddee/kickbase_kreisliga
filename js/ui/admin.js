@@ -226,8 +226,9 @@ async function fillPush() {
   if (!el) return;
   const st = await pushState();
   if (st === 'none') { el.remove(); return; }
-  const btn = st === 'on' ? '<button type="button" class="btn" data-adm="push-off"' + (pushBusy ? ' disabled' : '') + '>Aus</button>'
-    : st === 'off' ? '<button type="button" class="btn primary" data-adm="push-on"' + (pushBusy ? ' disabled' : '') + '>An</button>'
+  /* Schalter wie in den iPhone-Einstellungen */
+  const btn = st === 'on' || st === 'off'
+    ? '<button type="button" class="kl-sw" role="switch" aria-checked="' + (st === 'on') + '" aria-label="Benachrichtigungen" data-adm="' + (st === 'on' ? 'push-off' : 'push-on') + '"' + (pushBusy ? ' disabled' : '') + '><i></i></button>'
     : '<span class="pushc-s">' + (st === 'install' ? 'Nur in der installierten App' : 'In den Einstellungen blockiert') + '</span>';
   el.innerHTML = '<span class="pushc-i">' + BELL + '</span><span class="pushc-t"><b>Benachrichtigungen</b><small>MVP-Stage · Live-Spiele</small></span>' + btn;
   el.classList.toggle('on', st === 'on');
@@ -387,7 +388,8 @@ export function initAdmin() {
     else if (k === 'intro') { showIntro(); return; }
     else if (k === 'tourbook') { showBookingTour(); return; }
     else if (k === 'push-on' || k === 'push-off') {
-      pushBusy = true; fillPush();
+      b.setAttribute('aria-checked', String(k === 'push-on')); /* Schalter springt sofort um */
+      pushBusy = true; setTimeout(fillPush, 260);
       (k === 'push-on' ? pushOn() : pushOff()).then(ok => { if (k === 'push-on' && ok === false) toast('Nicht erlaubt'); else toast(k === 'push-on' ? 'Benachrichtigungen an' : 'Benachrichtigungen aus'); })
         .catch(e => toast('Hat nicht geklappt: ' + e.message, 'bad')).finally(() => { pushBusy = false; fillPush(); });
       return;

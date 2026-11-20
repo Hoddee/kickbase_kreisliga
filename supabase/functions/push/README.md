@@ -2,7 +2,7 @@
 
 Verschickt Push-Benachrichtigungen an alle, die sie im Konto eingeschaltet haben:
 
-- **Live-Start:** ein Spieler → „Silas Klenk ist live“, mehrere → „VfR Murrhardt ist live · 3 Spieler“ (ausgelöst vom Trigger auf `live_spiele`)
+- **Live-Start:** ein Spieler → „Silas Klenk ist live“, mehrere → „3 Spieler von VfR Murrhardt sind live“, Text „Live verfolgen 🔻“ (ausgelöst vom Trigger auf `live_spiele`)
 - **MVP-Stage:** montags 19 Uhr → „14. Spieltag: Die MVP-Stage ist live“ (Cron, nur wenn der Spieltag mind. 3 Spieler hat)
 
 Auf dem iPhone nur in der installierten App (Home-Bildschirm, iOS 16.4+).

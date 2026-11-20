@@ -24,7 +24,7 @@ const { chromium, devices } = require('playwright');
   await p.evaluate(() => document.querySelector('[data-adm="push-on"]').click()); await p.waitForTimeout(6000);
   const toast = await p.evaluate(() => (document.getElementById('toast') || {}).textContent);
   console.log('Nach „An“:', await p.evaluate(() => document.getElementById('pushCard').textContent), '| Toast:', toast, '| RPC:', calls.join(' / ') || '–');
-  await p.screenshot({ path: 'out/push.png' });
+  await p.evaluate(() => document.getElementById('pushCard').scrollIntoView({ block: 'center' })); await p.waitForTimeout(400); await p.screenshot({ path: 'out/push.png' });
   await p.evaluate(() => document.querySelector('[data-adm="push-off"]').click()); await p.waitForTimeout(1500);
   console.log('Nach „Aus“:', await p.evaluate(() => document.getElementById('pushCard').textContent), '| RPC:', calls.join(' / '));
   // Live-Stand mit Vereinsnamen

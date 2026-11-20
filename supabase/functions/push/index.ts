@@ -1,5 +1,5 @@
 // Edge Function „push“: verschickt Web-Push an alle Abos.
-//  - type "live": Anpfiff (vom Trigger auf live_spiele) → „Klenk ist live“ bzw. „VfR Murrhardt ist live · 3 Spieler“
+//  - type "live": Anpfiff (vom Trigger auf live_spiele) → „Silas Klenk ist live“ bzw. „3 Spieler von VfR Murrhardt sind live“, darunter „Live verfolgen 🔻“
 //  - type "mvp":  Montag 19 Uhr (Cron) → „14. Spieltag: Die MVP-Stage ist live“ (nur ab 3 Spielern)
 // Secrets: PUSH_SECRET, VAPID_PUBLIC, VAPID_PRIVATE (SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY gibt es automatisch).
 import webpush from 'npm:web-push@3.6.7';
@@ -38,9 +38,9 @@ async function sendAll(msg: { title: string; body: string; url: string; tag: str
 async function live(d: Record<string, unknown>) {
   const gid = String(d.gid || '');
   if (!/^[A-Za-z0-9_-]{6,64}$/.test(gid) || !(await once('live:' + gid))) return 0;
-  const n = Number(d.n) || 1, name = [d.vn, d.nm].filter(Boolean).join(' ').slice(0, 40), team = String(d.tn || '').slice(0, 40), opp = String(d.on || '').slice(0, 40);
-  const title = n > 1 ? (team || 'Unser Team') + ' ist live' : (name || 'Ein Spieler') + ' ist live';
-  const body = (n > 1 ? n + ' Spieler' + (opp ? ' · ' : '') : '') + (opp ? 'gegen ' + opp : '');
+  const n = Number(d.n) || 1, name = [d.vn, d.nm].filter(Boolean).join(' ').slice(0, 40), team = String(d.tn || '').slice(0, 40);
+  const title = n > 1 ? n + ' Spieler von ' + (team || 'unserem Team') + ' sind live' : (name || 'Ein Spieler') + ' ist live';
+  const body = 'Live verfolgen 🔻';
   return sendAll({ title, body, url: APP + '?live=' + encodeURIComponent(gid), tag: 'live-' + gid });
 }
 
