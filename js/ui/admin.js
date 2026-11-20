@@ -8,6 +8,7 @@ import { pad2 } from '../core/util.js';
 import { APP_VERSION, KEYS, SUPABASE_URL } from '../config.js';
 import { login, logout, signup, currentUser, isLoggedIn, isAdmin, myAccount, myPlayer, requestAccount, refreshAdminFlag, requestPasswordReset, updatePassword, onAuthChange } from '../services/auth.js';
 import { cutout } from '../core/cutout.js';
+import { pushSupported, pushState, pushOn, pushOff } from '../services/push.js';
 import { rest, loadRoster, updatePlayer, insertPlayer, uploadPhoto, games, loadAccounts, decideAccount, loadSchedule, saveFixture, deleteFixture } from '../services/api.js';
 import { openProfile } from './profile.js';
 import { showIntro, showBookingTour } from './intro.js';
@@ -217,6 +218,21 @@ function trafficHtml() {
     '<div class="trf-days">' + days.map(d => '<i title="' + esc(String(d.tag)) + '" style="height:' + Math.max(6, Number(d.bytes || 0) / max * 100).toFixed(0) + '%"></i>').join('') + '</div></div>';
 }
 
+/* ---------- Benachrichtigungen (alle Nutzer) ---------- */
+const BELL = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>';
+let pushBusy = false;
+async function fillPush() {
+  const el = $('pushCard');
+  if (!el) return;
+  const st = await pushState();
+  if (st === 'none') { el.remove(); return; }
+  const btn = st === 'on' ? '<button type="button" class="btn" data-adm="push-off"' + (pushBusy ? ' disabled' : '') + '>Aus</button>'
+    : st === 'off' ? '<button type="button" class="btn primary" data-adm="push-on"' + (pushBusy ? ' disabled' : '') + '>An</button>'
+    : '<span class="pushc-s">' + (st === 'install' ? 'Nur in der installierten App' : 'In den Einstellungen blockiert') + '</span>';
+  el.innerHTML = '<span class="pushc-i">' + BELL + '</span><span class="pushc-t"><b>Benachrichtigungen</b><small>MVP-Stage · Live-Spiele</small></span>' + btn;
+  el.classList.toggle('on', st === 'on');
+}
+
 function adminHtml() {
   const u = currentUser();
   return '<div class="card acct"><div>' + ICON.user + '</div><div><b>' + esc(u && u.email ? u.email : 'Angemeldet') + '</b><small>Admin</small></div>' +
@@ -238,9 +254,10 @@ export function render() {
   else if (!isLoggedIn()) h = loginHtml();
   else if (isAdmin()) h = adminHtml();
   else h = playerHtml();
-  $('adminBody').innerHTML = h + (!isLoggedIn() && readJson(KEYS.recorder, '') ? '<button type="button" class="lnk" data-adm="rname">Name ändern · ' + esc(readJson(KEYS.recorder, '')) + '</button>' : '') + '<button type="button" class="lnk" data-adm="intro">Einführung ansehen</button><button type="button" class="lnk" data-adm="tourbook">Punktevergabe erklärt</button><p class="appver">Version ' + APP_VERSION + '</p>';
+  $('adminBody').innerHTML = h + (!isLoggedIn() && readJson(KEYS.recorder, '') ? '<button type="button" class="lnk" data-adm="rname">Name ändern · ' + esc(readJson(KEYS.recorder, '')) + '</button>' : '') + (pushSupported() && !ui.passwordMode ? '<div class="card pushc" id="pushCard"></div>' : '') + '<button type="button" class="lnk" data-adm="intro">Einführung ansehen</button><button type="button" class="lnk" data-adm="tourbook">Punktevergabe erklärt</button><p class="appver">Version ' + APP_VERSION + '</p>';
   $('admTitle').textContent = isLoggedIn() && isAdmin() ? 'Admin' : 'Konto';
   if (isLoggedIn() && isAdmin() && !ui.passwordMode) loadTraffic();
+  fillPush();
   applyTier(0);
 }
 
@@ -369,6 +386,12 @@ export function initAdmin() {
     else if (k === 'mode-register') { ui.mode = 'register'; ui.msg = ''; }
     else if (k === 'intro') { showIntro(); return; }
     else if (k === 'tourbook') { showBookingTour(); return; }
+    else if (k === 'push-on' || k === 'push-off') {
+      pushBusy = true; fillPush();
+      (k === 'push-on' ? pushOn() : pushOff()).then(ok => { if (k === 'push-on' && ok === false) toast('Nicht erlaubt'); else toast(k === 'push-on' ? 'Benachrichtigungen an' : 'Benachrichtigungen aus'); })
+        .catch(e => toast('Hat nicht geklappt: ' + e.message, 'bad')).finally(() => { pushBusy = false; fillPush(); });
+      return;
+    }
     else if (k === 'rname') { askName(() => render(), readJson(KEYS.recorder, '')); return; }
     else if (k === 'change-player') { ui.changePlayer = true; ui.msg = ''; }
     else if (k === 'change-cancel') ui.changePlayer = false;
