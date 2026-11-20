@@ -11,7 +11,7 @@ export const VAPID_PUBLIC = 'BPpdkr18TxFId_jZJ6A0qLOo3pkdTIdKzKqfSYsnChxvth3Oq3V
 export const SEASON = '2026/2027';
 
 /* Angezeigte Version (Konto-Seite) – zusammen mit VERSION in sw.js hochzählen */
-export const APP_VERSION = '4.9.0';
+export const APP_VERSION = '4.9.1';
 
 /* localStorage-Schlüssel (alte Namen bleiben, damit laufende Spiele ein Update überstehen) */
 export const KEYS = {

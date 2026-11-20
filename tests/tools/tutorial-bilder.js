@@ -32,13 +32,13 @@ const CSS = `.tut-hl{outline:3px solid #28de86!important;outline-offset:3px;box-
   await shot('a-liga');
   await c('[data-lv]'); await p.waitForTimeout(900); await p.evaluate(() => { const s = document.getElementById('watchScroll'), h = s.querySelector('.mhero'); s.scrollTop = h.offsetHeight - 300; }); await p.waitForTimeout(200); await p.evaluate(() => document.getElementById('watchMini').classList.remove('on')); await shot('a-live'); await p.evaluate(() => history.back()); await p.waitForTimeout(500);
   await c('[data-tb="kader"]'); await p.waitForTimeout(500);
-  await p.evaluate(() => [...document.querySelectorAll('[data-open^="p:"]')].find(e => e.textContent.includes('Sipala')).click()); await p.waitForTimeout(1800); await p.evaluate(() => { const s = document.getElementById('profileScroll'), n = s.querySelector('.pnames'); s.scrollTop = n.getBoundingClientRect().top + s.scrollTop - 170; }); await p.waitForTimeout(200); await p.evaluate(() => document.getElementById('profileMini').classList.remove('on')); await shot('a-profil');
+  await p.evaluate(() => [...document.querySelectorAll('[data-open^="p:"]')].find(e => e.textContent.includes('Sipala')).click()); await p.waitForTimeout(1800); await p.evaluate(() => { const s = document.getElementById('profileScroll'), n = s.querySelector('.pnames'); s.scrollTop = 0; s.style.zoom = 0.72; }); await p.waitForTimeout(200); await p.evaluate(() => document.getElementById('profileMini').classList.remove('on')); await shot('a-profil');
   await p.evaluate(() => history.back()); await p.waitForTimeout(500);
   await c('[data-tb="hof"]'); await p.waitForTimeout(1500); await shot('a-ranking');
   await c('[data-tb="game"]'); await p.waitForTimeout(600); await c('[data-pick="multi"]');
   for (const id of ['Klenk', 'Krauss', 'Reule']) { await c('[data-pick="p:' + id + '"]'); await p.waitForTimeout(80); }
   if (await p.$eval('#goBtn', e => e.disabled)) await c('[data-pick^="o:"]');
-  await p.waitForTimeout(300); await hl('#goBtn'); await shot('a-neu'); await hl(null);
+  await p.waitForTimeout(300); 
   // ---- Punktevergabe
   await c('#goBtn'); await p.waitForTimeout(600); await c('[data-nav="edit"]'); await p.waitForTimeout(500);
   await c('[data-do="clock"]'); await p.waitForTimeout(300);
@@ -61,7 +61,5 @@ const CSS = `.tut-hl{outline:3px solid #28de86!important;outline-offset:3px;box-
   await c('#undoTx .rbc'); await p.waitForTimeout(400); await hl('#undoTx .rbc', false); await shot('b-zuletzt');
   await c('[data-rb-x]'); await p.waitForTimeout(200); await p.evaluate(() => window.scrollTo(0, 0));
   await c('[data-oh="toggle"]'); await p.waitForTimeout(400); await hl('.oh-grid', false); await shot('b-einhand'); await hl(null); await c('[data-oh="toggle"]');
-  await c('.tabs [data-tab="spiel"]'); await p.waitForTimeout(300); await c('[data-mt="host"]'); await p.waitForTimeout(1500);
-  await p.evaluate(() => { for (const id of ['squadE', 'undo']) document.getElementById(id).style.display = 'none'; const e = document.querySelector('.mt-qr'); window.scrollTo(0, e.getBoundingClientRect().top + scrollY - 84); }); await shot('b-mit');
   console.log('Fehler:', errs.length ? errs : 'keine'); await b.close();
 })();
