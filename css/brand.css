@@ -488,3 +488,15 @@ body.onehand #quick { display: none !important; }
 .tour-inset img { display: block; width: 100%; height: auto !important; }
 @media (prefers-reduced-motion: reduce) { .tour-chips span, .tour-inset { animation: none; opacity: 1; } }
 .tour-photo > img:first-child { object-position: center; }
+.tour-chips.top { top: 14px; bottom: auto; }
+/* Spieler-Marke (Rundgang „Abwehr zählt auch“) */
+.tour-tag { position: absolute; z-index: 2; right: 12px; bottom: 14px; display: flex; align-items: center; gap: 9px; padding: 5px 14px 5px 5px; border-radius: 999px;
+  background: rgba(19, 20, 23, .88); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); box-shadow: 0 6px 18px rgba(0, 0, 0, .4); }
+.tour-tag img { width: 38px !important; height: 38px !important; border-radius: 50%; object-fit: cover; object-position: top; background: #2a2b30; }
+.tour-tag span { display: grid; text-align: left; line-height: 1.05; }
+.tour-tag small { color: var(--muted); font: 600 12px var(--font-body); }
+.tour-tag b { color: var(--ink); font: 800 22px var(--font-display); }
+.tour-fly { position: absolute; z-index: 2; right: 14px; bottom: 66px; padding: 7px 12px; border-radius: 999px; background: rgba(19, 20, 23, .88); color: var(--ink);
+  font: 600 13.5px var(--font-body); font-style: normal; white-space: nowrap; animation: tour-fly 1.5s ease-out forwards; }
+.tour-fly b { font: 800 14px var(--font-display); margin-right: 4px; }
+@keyframes tour-fly { 0% { opacity: 0; transform: translateY(14px) scale(.9); } 15% { opacity: 1; transform: none; } 70% { opacity: 1; transform: translateY(-34px); } 100% { opacity: 0; transform: translateY(-60px); } }
