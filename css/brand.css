@@ -376,3 +376,11 @@ body.ended .cta button { background: rgba(19, 20, 23, .88); color: var(--ink); b
 .kl-rep-dot { flex: none; width: 9px; height: 9px; margin-right: 4px; border-radius: 50%; background: var(--live); animation: kbpulse 1.4s ease-in-out infinite; }
 .mrows + .kl-rep, .mtools + .kl-rep { margin-top: 18px; }
 @media (prefers-reduced-motion: reduce) { .kl-rep-dot { animation: none; } }
+
+/* Detaillierte Statistiken (Hall of Fame) */
+.hb-stats { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 52px; margin: 0 0 14px; }
+.hb-stats svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.hb-back { margin: 0 0 4px -8px; }
+.hb-st { margin: 6px 0 12px !important; font: 800 28px/1 var(--font-head) !important; font-stretch: 88%; letter-spacing: -.02em !important; text-transform: uppercase; color: #f4f6f9 !important; }
+.hb-st::after { display: none; }
+.hb-pick { display: block; margin-bottom: 14px; }

@@ -1,0 +1,30 @@
+const L = require('./lib.js');
+(async () => {
+  const t = await L.setup(); const { p, c } = t;
+  await L.startGame(t, ['Klenk', 'Krauss', 'Reule']);
+  await c('.tabs [data-tab="spiel"]'); await p.waitForTimeout(150);
+  await c('#edit [data-k="tg"]'); await p.waitForTimeout(300);
+  const box = () => p.evaluate(() => { const f = document.querySelector('.ga-foot').getBoundingClientRect(), pnl = document.querySelector('.ga-panel').getBoundingClientRect(); return Math.round(pnl.top) + '/' + Math.round(f.bottom) + ' (Fenster ' + innerHeight + ')'; });
+  await p.screenshot({ path: 'out/g1.png' }); console.log('Start Panel/Fuß:', await box());
+  await c('[data-ga="sc:0"]'); await p.waitForTimeout(150); await c('[data-ga="sb:sot"]'); await p.waitForTimeout(150);
+  await p.screenshot({ path: 'out/g2.png' }); console.log('nach Torschütze:', await box());
+  await c('[data-ga="next"]'); await p.waitForTimeout(300);
+  await c('[data-ga="as:1"]'); await p.waitForTimeout(150);
+  for (const k of ['intent', 'bcc', 'pf3']) { await c('[data-ga="ab:' + k + '"]'); await p.waitForTimeout(60); }
+  await p.screenshot({ path: 'out/g3.png' }); console.log('nach Vorlage:', await box());
+  await p.evaluate(() => { const b = document.querySelector('.ga-body'); b.scrollTop = b.scrollHeight; }); await p.waitForTimeout(150);
+  await p.screenshot({ path: 'out/g4.png' });
+  await c('[data-ga="next"]'); await p.waitForTimeout(300); await c('[data-ga="su:2"]'); await p.waitForTimeout(150);
+  await p.screenshot({ path: 'out/g5.png' });
+  console.log('Buchung:', JSON.stringify(L.evs(await t.S())));
+  await c('[data-ga="step:as"]'); await p.waitForTimeout(200); await c('[data-ga="as:-"]'); await p.waitForTimeout(200);
+  console.log('ohne Vorlage:', JSON.stringify(L.evs(await t.S())), '| Schritte:', await p.$$eval('.ga-st', e => e.length), '| Knöpfe:', await p.$$eval('.ga-btns .btn', e => e.map(x => x.textContent).join('/')));
+  await c('[data-ga="done"]'); await p.waitForTimeout(200);
+  await c('#edit [data-k="cg"]'); await p.waitForTimeout(300); await c('[data-ga="fx:2"]'); await p.waitForTimeout(150); await c('[data-ga="fk:own"]'); await p.waitForTimeout(150);
+  await p.screenshot({ path: 'out/g6.png' });
+  console.log('Gegentor:', JSON.stringify(L.evs(await t.S())));
+  await c('[data-ga="done"]'); await c('.tabs [data-tab="att"]'); await p.waitForTimeout(150); await c('#editBody [data-k="pen"]'); await p.waitForTimeout(300);
+  console.log('Elfmeter-Schritte:', await p.$$eval('.ga-st', e => e.map(x => x.textContent).join(' | ')), '| aktiv:', await p.$eval('.ga-st.on', e => e.textContent));
+  await p.screenshot({ path: 'out/g7.png' });
+  console.log('Fehler:', t.errs.length ? t.errs : 'keine'); await t.b.close();
+})();

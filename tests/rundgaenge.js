@@ -1,0 +1,25 @@
+const { chromium, devices } = require('playwright');
+(async () => {
+  const b = await chromium.launch(); const ctx = await b.newContext({ ...devices['iPhone 13'], serviceWorkers: 'block' });
+  await ctx.addInitScript(() => { if (!sessionStorage.getItem('x')) { localStorage.setItem('kl-intro-v1', 'true'); sessionStorage.setItem('x', 1); } });
+  await ctx.route(/supabase\.co/, r => r.request().method() !== 'GET' ? r.fulfill({ status: 201, body: '[]' }) : r.continue());
+  const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
+  const c = s => p.evaluate(s => { const e = document.querySelector(s); if (!e) return false; e.click(); return true; }, s);
+  const tour = () => p.evaluate(() => { const t = document.getElementById('tour'); return t ? t.getAttribute('aria-label') + ': ' + t.querySelector('h2').textContent : '-'; });
+  await p.goto('http://localhost:8123/', { waitUntil: 'networkidle' }); await p.waitForTimeout(1500);
+  console.log('Start (alter Nutzer):', await tour());
+  await p.screenshot({ path: 'out/t1.png' });
+  await c('[data-tr="next"]'); await p.waitForTimeout(400); console.log('Weiter:', await tour()); await p.screenshot({ path: 'out/t2.png' });
+  await c('[data-tr="go:5"]'); await p.waitForTimeout(300); console.log('Punkt 6:', await tour(), '| Knopf:', await p.$eval('.tour-nav .primary', e => e.textContent));
+  await c('[data-tr="done"]'); await p.waitForTimeout(400); console.log('nach Los geht’s:', await tour());
+  await p.reload({ waitUntil: 'networkidle' }); await p.waitForTimeout(1500); console.log('nach Neuladen:', await tour());
+  await c('[data-tb="game"]'); await p.waitForTimeout(400); await c('[data-pick="p:Klenk"]');
+  if (await p.$eval('#goBtn', e => e.disabled)) await c('[data-pick^="o:"]');
+  await c('#goBtn'); await p.waitForTimeout(500); console.log('nach Spiel starten:', await tour());
+  await c('[data-nav="edit"]'); await p.waitForTimeout(800); console.log('Punkte vergeben:', await tour());
+  await p.screenshot({ path: 'out/t3.png' });
+  await c('[data-tr="next"]'); await p.waitForTimeout(400); await p.screenshot({ path: 'out/t4.png' });
+  await c('[data-tr="skip"]'); await p.waitForTimeout(400); console.log('Überspringen:', await tour());
+  await c('[data-nav="home"]'); await p.waitForTimeout(300); await c('[data-nav="edit"]'); await p.waitForTimeout(800); console.log('zweites Mal:', await tour());
+  console.log('Fehler:', errs.length ? errs : 'keine'); await b.close();
+})();

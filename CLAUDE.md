@@ -21,9 +21,10 @@ Erklärzeilen unter Optionen). Beschriftungen knapp halten; Erklärungen gehöre
 - Lokal testen: `python3 -m http.server` im Repo-Root, dann im Browser (Playwright ist vorinstalliert). Handy-Ansicht
   testen (390 px breit) – die App wird fast nur auf dem Smartphone benutzt. Supabase-Aufrufe im Test abfangen,
   nichts in die echte Datenbank schreiben.
-- Es gibt noch **keine Tests im Repo**. Wichtige Abläufe, die nach jeder Änderung laufen sollten: Live-Spiel mit
-  1 und mehreren Spielern (Tore, Wechsel, Bank, Spieler nachträglich dazu, Abpfiff, Speichern), Nachtrag, Profil-Blatt
-  mit Reitern, Spiel-Detail aus Profil und Hall of Fame, Admin-Korrektur, Live-Zuschauer mit zwei Browsern.
+- **Tests:** `node tests/run.js` (alle) bzw. `node tests/run.js halbzeit menue` (einzelne) – Playwright im iPhone-Format,
+  startet selbst einen Server auf Port 8123, liest echte Daten, fängt alle Schreibzugriffe ab. Nach jeder Änderung laufen lassen;
+  neue Abläufe als eigene Datei in `tests/` (Muster: `lib.js` → `setup()`, am Ende `console.log('Fehler:', …)`).
+  Nicht abgedeckt und weiter von Hand prüfen: echtes iPhone (Home-Bildschirm, Gesten), Live mit zwei echten Geräten.
 
 ## Aufbau (Stand Nov. 2026)
 - `index.html` – alle Ansichten als Abschnitte; `js/router.js` blendet genau eine ein (Stapel-Verlauf, Overlays = Blätter von unten,
@@ -59,6 +60,7 @@ Erklärzeilen unter Optionen). Beschriftungen knapp halten; Erklärungen gehöre
   `erfasst_von` (Migration 011; angemeldet = Kontoname, sonst einmal „Dein Name“ abfragen, `KEYS.recorder`).
   Anzeige als Karte `reporterHtml` (components.js) – auch live („Trägt gerade ein“, `by`/`byP` im Live-Stand); mit Spielerprofil Foto + Link.
 - Hall of Fame: Reiter Übersicht (Top-3-Ranglisten), Tabelle, MVP, Rekorde, Alle Spiele (je 30 nachladen).
+  „Detaillierte Statistiken“ (Ansicht `ui.tab = 'stats'`): Ranglisten je Aktion aus allen Events (`loadAllEvents`, einmal pro Sitzung).
   Lädt beim Öffnen nur, wenn noch keine Daten da sind (Supabase-Traffic) – neu laden per Ziehen.
 - Spieltag / MVP-Stage (`js/ui/mvp.js`, Ansicht `mvp`): Spieltag = Woche Mo–So (Gerätezeit), bestes Spiel je Spieler zählt.
   Montag danach 19:00 wird er „gelauncht“: Stage mit Top 3 öffnet sich einmal von selbst (`KEYS.mvpSeen` = Spieltag-ID),

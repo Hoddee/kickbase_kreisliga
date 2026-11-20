@@ -1,0 +1,20 @@
+const L = require('./lib.js');
+(async () => {
+  const t = await L.setup(); const { p, c } = t;
+  await L.startGame(t, ['Klenk', 'Krauss']);
+  await c('.tabs [data-tab="att"]'); await p.waitForTimeout(250); await p.screenshot({ path: 'out/b1.png' });
+  console.log('Gruppen Angriff:', await p.$$eval('#actList h2', e => e.map(x => x.textContent).join(' | ')));
+  await p.fill('#aq', 'flanke'); await p.waitForTimeout(200);
+  console.log('Suche „flanke“:', await p.$$eval('#actList .act .lb', e => e.map(x => x.textContent).join(' | ')));
+  await p.screenshot({ path: 'out/b2.png' });
+  await c('#actList [data-k="cross"]'); await p.waitForTimeout(200);
+  console.log('nach Tipp: Fokus/Suche bleibt:', await p.$eval('#aq', e => e.value), '| gebucht:', JSON.stringify(L.evs(await t.S())));
+  await p.fill('#aq', 'gelbe'); await p.waitForTimeout(150); console.log('Suche „gelbe“ (anderer Reiter):', await p.$$eval('#actList .act .lb', e => e.map(x => x.textContent).join(' | ')));
+  await p.fill('#aq', 'xyz'); await p.waitForTimeout(150); console.log('Suche ohne Treffer:', await p.$eval('#actList', e => e.textContent));
+  await c('[data-do="q-x"]'); await p.waitForTimeout(150); console.log('nach ×:', await p.$eval('#aq', e => e.value === ''), await p.$$eval('#actList h2', e => e.length));
+  await c('.tabs [data-tab="def"]'); await p.waitForTimeout(200); await p.screenshot({ path: 'out/b3.png' });
+  await c('.tabs [data-tab="spiel"]'); await p.waitForTimeout(200);
+  console.log('Spiel-Reiter:', await p.$$eval('#editBody h2', e => e.map(x => x.textContent).join(' | ')));
+  await p.screenshot({ path: 'out/b4.png', fullPage: true });
+  console.log('Fehler:', t.errs.length ? t.errs : 'keine'); await t.b.close();
+})();

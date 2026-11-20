@@ -1,0 +1,21 @@
+const L = require('./lib.js');
+(async () => {
+  const t = await L.setup(); const { p, c } = t;
+  await c('[data-tb="hof"]'); await p.waitForTimeout(1200);
+  console.log('Reiter:', await p.$$eval('.htabs button', e => e.map(x => x.textContent).join(' | ')));
+  console.log('Übersicht:', await p.$$eval('.hb-h h3', e => e.map(x => x.textContent).join(' | ')), '| MVP-Karte:', await p.evaluate(() => (document.querySelector('.hb-mvp .pw-k') || {}).textContent));
+  await p.screenshot({ path: 'out/h1.png' }); await p.evaluate(() => scrollTo(0, 700)); await p.waitForTimeout(200); await p.screenshot({ path: 'out/h2.png' });
+  await c('[data-hof="t:mvp"]'); await p.waitForTimeout(300); console.log('MVP:', await p.$$eval('#hofBody .mdc-t', e => e.map(x => x.textContent).join(' | ')));
+  await p.screenshot({ path: 'out/h3.png' });
+  await c('#hofBody [data-md^="stage:"]'); await p.waitForTimeout(800); await p.evaluate(() => document.querySelector('#mvp').click()); await p.waitForTimeout(300);
+  console.log('Stage aus Verlauf:', await p.evaluate(() => document.querySelector('.mvp-head small').textContent));
+  await p.evaluate(() => history.back()); await p.waitForTimeout(400);
+  await c('[data-hof="t:records"]'); await p.waitForTimeout(300); console.log('Rekorde:', await p.$$eval('.rec-t', e => e.map(x => x.textContent).join(' | ')));
+  await p.screenshot({ path: 'out/h4.png' });
+  await c('[data-hof="t:all"]'); await p.waitForTimeout(300);
+  console.log('Alle:', await p.$$eval('#hofBody .glist li', e => e.length), 'Zeilen,', await p.evaluate(() => document.querySelector('.hb-sort span').textContent), '| Mehr laden:', await p.evaluate(() => !!document.querySelector('[data-hof="more"]')));
+  await c('[data-hof="more"]'); await p.waitForTimeout(200); console.log('nach Mehr:', await p.$$eval('#hofBody .glist li', e => e.length));
+  await c('[data-hof="s:pts"]'); await p.waitForTimeout(200); console.log('nach Punkten, erste:', await p.$$eval('#hofBody .glist .gv', e => e.slice(0, 3).map(x => x.textContent).join(',')));
+  await p.screenshot({ path: 'out/h5.png' });
+  console.log('Fehler:', t.errs.length ? t.errs : 'keine'); await t.b.close();
+})();
