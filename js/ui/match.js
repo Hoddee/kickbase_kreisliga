@@ -11,7 +11,7 @@ import { games, loadEvents, cachedEvents, updateGame, rememberEvents, deleteGame
 import { canManage, isAdmin } from '../services/auth.js';
 import { registerView, show, back, nav } from '../router.js';
 import { bindSheet } from './sheet.js';
-import { rowsFromRecord, rowLi, whistleLi, skeleton } from './components.js';
+import { rowsFromRecord, rowLi, whistleLi, skeleton, reporterHtml } from './components.js';
 import { openHofGame } from './hof.js';
 import { openProfile } from './profile.js';
 
@@ -103,7 +103,7 @@ function html() {
   return '<section class="mhero"><div class="pphoto"' + go + '><img src="' + esc(photoUrl(g.player)) + '" alt=""></div>' +
     '<div class="mh-t"><span' + go + '>' + esc(p.n) + '</span><b>' + pts + '</b><div class="mh-s"><img src="' + esc(crestUrl(l)) + '" alt=""><div><strong>' + score + '</strong><small>Endstand</small></div><img src="' + esc(crestUrl(r)) + '" alt=""></div></div></section>' +
     '<div class="pbody">' + (fix.on ? fixHtml(g) : '') +
-    '<ul class="rows mrows' + (fix.on ? ' fixing' : '') + '">' + (ev ? (fix.on ? '' : corrHtml(ev)) + rowsHtml(ev, g) : '<li class="sk-wrap">' + skeleton(5, true) + '</li>') + '</ul>' + tools + (g.erfasst_von && !fix.on ? '<p class="mby">Eingetragen von ' + esc(g.erfasst_von) + '</p>' : '') + '</div>';
+    '<ul class="rows mrows' + (fix.on ? ' fixing' : '') + '">' + (ev ? (fix.on ? '' : corrHtml(ev)) + rowsHtml(ev, g) : '<li class="sk-wrap">' + skeleton(5, true) + '</li>') + '</ul>' + tools + (fix.on ? '' : reporterHtml(g.erfasst_von)) + '</div>';
 }
 
 export function render(keep) {

@@ -1,7 +1,7 @@
 /* Wiederverwendbare Bausteine: Punktezeilen, Marken, Balkendiagramm, Bereichsbalken, Marktwert-Kurve */
 import { esc, fmt, cls, tierOf, minStamp, eur, trendClass, dateShort, pad2, cleanSheet } from '../core/util.js';
 import { ICON, statusIcon } from '../core/icons.js';
-import { PL, photoUrl, fullName, POS_NAME, POS_SHORT } from '../data/players.js';
+import { PL, PLAYER_LIST, photoUrl, fullName, POS_NAME, POS_SHORT } from '../data/players.js';
 import { CL, crestUrl } from '../data/clubs.js';
 import { scoreText, recordTeam } from '../core/game.js';
 import { marketOf } from '../core/market.js';
@@ -95,6 +95,18 @@ export function sparkline(series) {
 
 export const avatar = id => '<span class="hav"><img src="' + esc(photoUrl(id, true)) + '" alt="" loading="lazy" decoding="async"></span>';
 export const nameWithStatus = (id, label) => esc(label != null ? label : PL[id].n) + statusIcon(id) + (PL[id] && PL[id].guest ? ' <i class="tag">Gast</i>' : '');
+
+/* ---------- Wer trägt ein ----------
+   Mit Spielerprofil (angemeldet oder Name passt zu einem Spieler): Foto, antippen = Profil; sonst Initialen. live = rote Marke */
+export function reporterHtml(name, pid, live) {
+  if (!name) return '';
+  const p = pid && PL[pid] ? pid : (PLAYER_LIST.find(x => !x.guest && (fullName(x) === name || x.n === name)) || {}).id;
+  const ini = name.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+  return '<div class="kl-rep' + (live ? ' live' : '') + '"' + (p ? ' role="button" tabindex="0" data-open="p:' + esc(p) + '"' : '') + '>' +
+    (p ? avatar(p) : '<span class="kl-rep-i">' + esc(ini) + '</span>') +
+    '<span class="kl-rep-t"><small>' + (live ? 'Trägt gerade ein' : 'Eingetragen von') + '</small><b>' + esc(name) + '</b></span>' +
+    (live ? '<i class="kl-rep-dot" aria-hidden="true"></i>' : p ? '<span class="chev" aria-hidden="true">›</span>' : '') + '</div>';
+}
 
 /* ---------- Spielerzeile (Übersicht und Auswahl) ---------- */
 export function playerStats(id) {

@@ -57,6 +57,7 @@ Erklärzeilen unter Optionen). Beschriftungen knapp halten; Erklärungen gehöre
 - Spiel-Detail: „Korrekturen (n)“ öffnet ein eigenes Blatt (Ansicht `corr`, Overlay über `match`).
   Admin: „Spiel löschen“ steht unauffällig unten im Korrektur-Modus (mit Rückfrage). „Eingetragen von …“ aus Spalte
   `erfasst_von` (Migration 011; angemeldet = Kontoname, sonst einmal „Dein Name“ abfragen, `KEYS.recorder`).
+  Anzeige als Karte `reporterHtml` (components.js) – auch live („Trägt gerade ein“, `by`/`byP` im Live-Stand); mit Spielerprofil Foto + Link.
 - Hall of Fame: Reiter Übersicht (Top-3-Ranglisten), Tabelle, MVP, Rekorde, Alle Spiele (je 30 nachladen).
   Lädt beim Öffnen nur, wenn noch keine Daten da sind (Supabase-Traffic) – neu laden per Ziehen.
 - Spieltag / MVP-Stage (`js/ui/mvp.js`, Ansicht `mvp`): Spieltag = Woche Mo–So (Gerätezeit), bestes Spiel je Spieler zählt.

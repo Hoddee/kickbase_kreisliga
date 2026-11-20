@@ -254,6 +254,8 @@ function start() {
   if (!recorderName()) { askName(() => start()); return; }
   const g = freshGame({ pos: sel.pos });
   g.by = recorderName();
+  /* Angemeldet mit Spielerprofil: Foto des Eintragenden in Live-Ansicht und Spiel-Detail */
+  g.byP = isLoggedIn() && myPlayer() ? myPlayer() : null;
   g.match = { p: sel.p, o: sel.o, home: sel.home, team: sel.team || defaultTeam(sel.p) };
   if (isGuest(sel.p) && sel.pf) g.match.pf = sel.pf;
   if (isCustomClub(sel.o) && sel.of) g.match.of = sel.of;
