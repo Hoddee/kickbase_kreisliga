@@ -23,6 +23,26 @@ export async function rest(path, opt = {}) {
 }
 const json = { 'Content-Type': 'application/json' };
 
+/* ---------- Daten aus der Datenbank prüfen ----------
+   Jeder darf Spiele speichern (gewollt). Damit ein präparierter Eintrag keinen Code in die Seite schleust,
+   werden Zahlen hier zu echten Zahlen, IDs müssen ein gültiges Format haben – Texte escapt die Anzeige (esc). */
+export const num = (v, d = 0) => { const n = Number(v); return Number.isFinite(n) ? Math.round(n) : d; };
+export const str = (v, max = 80) => (typeof v === 'string' ? v.slice(0, max) : '');
+export const ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
+export const okId = v => (typeof v === 'string' && ID_RE.test(v) ? v : null);
+export const okFoto = v => (typeof v === 'string' && /^gast\/[a-f0-9]{24}\.(png|webp)$/.test(v) ? v : null);
+const POS = ['TW', 'ABW', 'MIT', 'ANG'];
+function cleanGame(g) {
+  if (!g || !okId(g.uid) || !okId(g.player) || !okId(g.opp) || isNaN(new Date(g.played_at))) return null;
+  return Object.assign(g, {
+    points: num(g.points), us: num(g.us), them: num(g.them), minutes: num(g.minutes), goals: num(g.goals), assists: num(g.assists),
+    pos: POS.includes(g.pos) ? g.pos : 'MIT', team: okId(g.team), home: !!g.home, manual: !!g.manual,
+    player_foto: okFoto(g.player_foto), opp_foto: okFoto(g.opp_foto), erfasst_von: str(g.erfasst_von, 40) || null, season: str(g.season, 20)
+  });
+}
+const cleanEvents = ev => (Array.isArray(ev) ? ev : []).filter(e => e && typeof e === 'object')
+  .map(e => Object.assign({}, e, { k: str(e.k, 24), l: str(e.l), p: num(e.p), t: num(e.t, -1), o: e.o === 'out' ? 'out' : e.o === 'in' ? 'in' : undefined }));
+
 /* ---------- Spiele ---------- */
 const LIST_FIELDS = 'uid,created_at,played_at,season,player,opp,home,pos,us,them,minutes,points,goals,assists,manual,team,player_foto,opp_foto';
 /* „erfasst_von“ kommt mit Migration 011 – bis sie ausgeführt ist, ohne die Spalte weiterarbeiten */
@@ -45,7 +65,7 @@ export async function loadGames(force = false) {
     const d = await r.json();
     /* Live gebuchte Spiele ohne Einsatzminuten (nur auf der Bank) zählen nirgends mit.
        Nachträge hat jemand bewusst eingetragen – die bleiben immer. */
-    games.list = (Array.isArray(d) ? d : []).filter(g => PL[g.player] && CL[g.opp] && (g.minutes > 0 || g.manual));
+    games.list = (Array.isArray(d) ? d : []).map(cleanGame).filter(g => g && PL[g.player] && CL[g.opp] && (g.minutes > 0 || g.manual));
     playerEventCache.clear();
     for (const g of games.list.slice().reverse()) applyMedia(g.player, g.opp, g.player_foto, g.opp_foto);
   } catch (e) { games.error = true; games.failedAt = Date.now(); }
@@ -81,7 +101,7 @@ export async function loadEvents(uid) {
   if (eventCache.has(uid)) return eventCache.get(uid);
   const r = await rest('spiele?select=events&uid=eq.' + encodeURIComponent(uid));
   const d = await r.json();
-  const ev = d[0] && Array.isArray(d[0].events) ? d[0].events : [];
+  const ev = cleanEvents(d[0] && d[0].events);
   eventCache.set(uid, ev);
   return ev;
 }
@@ -215,7 +235,7 @@ export async function loadPlayerEvents(id) {
   if (playerEventCache.has(id)) return playerEventCache.get(id);
   const r = await rest('spiele?select=uid,events&player=eq.' + encodeURIComponent(id));
   const d = await r.json();
-  const map = new Map((Array.isArray(d) ? d : []).map(x => [x.uid, Array.isArray(x.events) ? x.events : []]));
+  const map = new Map((Array.isArray(d) ? d : []).filter(x => x && okId(x.uid)).map(x => [x.uid, cleanEvents(x.events)]));
   for (const [uid, ev] of map) eventCache.set(uid, ev);
   playerEventCache.set(id, map);
   return map;
