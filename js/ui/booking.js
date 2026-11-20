@@ -6,17 +6,18 @@ import { POS_NAME, POS_ORDER } from '../data/players.js';
 import {
   store, saveGame, replaceGame, freshGame, names, isHome, scoreText, ACT, val, count, score, elapsed, onField, started,
   startLine, endLines, total, withMarkers, silentGoal, summaryText, isMulti, withPlayer, eachPlayer, allSaved,
-  addToSquad, squadIds, teamOf, MAX_SQUAD
+  addToSquad, squadIds, teamOf, MAX_SQUAD, bookGoal, mineAt
 } from '../core/game.js';
 import { PL, PLAYER_LIST } from '../data/players.js';
 import { halftimeLi, subLi, avatar } from './components.js';
 import { renderSquadBar, bindSquad } from './squad.js';
-import { registerView, show, nav } from '../router.js';
+import { registerView, show, nav, rerender } from '../router.js';
 import { openSetup } from './setup.js';
 import { openGoal, closeGoal, initGoal } from './goal.js';
 import { shareLiveGame } from './watch.js';
 import { bookingTourSeen, showBookingTour } from './intro.js';
 import { initOneHand, renderPad, oneHandBtn } from './onehand.js';
+import { initMit, hostCardHtml, helperCardHtml, lockBannerHtml, blocked } from './mit.js';
 
 let tab = 'spiel';
 const confirm = { end: false, reset: false };
@@ -83,8 +84,19 @@ function endHtml() {
 }
 
 /* ---------- Reiter "Spiel" (live) ---------- */
+/* Mitbucher: Uhr und Spielstand nur ansehen, Tore melden, eigene Spieler wählen */
+function remoteGameHtml() {
+  const S = store.S, sc = score();
+  return '<h2>Spieluhr</h2><div class="card"><div class="big-clk"><span id="clk">' + clock(elapsed()) + '</span></div>' + (S.ht ? '<div class="htlabel">Halbzeit</div>' : '') + '</div>' +
+    '<h2>Spielstand</h2><div class="scorebox">' + scoreText(sc, isHome()) + '</div>' +
+    '<div class="grid">' + (isHome() ? actBtn('tg') + actBtn('cg') : actBtn('cg') + actBtn('tg')) + '</div>' +
+    '<div class="grid ungoal">' + (isHome() ? unBtn('tg', sc.us) + unBtn('cg', sc.them) : unBtn('cg', sc.them) + unBtn('tg', sc.us)) + '</div>' +
+    helperCardHtml();
+}
 function liveGameHtml() {
-  const S = store.S, running = !!S.clock.startedAt, sc = score(), d = S.ended ? ' disabled' : '';
+  const S = store.S;
+  if (S.remote) return remoteGameHtml();
+  const running = !!S.clock.startedAt, sc = score(), d = S.ended ? ' disabled' : '';
   /* Halbzeit: „Halbzeitpfiff“ hält die Uhr an, danach ist der große Knopf „2. Halbzeit anpfeifen“ (Uhr springt auf 45:00) */
   const big = S.ht ? '2. Halbzeit anpfeifen' : running ? 'Pause' : (!S.h2 && elapsed() > 2700 ? '2. Halbzeit anpfeifen' : started() ? 'Weiter' : 'Anpfiff');
   const third = S.ht ? '<button type="button" class="btn" data-do="ht-x"' + d + '>Doch weiter</button>'
@@ -108,6 +120,7 @@ function liveGameHtml() {
       settingsHtml() +
     '</div>' + addHtml()) +
     '<h2>Automatische Punkte</h2><div class="card" id="autoBox">' + autoHtml() + '</div>' +
+    hostCardHtml() +
     (S.ended ? '' : '<h2>Zuschauer</h2><button type="button" class="btn full lvshare" data-do="lshare">Live-Link teilen</button>') +
     endHtml();
 }
@@ -249,7 +262,7 @@ function refresh() {
   const sel = rec.find(x => x.k === rb.sel), menu = $('rbMenu');
   menu.hidden = !sel;
   if (sel) {
-    const others = isMulti() && !sel.grp ? eachPlayer(i => (i === sel.i ? null : { i, p: store.S.match.p })).filter(Boolean) : [];
+    const others = isMulti() && !sel.grp ? eachPlayer(i => (i === sel.i || !mineAt(i) ? null : { i, p: store.S.match.p })).filter(Boolean) : [];
     menu.innerHTML = '<div class="wrap"><div class="rbm-t">' + esc((minStamp(sel.e.t) ? minStamp(sel.e.t) + ' · ' : '') + sel.e.label + (isMulti() ? ' · ' + (sel.grp ? 'alle Spieler' : PL[sel.p].n) : '')) + '</div>' +
       (others.length ? '<div class="rbm-l">Gehört zu</div><div class="rbm-ps">' + others.map(o => '<button type="button" class="rbm-p" data-rb-to="' + o.i + '">' + avatar(o.p) + '<span>' + esc(PL[o.p].n) + '</span></button>').join('') + '</div>' : '') +
       '<div class="rbm-a"><button type="button" class="btn danger" data-rb-del>Löschen</button><button type="button" class="btn" data-rb-x>Schließen</button></div></div>';
@@ -267,6 +280,7 @@ function recentBookings(n = 3) {
   all.sort((a, b) => (b.e.ts || 0) - (a.e.ts || 0) || b.e.id - a.e.id);
   const out = [];
   for (const x of all) {
+    if (!x.e.grp && !mineAt(x.i)) continue;
     if (S.manual && (x.e.key === 'tg' || x.e.key === 'cg')) continue;
     if (x.e.grp) { if (seen.has(x.e.grp)) continue; seen.add(x.e.grp); x.grp = x.e.grp; }
     else if (silentGoal(x.e)) continue;
@@ -303,7 +317,7 @@ export function render() {
   const m = main();
   if (tab === 'spiel') m.innerHTML = S.manual ? manualGameHtml() : liveGameHtml();
   else if (tab === 'log') m.innerHTML = logHtml();
-  else m.innerHTML = '<div id="htBar">' + htBarHtml() + '</div><div class="asrow">' + searchBox() + oneHandBtn() + '</div><div id="actList">' + actListHtml() + '</div>';
+  else m.innerHTML = '<div id="htBar">' + htBarHtml() + '</div>' + lockBannerHtml() + '<div class="asrow">' + searchBox() + oneHandBtn() + '</div><div id="actList"' + (blocked() ? ' class="mt-dis"' : '') + '>' + actListHtml() + '</div>';
   document.querySelectorAll('[data-tab]').forEach(b => b.setAttribute('aria-selected', String(b.getAttribute('data-tab') === tab)));
   refresh();
 }
@@ -312,6 +326,8 @@ export function render() {
 function addEvent(key) {
   const S = store.S, a = ACT[key];
   if (!a) return;
+  /* Spieler bucht gerade ein anderes Handy – Tore darf trotzdem jeder melden */
+  if (blocked() && !['tg', 'cg', 'goal', 'pen'].includes(key)) { toast('Bucht gerade ein anderes Handy'); buzz(30); return; }
   const live = !S.manual && (S.clock.startedAt !== null || S.clock.offset > 0), t = live ? Math.floor(elapsed()) : -1, ts = Date.now();
   /* „Tor“/„Elfmeter verwandelt“ beim Spieler: über den Tor-Assistenten, damit auch der Spielstand stimmt.
      Ein eben gebuchtes Team-Tor ohne Torschützen (letzte 3 Min.) wird übernommen statt ein zweites zu buchen. */
@@ -334,13 +350,6 @@ function addEvent(key) {
   main().querySelectorAll('[data-k="' + key + '"]').forEach(el => { el.outerHTML = actBtn(key); });
   main().querySelectorAll('[data-k="' + key + '"]').forEach(el => el.classList.add('hit'));
   refresh();
-}
-/* Team-Tor/Gegentor für alle Spieler buchen; gibt die Gruppen-ID zurück */
-function bookGoal(key, t, ts) {
-  const a = ACT[key], grp = 'g' + ts;
-  eachPlayer(() => { const P = store.S; P.events.push({ id: P.nextId++, key, label: a.s || a.l, pts: val(a), t, ts, grp }); });
-  saveGame();
-  return grp;
 }
 function setField(on) {
   const S = store.S, el = elapsed(), l = S.stints[S.stints.length - 1];
@@ -378,6 +387,7 @@ function htState() {
 let htShown = '';
 function htBarHtml() {
   const s = htShown = htState();
+  if (store.S.remote) return s === 'ht' ? '<div class="htbar"><span><b>Halbzeit</b></span></div>' : '';
   if (s === 'ht') return '<div class="htbar"><span><b>Halbzeit</b></span><button type="button" class="btn primary" data-do="half2">2. HZ anpfeifen</button></div>';
   if (s === 'h1end') return '<div class="htbar"><span><b>45’+</b> 1. Halbzeit</span><button type="button" class="btn" data-do="ht">Halbzeitpfiff</button></div>';
   if (s === 'h2end') return '<div class="htbar"><span><b>90’+</b> 2. Halbzeit</span><button type="button" class="btn" data-do="endq">Abpfiff</button></div>';
@@ -471,6 +481,12 @@ export function initBooking() {
     render
   });
   initGoal(() => { if (nav.current === 'edit') render(); });
+  /* Mitbuchen: Änderungen von anderen Handys – beim Tippen in der Suche nur die Leisten auffrischen */
+  initMit(() => {
+    if (nav.current === 'home') { rerender('home'); return; }
+    if (nav.current !== 'edit') return;
+    if (document.activeElement && document.activeElement.id === 'aq') refresh(); else render();
+  });
   initOneHand({ book: addEvent, tab: () => (nav.current === 'edit' ? tab : ''), onSwitch: () => render() });
   main().addEventListener('click', e => {
     const b = e.target.closest('[data-k],[data-do],[data-del]');

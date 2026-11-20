@@ -4,7 +4,7 @@ const { chromium, devices } = require('playwright');
   const b = await chromium.launch(); const errs = [];
   // 1) normales Gerät: zählt und meldet beim Verlassen
   let ctx = await b.newContext({ ...devices['iPhone 13'], serviceWorkers: 'block' });
-  await ctx.addInitScript(() => { for (const k of ['kl-intro-v1', 'kl-intro-v2', 'kl-tour-book-v1', 'kl-mvp-news']) localStorage.setItem(k, 'true'); localStorage.setItem('kl-mvp-seen', JSON.stringify('x')); });
+  await ctx.addInitScript(() => { for (const k of ['kl-intro-v1', 'kl-intro-v2', 'kl-intro-v3', 'kl-tour-book-v2', 'kl-tour-book-v1', 'kl-mvp-news']) localStorage.setItem(k, 'true'); localStorage.setItem('kl-mvp-seen', JSON.stringify('x')); });
   const reports = [];
   await ctx.route(/supabase\.co/, r => { const q = r.request(), u = q.url();
     if (u.includes('rpc/traffic_melden')) { reports.push(JSON.parse(q.postData())); return r.fulfill({ status: 204, body: '' }); }
@@ -17,7 +17,7 @@ const { chromium, devices } = require('playwright');
   await ctx.close();
   // 2) Admin: Karte mit Beispieldaten
   ctx = await b.newContext({ ...devices['iPhone 13'], serviceWorkers: 'block' });
-  await ctx.addInitScript(() => { for (const k of ['kl-intro-v1', 'kl-intro-v2', 'kl-tour-book-v1', 'kl-mvp-news']) localStorage.setItem(k, 'true'); localStorage.setItem('kl-mvp-seen', JSON.stringify('x'));
+  await ctx.addInitScript(() => { for (const k of ['kl-intro-v1', 'kl-intro-v2', 'kl-intro-v3', 'kl-tour-book-v2', 'kl-tour-book-v1', 'kl-mvp-news']) localStorage.setItem(k, 'true'); localStorage.setItem('kl-mvp-seen', JSON.stringify('x'));
     localStorage.setItem('kl-auth-v1', JSON.stringify({ access_token: 't', refresh_token: 'r', expires_at: Date.now() + 36e5, user: { id: 'u1', email: 'admin@test.de' } })); });
   await ctx.route(/supabase\.co/, r => { const q = r.request(), u = q.url();
     if (u.includes('rpc/is_admin')) return r.fulfill({ status: 200, contentType: 'application/json', body: 'true' });

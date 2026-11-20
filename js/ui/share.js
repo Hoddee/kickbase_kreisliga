@@ -122,15 +122,17 @@ export async function shareTeamCard() {
     x.fillStyle = i === 0 ? 'rgba(255,255,255,.07)' : 'rgba(255,255,255,.035)';
     roundRect(x, 50, y + 6, W - 100, rh - 12, 22); x.fill();
     if (i === 0) { x.fillStyle = col; roundRect(x, 50, y + 6, 10, rh - 12, 5); x.fill(); }
-    const ph = photos[i], s = rh - 34;
-    x.save(); x.beginPath(); x.arc(140, cy, s / 2, 0, 6.2832); x.fillStyle = '#22252b'; x.fill(); x.clip();
-    if (ph) { const w = s * 1.15, h = w * ph.height / ph.width; x.drawImage(ph, 140 - w / 2, cy - s / 2 - 2, w, h); }
+    /* Schrift wächst/schrumpft mit der Zeilenhöhe (bis zu 15 Spieler) */
+    const ph = photos[i], s = rh - Math.round(rh * 0.23), k = rh / 146, f = v => Math.round(v * Math.max(0.5, k));
+    x.save(); x.beginPath(); x.arc(90 + s / 2 + 8, cy, s / 2, 0, 6.2832); x.fillStyle = '#22252b'; x.fill(); x.clip();
+    if (ph) { const w = s * 1.15, h = w * ph.height / ph.width; x.drawImage(ph, 90 + s / 2 + 8 - w / 2, cy - s / 2 - 2, w, h); }
     x.restore();
     x.textAlign = 'left';
-    x.fillStyle = '#fff'; x.font = '800 54px "KL Pitch", Arial, sans-serif'; narrow(x, true); x.fillText(r.n.toUpperCase(), 215, cy - 2); narrow(x, false);
+    const tx = 90 + s + 30, two = rh >= 90;
+    x.fillStyle = '#fff'; x.font = '800 ' + f(54) + 'px "KL Pitch", Arial, sans-serif'; narrow(x, true); x.fillText(r.n.toUpperCase(), tx, two ? cy - 2 : cy + f(18)); narrow(x, false);
     const extra = [r.pos, r.g ? r.g + (r.g > 1 ? ' Tore' : ' Tor') : '', r.a ? r.a + (r.a > 1 ? ' Vorlagen' : ' Vorlage') : ''].filter(Boolean).join(' · ');
-    x.fillStyle = '#8b9098'; x.font = '500 28px "Inter Tight", Arial, sans-serif'; x.fillText(extra, 215, cy + 36);
-    x.textAlign = 'right'; x.fillStyle = col; x.font = '800 76px "KL Pitch", Oxanium, Arial, sans-serif'; x.fillText(String(r.t), W - 90, cy + 26);
+    if (two) { x.fillStyle = '#8b9098'; x.font = '500 ' + f(28) + 'px "Inter Tight", Arial, sans-serif'; x.fillText(extra, tx, cy + f(36)); }
+    x.textAlign = 'right'; x.fillStyle = col; x.font = '800 ' + f(76) + 'px "KL Pitch", Oxanium, Arial, sans-serif'; x.fillText(String(r.t), W - 90, cy + f(26));
   });
   x.textAlign = 'center'; x.font = '500 26px "Inter Tight", Arial, sans-serif'; x.fillStyle = '#7e8187';
   x.fillText('Kickbase KL · Kreisliga ' + (CL[teamOf(S.match)].lg || ''), W / 2, H - 30);

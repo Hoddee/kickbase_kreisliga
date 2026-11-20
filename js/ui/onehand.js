@@ -8,7 +8,7 @@ import { esc, fmt, cls, buzz, readJson, writeJson } from '../core/util.js';
 import { KEYS } from '../config.js';
 import { QUICK_DEFAULTS } from '../data/actions.js';
 import { PL } from '../data/players.js';
-import { store, ACT, val, count, isMulti, switchPlayer } from '../core/game.js';
+import { store, ACT, val, count, isMulti, stepPlayer, mineAt } from '../core/game.js';
 
 const N = 6, SKIP = new Set(['tg', 'cg', 'goal', 'pen']);
 let on = !!readJson(KEYS.oneHand, false), book = () => {}, getTab = () => '', switched = () => {};
@@ -53,7 +53,7 @@ export function renderPad() {
   }
   el.hidden = false;
   const S = store.S;
-  el.innerHTML = '<div class="wrap">' + (isMulti() ? '<div class="oh-who"><span>' + esc(PL[S.match.p] ? PL[S.match.p].n : '') + '</span><i>' + S.squad.map((_, i) => '<b' + (i === S.cur ? ' class="on"' : '') + '></b>').join('') + '</i></div>' : '') +
+  el.innerHTML = '<div class="wrap">' + (isMulti() ? '<div class="oh-who"><span>' + esc(PL[S.match.p] ? PL[S.match.p].n : '') + '</span><i>' + S.squad.map((_, i) => (mineAt(i) ? '<b' + (i === S.cur ? ' class="on"' : '') + '></b>' : '')).join('') + '</i></div>' : '') +
     '<div class="oh-grid">' + keysFor().map(k => {
       const a = ACT[k], p = val(a), c = count(k);
       return '<button type="button" class="oh-k" data-ohk="' + k + '"><span>' + esc(a.s || a.l) + '</span><b class="' + cls(p) + '">' + fmt(p) + '</b>' + (c ? '<i>' + c + '</i>' : '') + '</button>';
@@ -82,9 +82,7 @@ function bindSwipe(el) {
     const t = e.changedTouches[0], dx = t.clientX - x0, dy = t.clientY - y0;
     x0 = null;
     if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx) * 0.6) return;
-    const n = store.S.squad.length;
-    switchPlayer((store.S.cur + (dx < 0 ? 1 : n - 1)) % n);
-    buzz(8); switched();
+    if (stepPlayer(dx < 0 ? 1 : -1)) { buzz(8); switched(); }
   }, { passive: true });
 }
 

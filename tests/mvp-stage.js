@@ -3,7 +3,7 @@ const { chromium, devices } = require('playwright');
   const b = await chromium.launch();
   for (const [label, time] of [['So 18:59', '2026-11-15T18:59:00'], ['So 19:01', '2026-11-15T19:01:00']]) {
     const ctx = await b.newContext({ ...devices['iPhone 13'], serviceWorkers: 'block' });
-    await ctx.addInitScript(() => { for (const k of ['kl-intro-v1', 'kl-intro-v2', 'kl-tour-book-v1']) localStorage.setItem(k, 'true'); });
+    await ctx.addInitScript(() => { for (const k of ['kl-intro-v1', 'kl-intro-v2', 'kl-tour-book-v1', 'kl-tour-book-v2', 'kl-intro-v3']) localStorage.setItem(k, 'true'); });
     await ctx.route(/supabase\.co/, r => r.request().method() !== 'GET' ? r.fulfill({ status: 201, body: '[]' }) : r.continue());
     const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
     await p.clock.install({ time: new Date(time) });

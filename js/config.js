@@ -11,12 +11,13 @@ export const VAPID_PUBLIC = 'BPpdkr18TxFId_jZJ6A0qLOo3pkdTIdKzKqfSYsnChxvth3Oq3V
 export const SEASON = '2026/2027';
 
 /* Angezeigte Version (Konto-Seite) – zusammen mit VERSION in sw.js hochzählen */
-export const APP_VERSION = '4.8.1';
+export const APP_VERSION = '4.9.0';
 
 /* localStorage-Schlüssel (alte Namen bleiben, damit laufende Spiele ein Update überstehen) */
 export const KEYS = {
   game: 'matchday-punkte-v3',
   lastSelection: 'matchday-last-v1', schedule: 'kl-schedule-v1', intro: 'kl-intro-v1', intro2: 'kl-intro-v2', tourBook: 'kl-tour-book-v1', mvpSeen: 'kl-mvp-seen', mvpNews: 'kl-mvp-news', recorder: 'kl-recorder', oneHand: 'kl-onehand', traffic: 'kl-traffic',
+  intro3: 'kl-intro-v3', tourBook2: 'kl-tour-book-v2', dev: 'kl-dev', mit: 'kl-mit',
   roster: 'kl-roster-v1',
   auth: 'kl-auth-v1'
 };

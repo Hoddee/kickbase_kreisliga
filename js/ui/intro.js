@@ -1,37 +1,55 @@
 /* Rundgänge mit Bildern aus der App:
    - Einführung beim ersten Öffnen (und über „Konto → Einführung ansehen“)
    - Punktevergabe erklärt: beim ersten Öffnen von „Punkte vergeben“ nach dem Spielstart
-   Jeder Rundgang erscheint pro Gerät genau einmal (Schlüssel in KEYS). Neue Version eines Rundgangs = neuer Schlüssel,
+   Bilder: Screenshots der App und Fotos von uns (f-*), gemischt. Jeder Rundgang erscheint pro Gerät genau einmal (Schlüssel in KEYS). Neue Version eines Rundgangs = neuer Schlüssel,
    dann sieht ihn jeder noch einmal. Bilder liegen im Repo (assets/img/tut, WebP) – kein Supabase-Traffic. */
-import { readJson, writeJson, esc } from '../core/util.js';
+import { readJson, writeJson, esc, fmt, cls } from '../core/util.js';
+import { ACT } from '../core/game.js';
 import { KEYS } from '../config.js';
 
-const IMG = 'assets/img/tut/';
-/* [Bild (ohne Endung) oder null = Logo, Überschrift, Text] */
+const IMG = 'assets/img/tut/', V = '.webp?v=2'; // neue Bilder: v hochzählen (der Service Worker hält Bilder sonst für immer)
+/* Folien: { s: Screenshot der App } oder { f: Foto von uns, chips: [[Aktion, Punkte]], inset: kleiner Screenshot, logo } */
 const APP = [
-  [null, 'Willkommen bei Kickbase KL', 'Kickbase-Punkte für eure Kreisliga-Spiele: live gebucht, mit Profil, Marktwert und Hall of Fame.'],
-  ['a-liga', 'Liga', 'Live-Spiele, nächste Spiele und der Spieler der Woche. Unten das Menü – oder einfach nach links und rechts wischen.'],
-  ['a-profil', 'Jeder Spieler hat ein Profil', 'Spieler antippen: Punkte pro Spiel, Marktwert und Form. Ein Balken öffnet das Spiel mit allen Aktionen.'],
-  ['a-live', 'Live mitfiebern', 'Läuft ein Spiel, siehst du jede Aktion sofort. Den Live-Link kannst du an alle schicken.'],
-  ['a-neu', 'Selbst Punkte vergeben', 'Über den Blitz unten: Spieler wählen, Spiel starten. Die App erklärt dir dann alles Schritt für Schritt.'],
-  ['a-ranking', 'Ranking', 'Nach dem Abpfiff speichern – dann landet das Spiel in der Hall of Fame und zählt für den Marktwert.']
+  { f: 'f-team', logo: 1, t: 'Willkommen bei Kickbase KL', x: 'Kickbase-Punkte für unsere Kreisliga – live vom Spielfeldrand.' },
+  { s: 'a-liga', t: 'Liga', x: 'Live-Spiele, nächste Spiele und der Spieler der Woche. Unten das Menü – oder einfach seitlich wischen.' },
+  { s: 'a-profil', t: 'Jeder hat ein Profil', x: 'Punkte pro Spiel, Marktwert und Form. Ein Balken öffnet das Spiel mit allen Aktionen.' },
+  { s: 'a-live', t: 'Live dabei', x: 'Läuft ein Spiel, siehst du jede Aktion sofort – auch ohne am Platz zu sein.' },
+  { s: 'a-neu', t: 'Selbst Punkte vergeben', x: 'Über den Blitz unten: Spieler wählen, Spiel starten. Den Rest zeigt dir die App beim ersten Mal.' },
+  { s: 'a-ranking', t: 'Ranking', x: 'Nach dem Abpfiff speichern – dann zählt das Spiel für Hall of Fame und Marktwert.' },
+  { f: 'f-jubel', chips: [['MVP', 1], ['Top 3', 2]], t: 'Montag, 19 Uhr', x: 'Dann startet die MVP-Stage: die drei Besten des Spieltags.' }
 ];
 const BOOK = [
-  ['b-start', 'So vergibst du Punkte', 'Oben wählst du den Spieler, unten den Bereich. Aktion antippen – fertig. Kleine Sachen stehen oben, große unten.'],
-  ['b-tor', 'Tor? Erst „Tor“ fürs Team', 'Fällt ein Tor, tippe im Reiter Spiel auf „Tor“ für dein Team – nicht beim Spieler. So stimmt der Spielstand für alle.'],
-  ['b-schuetze', 'Dann fragt die App nach', 'Wer hat getroffen? Fernschuss oder Schuss aufs Tor einfach dazu ankreuzen.'],
-  ['b-vorlage', 'Vorlage und Extras', 'Wer hat vorgelegt, und was war besonders? Alles ist freiwillig – „Fertig“ unten geht immer.'],
-  ['b-gegentor', 'Gegentor', 'Auch hier zuerst „Tor“ für den Gegner. Danach kannst du einen Schuldigen wählen – nur, wenn es eindeutig war.'],
-  ['b-suche', 'Suchen statt Scrollen', 'Du findest eine Aktion nicht? Einfach suchen, z. B. „Flanke“ oder „Karte“.'],
-  ['b-zuletzt', 'Vertippt? Kein Problem', 'Unten stehen die letzten Buchungen. Antippen: löschen oder einem anderen Spieler geben.']
+  { s: 'b-start', t: 'So vergibst du Punkte', x: 'Oben den Spieler wählen, unten den Bereich. Aktion antippen – fertig.' },
+  { s: 'b-tor', t: 'Tor? Erst fürs Team', x: 'Fällt ein Tor, tippe im Reiter Spiel auf „Tor“ für dein Team – nicht beim Spieler. So stimmt der Spielstand für alle.' },
+  { f: 'f-schuss', chips: [['Tor', 'goal'], ['Schuss aufs Tor', 'sot'], ['Fernschuss', 'long']], t: 'Wer war’s?', x: 'Torschütze antippen, Fernschuss oder Schuss aufs Tor gleich mit dazu.' },
+  { s: 'b-vorlage', t: 'Vorlage mit Extras', x: 'Wer hat aufgelegt? Großchance, Flanke oder Pass des Todes geben extra Punkte. Alles freiwillig.' },
+  { s: 'b-gegentor', t: 'Gegentor', x: 'Zuerst „Tor“ für den Gegner. Danach den Schuldigen wählen – wenn es einen gibt.' },
+  { s: 'b-einhand', t: 'Ein-Hand-Modus', x: 'Hand-Symbol neben der Suche: sechs große Kacheln im Daumenbereich. Wischen wechselt den Spieler.' },
+  { f: 'f-duell', inset: 'b-mit', t: 'Zusammen buchen', x: 'Bis zu 3 Handys scannen den QR-Code im Reiter Spiel. Jeder wählt seine Spieler – Tore darf jeder melden.' },
+  { s: 'b-zuletzt', t: 'Vertippt? Kein Problem', x: 'Unten stehen die letzten Buchungen. Antippen: löschen oder einem anderen Spieler geben.' }
 ];
 
-export const introSeen = () => !!readJson(KEYS.intro2, false);
-export const bookingTourSeen = () => !!readJson(KEYS.tourBook, false);
-export const showIntro = () => tour(APP, KEYS.intro2, 'Einführung', 'Los geht’s');
-export const showBookingTour = () => tour(BOOK, KEYS.tourBook, 'Punktevergabe erklärt', 'Verstanden');
+export const introSeen = () => !!readJson(KEYS.intro3, false);
+export const bookingTourSeen = () => !!readJson(KEYS.tourBook2, false);
+export const showIntro = () => tour(APP, KEYS.intro3, 'Einführung', 'Los geht’s');
+export const showBookingTour = () => tour(BOOK, KEYS.tourBook2, 'Punktevergabe erklärt', 'Verstanden');
 
-const logo = '<div class="tour-logo"><img src="assets/icons/logo.svg" alt="Kickbase KL" width="150" height="66"></div>';
+/* Punkte-Chips auf den Fotos: Zahl = feste Punktzahl, Text = Aktion aus der Punktetabelle (Stürmer) */
+function chipPts(v) {
+  if (typeof v === 'number') return '';
+  const a = ACT[v];
+  if (!a) return '';
+  const n = typeof a.v === 'number' ? a.v : a.v && (a.v.ANG != null ? a.v.ANG : a.v.MIT);
+  return n != null ? '<b class="' + cls(n) + '">' + fmt(n) + '</b>' : '';
+}
+function visual(sl) {
+  if (sl.s) return '<div class="tour-shot"><img src="' + IMG + sl.s + V + '" alt="" width="600" height="676"></div>';
+  return '<div class="tour-shot tour-photo"><img src="' + IMG + sl.f + V + '" alt="" width="600" height="676">' +
+    (sl.logo ? '<img class="tour-plogo" src="assets/icons/logo.svg" alt="Kickbase KL">' : '') +
+    (sl.chips ? '<div class="tour-chips">' + sl.chips.map(([l, v], j) => '<span style="animation-delay:' + (0.25 + j * 0.22) + 's">' + esc(l) + chipPts(v) + '</span>').join('') + '</div>' : '') +
+    (sl.inset ? '<div class="tour-inset"><img src="' + IMG + sl.inset + V + '" alt=""></div>' : '') + '</div>';
+}
+
 
 function tour(slides, key, label, doneLabel) {
   if (document.getElementById('tour')) return;
@@ -43,11 +61,10 @@ function tour(slides, key, label, doneLabel) {
     '<div class="tour-dots">' + slides.map((_, j) => '<i data-tr="go:' + j + '"></i>').join('') + '</div>' +
     '<div class="tour-nav"><button type="button" class="btn" data-tr="prev">Zurück</button><button type="button" class="btn primary" data-tr="next"></button></div></div>';
   /* Bilder schon mal laden, damit beim Weiterblättern nichts aufpoppt */
-  for (const [img] of slides) if (img) { const im = new Image(); im.src = IMG + img + '.webp'; }
+  for (const sl of slides) for (const n of [sl.s, sl.f, sl.inset]) if (n) { const im = new Image(); im.src = IMG + n + V; }
   const draw = dir => {
-    const [img, t, x] = slides[i], last = i === slides.length - 1, st = el.querySelector('#tourStage');
-    st.innerHTML = (img ? '<div class="tour-shot"><img src="' + IMG + img + '.webp" alt="" width="600" height="676"></div>' : logo) +
-      '<h2>' + esc(t) + '</h2><p>' + esc(x) + '</p>';
+    const sl = slides[i], last = i === slides.length - 1, st = el.querySelector('#tourStage');
+    st.innerHTML = visual(sl) + '<h2>' + esc(sl.t) + '</h2><p>' + esc(sl.x) + '</p>';
     if (dir && st.animate && !matchMedia('(prefers-reduced-motion: reduce)').matches)
       st.animate([{ opacity: 0, transform: 'translateX(' + 30 * dir + 'px)' }, { opacity: 1, transform: 'none' }], { duration: 260, easing: 'cubic-bezier(.2, .8, .2, 1)' });
     el.querySelectorAll('.tour-dots i').forEach((d, j) => d.classList.toggle('on', j === i));

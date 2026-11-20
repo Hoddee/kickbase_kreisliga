@@ -31,7 +31,7 @@ Erklärzeilen unter Optionen). Beschriftungen knapp halten; Erklärungen gehöre
   Zurück-Taste des Handys wird abgefangen).
 - `js/main.js` – Einstieg, Klick-Delegation (`data-nav`, `data-open="p:ID"|"g:UID"`, `data-match`), Sekundentakt, Wake Lock, SW.
 - `js/core/game.js` – Spielzustand in localStorage (`KEYS.game`) und gesamte Punkteberechnung. Mehrere Spieler pro Spiel
-  (bis `MAX_SQUAD` = 7): aktiver Spieler liegt direkt in `store.S`, die anderen in `store.S.squad`; `withPlayer/eachPlayer` tauschen um.
+  (bis `MAX_SQUAD` = 15, Spielerleiste scrollt ab 8 – `.sqrow.many`): aktiver Spieler liegt direkt in `store.S`, die anderen in `store.S.squad`; `withPlayer/eachPlayer` tauschen um.
   Team-Tor/Gegentor (`tg`/`cg`) gelten für alle Spieler (`grp`); ohne Punkte = `silentGoal`, zählt nur fürs Ergebnis.
 - `js/core/correct.js` – nachträgliche Korrekturen an gespeicherten Spielen (nur Admin, im Spiel-Detail): Aktionen entfernen
   (`x: 1`, bleiben ausgegraut), nachtragen (`c: 1`), Ergebnis per +/−; Zu null und Sieg/Niederlage ziehen automatisch nach
@@ -59,9 +59,20 @@ Erklärzeilen unter Optionen). Beschriftungen knapp halten; Erklärungen gehöre
   Live-Stand enthält dafür `tn`/`on` (Vereinsnamen). Privater VAPID-Schlüssel/Secret nie ins Repo.
 - Traffic (`js/services/traffic.js`): jedes Gerät zählt seine Supabase-Bytes (geschätzt) und meldet die Tagessumme
   (`rpc/traffic_melden`); Admins sehen die Monatssumme im Admin-Bereich (`rpc/traffic_monat`, Migration 012).
-- Rundgänge (`js/ui/intro.js`): Einführung (`KEYS.intro2`) und „Punktevergabe erklärt“ (`KEYS.tourBook`, beim ersten
-  „Punkte vergeben“). Je einmal pro Gerät; neue Fassung = neuer Schlüssel. Bilder: Screenshots als WebP in `assets/img/tut/`
-  (600×676, Fenster 390×440 aufgenommen). Ändert sich die Oberfläche stark, die Bilder neu aufnehmen.
+- Rundgänge (`js/ui/intro.js`): Einführung (`KEYS.intro3`) und „Punktevergabe erklärt“ (`KEYS.tourBook2`, beim ersten
+  „Punkte vergeben“). Je einmal pro Gerät; neue Fassung = neuer Schlüssel. Folien `{ s }` = Screenshot, `{ f, chips, inset, logo }` =
+  Foto von uns (`f-*.webp`) mit Punkte-Chips bzw. kleinem Screenshot – gesunder Mix, Screenshots wo die Bedienung gezeigt wird.
+  Bilder als WebP in `assets/img/tut/` (600×676); Screenshots erzeugt `node tests/tools/tutorial-bilder.js` (Fenster 390×440,
+  danach PNG → WebP, `V` in intro.js hochzählen). Ändert sich die Oberfläche stark, die Bilder neu aufnehmen.
+- Mitbuch-Modus (`js/services/mit.js` Logik/Übertragung, `js/ui/mit.js` Oberfläche, `js/core/qr.js` QR-Code ohne Bibliothek):
+  Gastgeber lädt im Reiter Spiel per QR/Link `?mit=<Spiel-ID>.<Code>` bis zu 3 Mitbucher ein (kein Konto, Name wie bei „Dein Name“).
+  Supabase Realtime **Broadcast** (Kanal `mit-<gid>-<code>`, nichts in der DB, keine Migration). Gastgeber ist maßgeblich
+  (Uhr, Wechsel, Abpfiff, Speichern); Mitbucher haben eine Kopie (`S.remote`, wird nie in `KEYS.game` gespeichert, Live-Senden aus)
+  und schicken nach jedem `saveGame` (`hooks.save`) die Unterschiede der Ereignisse (Kennung `ts|key`), der Gastgeber rechnet
+  Punkte selbst, bestätigt (`acks`), es wird bis dahin wiederholt (doppelt anwenden schadet nicht). Spieler „sperren“:
+  `S.mit.locks` (uid → Gerät), Mitbucher sehen nur ihre Spieler (`S.mine`, `mineAt`), Tore (inkl. Tor-Assistent) darf jeder.
+  „Übernehmen“ holt einen Spieler zurück. Prüfsummen über JSON mit sortierten Schlüsseln (Realtime sortiert um).
+  Test: `tests/mitbuchen.js` (zwei Browser über echten Broadcast).
 - Spiel-Detail: „Korrekturen (n)“ öffnet ein eigenes Blatt (Ansicht `corr`, Overlay über `match`).
   Admin: „Spiel löschen“ steht unauffällig unten im Korrektur-Modus (mit Rückfrage). „Eingetragen von …“ aus Spalte
   `erfasst_von` (Migration 011; angemeldet = Kontoname, sonst einmal „Dein Name“ abfragen, `KEYS.recorder`).
