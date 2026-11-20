@@ -15,7 +15,7 @@ const SHELL = [
   'js/data/actions.js', 'js/data/clubs.js', 'js/data/players.js', 'js/data/schedule.js', 'js/core/cutout.js', 'js/ui/start.js', 'js/ui/profile.js', 'js/ui/squad.js', 'js/ui/intro.js', 'js/ui/me.js', 'css/profile.css', 'css/sheet.css', 'js/ui/sheet.js', 'js/ui/match.js', 'js/core/correct.js', 'js/services/live.js', 'js/ui/watch.js',
   'js/core/game.js', 'js/core/icons.js', 'js/core/market.js', 'js/core/util.js',
   'js/services/api.js', 'js/services/auth.js',
-  'js/ui/admin.js', 'js/ui/feel.js', 'js/ui/tabbar.js', 'js/ui/mvp.js', 'js/ui/onehand.js', 'css/brand.css', 'js/ui/goal.js', 'css/feel.css', 'js/ui/booking.js', 'js/ui/components.js', 'js/ui/hof.js', 'js/ui/live.js', 'js/ui/setup.js', 'js/ui/share.js',
+  'js/ui/admin.js', 'js/ui/feel.js', 'js/ui/tabbar.js', 'js/ui/mvp.js', 'js/ui/onehand.js', 'js/services/traffic.js', 'css/brand.css', 'js/ui/goal.js', 'css/feel.css', 'js/ui/booking.js', 'js/ui/components.js', 'js/ui/hof.js', 'js/ui/live.js', 'js/ui/setup.js', 'js/ui/share.js',
   'assets/fonts/inter-tight-latin-400-normal.woff2', 'assets/fonts/inter-tight-latin-500-normal.woff2',
   'assets/fonts/inter-tight-latin-600-normal.woff2', 'assets/fonts/inter-tight-latin-700-normal.woff2',
   'assets/fonts/saira-kl-var.woff2',

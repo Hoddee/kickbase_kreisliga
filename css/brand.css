@@ -408,3 +408,17 @@ body.ended .cta button { background: rgba(19, 20, 23, .88); color: var(--ink); b
 .oh-fly.pos { color: var(--lime); } .oh-fly.hi { color: var(--hi); } .oh-fly.neg { color: var(--neg); } .oh-fly.zero { color: var(--muted); }
 body.onehand #editBody { padding-bottom: calc(240px + 110px + env(safe-area-inset-bottom, 0px)); }
 body.onehand #quick { display: none !important; }
+
+/* Traffic-Anzeige (Admin) */
+.trf { margin-top: 12px; }
+.trf-h { display: flex; align-items: baseline; justify-content: space-between; }
+.trf-h b { font: 800 20px/1 var(--font-head); font-stretch: 88%; letter-spacing: -.02em; text-transform: uppercase; }
+.trf-v { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+.trf-v strong { font: 800 28px/1 var(--font-display); }
+.trf-v span { font-size: 12.5px; color: var(--muted); }
+.trf-bar { height: 8px; margin-top: 12px; border-radius: 4px; background: var(--raised); overflow: hidden; }
+.trf-bar i { display: block; height: 100%; border-radius: 4px; background: var(--hi); }
+.trf.warn .trf-bar i { background: #ED8928; }
+.trf.warn .trf-v strong { color: #ED8928; }
+.trf-days { display: flex; align-items: flex-end; gap: 3px; height: 40px; margin-top: 12px; }
+.trf-days i { flex: 1; max-width: 12px; border-radius: 2px; background: rgba(222, 228, 236, .25); }

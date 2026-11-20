@@ -14,7 +14,7 @@ export const APP_VERSION = '4.7.0';
 /* localStorage-Schlüssel (alte Namen bleiben, damit laufende Spiele ein Update überstehen) */
 export const KEYS = {
   game: 'matchday-punkte-v3',
-  lastSelection: 'matchday-last-v1', schedule: 'kl-schedule-v1', intro: 'kl-intro-v1', intro2: 'kl-intro-v2', tourBook: 'kl-tour-book-v1', mvpSeen: 'kl-mvp-seen', mvpNews: 'kl-mvp-news', recorder: 'kl-recorder', oneHand: 'kl-onehand',
+  lastSelection: 'matchday-last-v1', schedule: 'kl-schedule-v1', intro: 'kl-intro-v1', intro2: 'kl-intro-v2', tourBook: 'kl-tour-book-v1', mvpSeen: 'kl-mvp-seen', mvpNews: 'kl-mvp-news', recorder: 'kl-recorder', oneHand: 'kl-onehand', traffic: 'kl-traffic',
   roster: 'kl-roster-v1',
   auth: 'kl-auth-v1'
 };

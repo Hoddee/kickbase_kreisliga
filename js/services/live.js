@@ -5,6 +5,7 @@
    (WebSocket). Fällt die Verbindung weg, wird nachgeladen, bis sie wieder steht. */
 import { SUPABASE_URL, SUPABASE_KEY } from '../config.js';
 import { rest, num, str, okId, okFoto } from './api.js';
+import { countBytes } from './traffic.js';
 import { PL } from '../data/players.js';
 import {
   store, silentGoal, eachPlayer, isMulti, started, elapsed, total, score, isHome, teamOf, endLines, startLine, withMarkers
@@ -145,6 +146,7 @@ function connect() {
     loadAll();
   };
   ws.onmessage = m => {
+    countBytes(typeof m.data === 'string' ? m.data.length : 0);
     let msg; try { msg = JSON.parse(m.data); } catch (e) { return; }
     if (msg.event !== 'postgres_changes' || !msg.payload || !msg.payload.data) return;
     const d = msg.payload.data;
