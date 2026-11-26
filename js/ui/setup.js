@@ -159,9 +159,8 @@ function teamChips() {
 
 function html() {
   let h = '';
-  if (sel.manual) h += '<div class="note-badge">Nachtrag: Spiel nachträglich eintragen</div>';
-  else if (store.S.match) h += '<button type="button" class="back" data-pick="back"><b aria-hidden="true">‹</b>Zurück zum Spiel</button>';
-  h += '<div class="sh2"><h2>Spieler</h2>' + (sel.manual ? '' : '<button type="button" class="multibtn" data-pick="multi" aria-pressed="' + sel.multi + '">' +
+  if (!sel.manual && store.S.match) h += '<button type="button" class="back" data-pick="back"><b aria-hidden="true">‹</b>Zurück zum Spiel</button>';
+  h += '<div class="sh2"><h2>Spieler</h2>' + (sel.manual && !isAdmin() ? '' : '<button type="button" class="multibtn" data-pick="multi" aria-pressed="' + sel.multi + '">' +
     '<span class="mbi" aria-hidden="true"><i></i><i></i><i></i></span>' + (sel.multi ? 'Mehrere · ' + sel.ps.length + '/' + MAX_SQUAD : 'Mehrere Spieler') + '</button>') + '</div>' +
     '';
   if (sel.lock) {
@@ -260,7 +259,7 @@ function start() {
   if (isGuest(sel.p) && sel.pf) g.match.pf = sel.pf;
   if (isCustomClub(sel.o) && sel.of) g.match.of = sel.of;
   g.uid = randomId();
-  if (!sel.manual && sel.multi && sel.ps.length > 1) {
+  if ((!sel.manual || isAdmin()) && sel.multi && sel.ps.length > 1) {
     /* Mehrere Spieler: jeder bekommt einen eigenen Eintrag, der erste ist zuerst aktiv */
     g.squad = sel.ps.map((p, i) => newSlot(p, sel.poss[p] || 'MIT', i === 0 ? g.uid : randomId()));
     g.cur = 0;

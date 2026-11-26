@@ -180,13 +180,17 @@ const MF_DEFAULT = { dur: 92, inMin: '', outMin: '', us: 0, them: 0, usOn: 0, th
 function numField(id, label, value, opts = '') {
   return '<label class="nf"><span>' + label + '</span><input class="fi" type="number" inputmode="numeric" min="0" max="150" data-mf="' + id + '" value="' + esc(value) + '" ' + opts + '></label>';
 }
+/* Nachtrag: Datum, Dauer und Ergebnis gelten für alle; Einwechslung, Auswechslung und Tore „mit ihm auf dem Platz“ je Spieler (S.mfp).
+   Alte Nachträge (ein Spieler) hatten alles in S.mf – das wird weiter gelesen. */
+const MF_SHARED = ['dur', 'us', 'them'];
+const mfp = S => Object.assign({ inMin: '', outMin: '', usOn: 0, themOn: 0 }, pick(S.mf || {}, ['inMin', 'outMin', 'usOn', 'themOn']), S.mfp || {});
+const pick = (o, ks) => Object.fromEntries(ks.filter(k => k in o).map(k => [k, o[k]]));
 function manualGameHtml() {
-  const S = store.S, mf = S.mf || MF_DEFAULT, d = S.ended ? ' disabled' : '';
+  const S = store.S, mf = Object.assign({}, MF_DEFAULT, S.mf || {}, mfp(S)), d = S.ended ? ' disabled' : '', who = isMulti() ? ' · ' + esc(names.player) : '';
   const day = (S.playedAt || new Date().toISOString()).slice(0, 10);
-  return '<div class="note-badge">Nachtrag · wird mit Spieldatum gespeichert</div>' +
-    '<h2>Spieltag</h2><div class="card"><label class="nf"><span>Datum</span><input class="fi" type="date" data-mf="date" value="' + day + '"' + d + '></label>' +
+  return '<h2>Spieltag</h2><div class="card"><label class="nf"><span>Datum</span><input class="fi" type="date" data-mf="date" value="' + day + '"' + d + '></label>' +
       numField('dur', 'Spieldauer inkl. Nachspielzeit (Min.)', mf.dur, d) + '</div>' +
-    '<h2>Einsatz</h2><div class="card">' +
+    '<h2>Einsatz' + who + '</h2><div class="card">' +
       seg('Start', [['start1', 'Startelf'], ['start0', 'Bank']], S.startelf ? 'start1' : 'start0') +
       '<div class="nf2">' + (S.startelf ? '' : numField('inMin', 'Eingewechselt (Minute)', mf.inMin, d)) +
       numField('outMin', 'Ausgewechselt (Minute, leer = bis Schluss)', mf.outMin, d) + '</div>' +
@@ -198,8 +202,9 @@ function manualGameHtml() {
     '<h2>Automatische Punkte</h2><div class="card" id="autoBox">' + autoHtml() + '</div>' + endHtml();
 }
 /* Eingaben des Nachtrags in Einsatzzeiten, Wechsel-Marken und Tor-Ereignisse übersetzen */
-function applyManual() {
-  const S = store.S, mf = S.mf;
+function applyManual() { eachPlayer(() => applyManualOne()); }
+function applyManualOne() {
+  const S = store.S, mf = Object.assign({}, MF_DEFAULT, S.mf || {}, mfp(S));
   const n = (v, def) => (v === '' || v == null || isNaN(+v) ? def : Math.max(0, Math.min(150, Math.round(+v))));
   const dur = n(mf.dur, 90), inMin = n(mf.inMin, null), outMin = n(mf.outMin, null);
   const from = S.startelf ? 0 : inMin, to = Math.min(outMin != null ? outMin : dur, dur);
@@ -509,7 +514,8 @@ export function initBooking() {
     if (!f || !S.manual) return;
     const k = f.getAttribute('data-mf');
     if (k === 'date') { if (f.value) S.playedAt = new Date(f.value + 'T15:00:00').toISOString(); }
-    else { S.mf = Object.assign({}, MF_DEFAULT, S.mf); S.mf[k] = f.value; applyManual(); }
+    else if (MF_SHARED.includes(k)) { S.mf = Object.assign({}, MF_DEFAULT, S.mf); S.mf[k] = f.value; applyManual(); }
+    else { S.mfp = Object.assign(mfp(S), { [k]: f.value }); applyManual(); }
     saveGame(); render();
   });
   $('quick').addEventListener('click', e => { const b = e.target.closest('[data-k]'); if (b) addEvent(b.getAttribute('data-k')); });

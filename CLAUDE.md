@@ -77,6 +77,13 @@ Erklärzeilen unter Optionen). Beschriftungen knapp halten; Erklärungen gehöre
   Test: `tests/mitbuchen.js` (zwei Browser über echten Broadcast).
 - Spieler-Vergleich (`profile.js`, `state.cmp`/`state.cmpPick`): „Vergleichen“ in der Profil-Übersicht → Spieler wählen →
   beide nebeneinander (Punkte, Ø, Form, bestes Spiel, Spiele, Tore, Vorlagen, Marktwert; Balken, Besserer hell). Nur aus `games.list`, kein Extra-Traffic.
+- Spielstand-Sicherung (seit v4.11): iOS kann bei weggewischten Home-Bildschirm-Apps den Handy-Speicher verlieren.
+  `saveGame` zählt `S.rev` hoch und schreibt zusätzlich in IndexedDB (`js/core/vault.js`); `js/services/backup.js` lädt den
+  Stand alle 5 s (nur bei Änderung) in `spiel_sicherung` (Migration 014, eine Zeile pro Gerät, Geräteschlüssel `x-live-key`, auch in IndexedDB).
+  Beim Start: IndexedDB neuer → still übernehmen; sonst kein laufendes Spiel, aber Sicherung < 8 Std. → Blatt „Laufendes Spiel gefunden“
+  (`js/ui/restore.js`). `normalizeGame` (game.js) wirft nie Spieler/Spiel weg (unbekannte IDs = vorläufiger Eintrag, `active: false`).
+  Diagnose der letzten Starts im Admin-Bereich (`KEYS.diag`). Keine `navigator.storage.persist()`-Abfrage (Wunsch des Nutzers).
+- Nachtrag mit mehreren Spielern (nur Admin): Datum, Dauer, Ergebnis gemeinsam (`S.mf`), Einwechslung/Auswechslung/Tore mit ihm je Spieler (`S.mfp`, Slot-Feld).
 - Spiel-Detail: „Korrekturen (n)“ öffnet ein eigenes Blatt (Ansicht `corr`, Overlay über `match`).
   Admin: „Spiel löschen“ steht unauffällig unten im Korrektur-Modus (mit Rückfrage). „Eingetragen von …“ aus Spalte
   `erfasst_von` (Migration 011; angemeldet = Kontoname, sonst einmal „Dein Name“ abfragen, `KEYS.recorder`).
@@ -113,7 +120,7 @@ Erklärzeilen unter Optionen). Beschriftungen knapp halten; Erklärungen gehöre
   Vor neuen Klassennamen per `grep` prüfen, dass es sie noch nicht gibt – Kollisionen haben schon die Startseite verbreitert.
 
 ## Datenbank (Supabase)
-Tabellen: `spiele` (gespeicherte Spiele inkl. `events` jsonb), `kader`, `admins`, `spielplan`, `spieler_konten`, `live_spiele`
+Tabellen: `spiele` (gespeicherte Spiele inkl. `events` jsonb), `kader`, `admins`, `spielplan`, `spieler_konten`, `live_spiele`, `spiel_sicherung`
 (Schreibrecht per Geräte-Schlüssel im Header `x-live-key`, nur Hash gespeichert). Storage-Bucket `kickbase`.
 - Schemaänderungen als neue Datei `supabase/migrations/0NN_name.sql` (fortlaufend nummeriert, idempotent mit `if not exists` /
   `drop policy if exists`). Der Nutzer führt sie selbst im Supabase-SQL-Editor aus – im PR/Antwort ausdrücklich darauf hinweisen.

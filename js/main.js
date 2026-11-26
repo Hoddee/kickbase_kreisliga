@@ -18,6 +18,8 @@ import { initFeel } from './ui/feel.js';
 import { initTabbar } from './ui/tabbar.js';
 import { initMvp } from './ui/mvp.js';
 import { startTraffic } from './services/traffic.js';
+import { restoreOnStart, startBackup } from './services/backup.js';
+import { offerRestore } from './ui/restore.js';
 import { loadRoster, loadSchedule } from './services/api.js';
 import { consumeRedirect, isLoggedIn, refreshAdminFlag, onAuthChange } from './services/auth.js';
 
@@ -95,6 +97,13 @@ if (isLoggedIn()) refreshAdminFlag();
 startPublisher();
 startViewer();
 startTraffic();
+
+/* Spielstand absichern: beim Start den neuesten Stand nehmen (Handy/IndexedDB/Supabase), danach laufend sichern */
+restoreOnStart({
+  onRestored: () => { toast('Spiel wiederhergestellt'); show(store.S.manual && !store.S.ended ? 'edit' : 'home'); },
+  offer: offerRestore
+});
+startBackup();
 
 /* Sekundentakt für Uhr und Live-Status */
 setInterval(() => {
