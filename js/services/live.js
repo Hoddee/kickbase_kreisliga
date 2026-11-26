@@ -6,6 +6,7 @@
 import { SUPABASE_URL, SUPABASE_KEY } from '../config.js';
 import { rest, num, str, okId, okFoto } from './api.js';
 import { countBytes } from './traffic.js';
+import { vaultGet, vaultSet } from '../core/vault.js';
 import { PL } from '../data/players.js';
 import { CL } from '../data/clubs.js';
 import {
@@ -17,15 +18,18 @@ const MAX_AGE = 8 * 3600e3;
 
 /* ---------- Gerät: geheimer Schreibschlüssel ---------- */
 let keyCache = null;
-async function deviceKey() {
+export async function deviceKey() {
   if (keyCache) return keyCache;
   let k = null;
   try { k = localStorage.getItem(KEY_LS); } catch (e) {}
+  /* Zweite Kopie in IndexedDB: geht der Handy-Speicher verloren, findet die App so ihre Sicherung (spiel_sicherung) wieder */
+  if (!k || k.length < 32) { const v = await vaultGet('livekey'); if (typeof v === 'string' && v.length >= 32) { k = v; try { localStorage.setItem(KEY_LS, k); } catch (e) {} } }
   if (!k || k.length < 32) {
     const b = new Uint8Array(24); crypto.getRandomValues(b);
     k = [...b].map(x => x.toString(16).padStart(2, '0')).join('');
     try { localStorage.setItem(KEY_LS, k); } catch (e) {}
   }
+  vaultSet('livekey', k);
   const h = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(k));
   keyCache = { k, hash: [...new Uint8Array(h)].map(x => x.toString(16).padStart(2, '0')).join('') };
   return keyCache;

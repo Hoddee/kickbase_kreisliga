@@ -2,7 +2,8 @@
    Ein Spiel läuft immer nur auf dem Gerät, auf dem es gebucht wird. */
 import { KEYS } from '../config.js';
 import { GROUPS, CLEAN_SHEET, GOAL_KEYS, ASSIST_KEYS } from '../data/actions.js';
-import { PL, POS_NAME } from '../data/players.js';
+import { PL, POS_NAME, addPlayer } from '../data/players.js';
+import { vaultSet } from './vault.js';
 import { CL } from '../data/clubs.js';
 import { minStamp, randomId } from './util.js';
 
@@ -13,28 +14,44 @@ export function freshGame(keep = {}) {
     clock: { offset: 0, startedAt: null }, ended: false, events: [], nextId: 1, subs: []
   };
 }
-function loadGame() {
-  try {
-    const s = JSON.parse(localStorage.getItem(KEYS.game) || 'null');
-    if (s && s.events && s.clock && s.stints) {
-      if (!POS_NAME[s.pos]) s.pos = 'ABW';
-      if (!s.match || !PL[s.match.p] || !CL[s.match.o]) s.match = null;
-      else applyMedia(s.match.p, s.match.o, s.match.pf, s.match.of);
-      if (s.squad && !(s.match && s.squad.every(x => PL[x.p]))) { delete s.squad; delete s.cur; }
-      if (s.squad) s.squad.forEach(x => applyMedia(x.p, null, x.pf, null));
-      s.subs = s.subs || [];
-      return s;
-    }
-  } catch (e) {}
-  return null;
+/* Gespeicherten Stand prüfen und reparieren. Nie Spieler oder das Spiel verwerfen: Unbekannte Spieler/Vereine
+   (z. B. später angelegt, Kader noch nicht geladen) bekommen einen vorläufigen Eintrag, den der Kader nachträglich füllt. */
+export function normalizeGame(s) {
+  if (!s || typeof s !== 'object' || !Array.isArray(s.events) || !s.clock || !Array.isArray(s.stints)) return null;
+  if (!POS_NAME[s.pos]) s.pos = 'ABW';
+  if (s.match && (typeof s.match.p !== 'string' || typeof s.match.o !== 'string')) s.match = null;
+  if (s.match) {
+    const team = s.match.team || 'vfr';
+    const known = id => { if (!PL[id]) addPlayer({ id, vn: '', n: id, c: team, pos: 'MIT', mw: 500000, status: 'fit', active: false }); };
+    known(s.match.p);
+    if (!CL[s.match.o]) CL[s.match.o] = { id: s.match.o, n: s.match.o, lg: null, custom: true };
+    if (s.match.team && !CL[s.match.team]) delete s.match.team;
+    if (Array.isArray(s.squad)) { s.squad = s.squad.filter(x => x && typeof x.p === 'string'); s.squad.forEach(x => known(x.p)); }
+    applyMedia(s.match.p, s.match.o, s.match.pf, s.match.of);
+  }
+  if (s.squad && (!s.match || !s.squad.length)) { delete s.squad; delete s.cur; }
+  if (s.squad) { if (!(s.cur >= 0 && s.cur < s.squad.length)) s.cur = 0; s.squad.forEach(x => applyMedia(x.p, null, x.pf, null)); }
+  s.subs = s.subs || [];
+  return s;
 }
+function loadGame() {
+  try { return normalizeGame(JSON.parse(localStorage.getItem(KEYS.game) || 'null')); } catch (e) { return null; }
+}
+/* Läuft ein Spiel (oder ist es beendet, aber noch nicht gespeichert)? */
+export const isRunning = s => !!(s && s.match && !(s.ended && (s.squad ? s.squad.every((x, i) => (i === s.cur ? s.saved : x.saved)) : s.saved)));
 export const store = { S: loadGame() || freshGame() };
 /* hooks.save läuft nach jedem Speichern (Mitbuch-Modus: Änderungen weitergeben) */
 export const hooks = { save: null };
 export function saveGame() {
   if (isMulti()) store.S.squad[store.S.cur] = extract(store.S);
   /* Mitbucher arbeiten auf einer Kopie des fremden Spiels – das eigene Spiel im Speicher bleibt unberührt */
-  if (!store.S.remote) try { localStorage.setItem(KEYS.game, JSON.stringify(store.S)); } catch (e) {}
+  /* Jeder Stand bekommt eine laufende Nummer (rev) – beim Start gewinnt der neueste aus Handy-Speicher, IndexedDB oder Sicherung */
+  if (!store.S.remote) {
+    store.S.rev = (store.S.rev || 0) + 1;
+    const json = JSON.stringify(store.S);
+    try { localStorage.setItem(KEYS.game, json); } catch (e) {}
+    vaultSet('game', json);
+  }
   if (hooks.save) try { hooks.save(); } catch (e) {}
 }
 /* Eigenes Spiel wieder aus dem Speicher holen (nach dem Mitbuchen) */
@@ -44,7 +61,7 @@ export function reloadGame() { store.S = loadGame() || freshGame(); applyMatchNa
    Gemeinsam: Uhr, Gegner, Spielort, Mannschaft, Spielende. Pro Spieler: Position, Startelf, Einsatzzeiten,
    Aktionen, Wechsel, Halbzeit-Marke, eigene Spiel-ID und ob er schon gespeichert ist.
    Der gerade gewählte Spieler liegt wie bisher direkt in store.S, die anderen in store.S.squad. */
-const SLOT_KEYS = ['pos', 'startelf', 'stints', 'events', 'subs', 'nextId', 'h2Id', 'uid', 'saved'];
+const SLOT_KEYS = ['pos', 'startelf', 'stints', 'events', 'subs', 'nextId', 'h2Id', 'uid', 'saved', 'mfp'];
 /* Team-Tor/Gegentor ohne Punkte (Spieler nicht auf dem Platz): zählt fürs Ergebnis, erscheint aber nirgends */
 export const silentGoal = e => (e.key === 'tg' || e.key === 'cg') && !e.pts;
 export const MAX_SQUAD = 15;
@@ -135,7 +152,7 @@ export function squadInfo() {
   return eachPlayer(i => ({ i, p: store.S.match.p, t: total(), on: onField(), started: !!store.S.stints.length, saved: !!store.S.saved }));
 }
 export const allSaved = () => (isMulti() ? store.S.squad.every((x, i) => (i === store.S.cur ? store.S.saved : x.saved)) : !!store.S.saved);
-export function replaceGame(next) { store.S = next; saveGame(); }
+export function replaceGame(next) { next.rev = Math.max(next.rev || 0, store.S.rev || 0); store.S = next; saveGame(); }
 
 /* Eigene Bilder von Gastspielern / eigenen Gegnern an die (temporären) Einträge hängen */
 export function applyMedia(p, o, pf, of) {

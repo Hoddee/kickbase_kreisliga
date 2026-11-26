@@ -9,6 +9,7 @@ import { APP_VERSION, KEYS, SUPABASE_URL } from '../config.js';
 import { login, logout, signup, currentUser, isLoggedIn, isAdmin, myAccount, myPlayer, requestAccount, refreshAdminFlag, requestPasswordReset, updatePassword, onAuthChange } from '../services/auth.js';
 import { cutout } from '../core/cutout.js';
 import { pushSupported, pushState, pushOn, pushOff } from '../services/push.js';
+import { diagHtml } from './restore.js';
 import { rest, loadRoster, updatePlayer, insertPlayer, uploadPhoto, games, loadAccounts, decideAccount, loadSchedule, saveFixture, deleteFixture } from '../services/api.js';
 import { openProfile } from './profile.js';
 import { showIntro, showBookingTour } from './intro.js';
@@ -241,7 +242,7 @@ function adminHtml() {
     '<div class="tiles">' +
       '<button type="button" class="tile" data-adm="manual">' + ICON.plus + '<b>Spiel nachtragen</b></button>' +
       '<button type="button" class="tile" data-nav="hof">' + ICON.trophy + '<b>Spiele verwalten</b></button>' +
-    '</div>' + trafficHtml() + (myPlayer() && PL[myPlayer()] ? '<button type="button" class="pcard" data-adm="my-area">' + avatar(myPlayer()) + '<span><small>Mein Bereich</small><b>' + esc(fullName(PL[myPlayer()])) + '</b></span><span class="chev">›</span></button>' : '') +
+    '</div>' + trafficHtml() + '<div id="diagCard"></div>' + (myPlayer() && PL[myPlayer()] ? '<button type="button" class="pcard" data-adm="my-area">' + avatar(myPlayer()) + '<span><small>Mein Bereich</small><b>' + esc(fullName(PL[myPlayer()])) + '</b></span><span class="chev">›</span></button>' : '') +
     accountsHtml() + scheduleHtml() +
     '<h2>Kader</h2>' +
     newPlayerHtml() +
@@ -257,7 +258,7 @@ export function render() {
   else h = playerHtml();
   $('adminBody').innerHTML = h + (!isLoggedIn() && readJson(KEYS.recorder, '') ? '<button type="button" class="lnk" data-adm="rname">Name ändern · ' + esc(readJson(KEYS.recorder, '')) + '</button>' : '') + (pushSupported() && !ui.passwordMode ? '<div class="card pushc" id="pushCard"></div>' : '') + '<button type="button" class="lnk" data-adm="intro">Einführung ansehen</button><button type="button" class="lnk" data-adm="tourbook">Punktevergabe erklärt</button><p class="appver">Version ' + APP_VERSION + '</p>';
   $('admTitle').textContent = isLoggedIn() && isAdmin() ? 'Admin' : 'Konto';
-  if (isLoggedIn() && isAdmin() && !ui.passwordMode) loadTraffic();
+  if (isLoggedIn() && isAdmin() && !ui.passwordMode) { loadTraffic(); diagHtml().then(h => { const el = $('diagCard'); if (el) el.outerHTML = h; }); }
   fillPush();
   applyTier(0);
 }

@@ -547,3 +547,21 @@ body.onehand #quick { display: none !important; }
 .pask h3 { margin: 4px 0 0; }
 .pask p { margin: 0 0 8px; color: var(--muted); font-size: 15px; }
 .pask .btn { min-height: 52px; }
+
+/* ---------- Spiel wiederherstellen (js/ui/restore.js) ---------- */
+.rs { display: grid; gap: 12px; text-align: center; }
+.rs h3 { margin: 4px 0 0; }
+.rs-m { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px; padding: 12px; border-radius: 14px; background: var(--raised); }
+.rs-m b { font: 600 14px var(--font-body); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rs-m b:first-child { text-align: right; } .rs-m b:last-child { text-align: left; }
+.rs-m span { font: 800 24px var(--font-display); }
+.rs-ps { display: flex; justify-content: center; }
+.rs-ps .hav { width: 38px; height: 38px; box-shadow: 0 0 0 2px var(--surface); }
+.rs-ps .hav + .hav { margin-left: -8px; }
+.rs-ps i { align-self: center; margin-left: 6px; color: var(--muted); font: 600 13px var(--font-body); font-style: normal; }
+.rs-n { color: var(--muted); font-size: 13px; }
+.rs .btn { min-height: 52px; }
+.rsd b { display: block; margin-bottom: 8px; font: 700 13px var(--font-body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.rsd ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 12.5px; }
+.rsd li { display: grid; grid-template-columns: 82px 1fr; gap: 8px; color: var(--muted); }
+.rsd li b { display: inline; margin: 0; font: inherit; letter-spacing: 0; text-transform: none; color: var(--ink); }
